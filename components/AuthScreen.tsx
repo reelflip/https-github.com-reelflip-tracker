@@ -93,7 +93,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             throw new Error("Server error. Please check your connection or database.");
         }
 
-        if (!response.ok || !data.user) {
+        if (!response.ok) {
             throw new Error(data.message || 'Authentication failed');
         }
 
@@ -102,8 +102,12 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             setIsRegistering(false); // Switch to Login view
             setSuccessMessage("Registration successful! Please log in with your credentials.");
             setFormData(prev => ({ ...prev, password: '' })); // Clear password for security
+            window.scrollTo({ top: 0, behavior: 'smooth' }); // Ensure user sees message
         } else {
-            // Login Successful
+            // Login Successful - Require User Object
+            if (!data.user) {
+                throw new Error('Login failed: Invalid server response.');
+            }
             onLogin(data.user);
         }
 

@@ -544,7 +544,7 @@ if(isset($data->email) && isset($data->password)) {
         if($stmt->execute()) {
             $newUserId = $conn->lastInsertId();
             
-            // Return user object so frontend can auto-login
+            // Return success. Frontend handles manual login redirect.
             echo json_encode([
                 "message" => "Registration successful", 
                 "user" => [
