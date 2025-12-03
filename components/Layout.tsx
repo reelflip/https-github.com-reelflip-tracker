@@ -74,7 +74,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-white h-screen fixed left-0 top-0 z-50 shadow-xl">
         <div className="p-6 border-b border-slate-800">
           <h1 className="text-2xl font-bold tracking-tight text-blue-400">JEE Tracker</h1>
-          <p className="text-xs text-slate-400 mt-1">v1.0 • {currentUser.role}</p>
+          <p className="text-xs text-slate-400 mt-1">v1.2 (Live) • {currentUser.role}</p>
         </div>
         
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto no-scrollbar">
