@@ -1,7 +1,8 @@
 
 import React, { useState } from 'react';
 import { generateSQLSchema, getBackendFiles, generateFrontendGuide, generateHtaccess, getDeploymentPhases } from '../services/generatorService';
-import { Download, Database, Code, Terminal, FileCode, BookOpen, CheckCircle, Activity, Play, AlertCircle, Server, Folder, File, Settings, Key, User as UserIcon } from 'lucide-react';
+import { Download, Database, Code, Terminal, FileCode, BookOpen, CheckCircle, Activity, Play, AlertCircle, Server, Folder, File, Settings, Key, User as UserIcon, Package } from 'lucide-react';
+import JSZip from 'jszip';
 
 const SystemDocs: React.FC = () => {
     
@@ -17,6 +18,7 @@ const SystemDocs: React.FC = () => {
     const [testUrl, setTestUrl] = useState('https://iitjeetracker.com/api');
     const [testResult, setTestResult] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
+    const [isZipping, setIsZipping] = useState(false);
 
     const downloadFile = (filename: string, content: string) => {
         const element = document.createElement('a');
@@ -28,17 +30,66 @@ const SystemDocs: React.FC = () => {
         document.body.removeChild(element);
     };
 
+    const downloadAllZip = async () => {
+        setIsZipping(true);
+        try {
+            const zip = new JSZip();
+            const backendFiles = getBackendFiles(dbConfig);
+
+            // Add .htaccess to root
+            zip.file(".htaccess", generateHtaccess());
+
+            // Add API files to api/ folder
+            const apiFolder = zip.folder("api");
+            if (apiFolder) {
+                backendFiles.forEach(file => {
+                    apiFolder.file(file.name, file.content);
+                });
+            }
+
+            // Generate blob
+            const content = await zip.generateAsync({ type: "blob" });
+            const url = URL.createObjectURL(content);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = "hostinger_backend_bundle.zip";
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        } catch (error) {
+            console.error("Failed to zip files", error);
+            alert("Error creating zip file. Please try downloading files individually.");
+        }
+        setIsZipping(false);
+    };
+
     const runDiagnostics = async () => {
         setIsLoading(true);
         setTestResult(null);
         try {
             // Must remove trailing slash if present
             const baseUrl = testUrl.replace(/\/$/, "");
-            const response = await fetch(`${baseUrl}/test_db.php`);
-            const data = await response.json();
-            setTestResult(data);
-        } catch (error) {
-            setTestResult({ status: 'ERROR', message: 'Failed to fetch. Check CORS or URL.' });
+            
+            // Allow cross-origin requests
+            const response = await fetch(`${baseUrl}/test_db.php`, {
+                method: 'GET',
+                mode: 'cors'
+            });
+            
+            if (!response.ok) {
+                throw new Error(`Server returned ${response.status} ${response.statusText}`);
+            }
+            
+            const text = await response.text();
+            
+            try {
+                const data = JSON.parse(text);
+                setTestResult(data);
+            } catch (e) {
+                throw new Error(`Invalid JSON response. The server might be returning HTML error details. Response preview: ${text.substring(0, 100)}...`);
+            }
+        } catch (error: any) {
+            setTestResult({ status: 'ERROR', message: error.message || 'Failed to fetch. Check CORS or URL.' });
         }
         setIsLoading(false);
     };
@@ -183,7 +234,14 @@ const SystemDocs: React.FC = () => {
                 <div className="md:col-span-1 bg-slate-900 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-lg font-mono text-xs border border-slate-800">
                     <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
                         <h3 className="text-white font-bold flex items-center text-sm"><Code className="mr-2 w-4 h-4 text-purple-400"/> 3. PHP Backend API</h3>
-                        <span className="text-slate-500 text-[10px]">Auto-Configured</span>
+                        <button 
+                            onClick={downloadAllZip}
+                            disabled={isZipping}
+                            className="bg-purple-600 hover:bg-purple-500 text-white px-3 py-1.5 rounded flex items-center transition-colors shadow-lg border border-purple-500 disabled:opacity-50"
+                        >
+                            {isZipping ? <Activity className="w-3 h-3 mr-1 animate-spin" /> : <Package className="w-3 h-3 mr-1" />}
+                            Download All (.zip)
+                        </button>
                     </div>
                     
                     <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto custom-scrollbar pr-2">
@@ -236,14 +294,7 @@ const SystemDocs: React.FC = () => {
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> manage_mistakes.php</div>
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> save_timetable.php</div>
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> test_db.php</div>
-                                
-                                <div className="flex items-center text-orange-400 mt-1"><Folder className="w-3 h-3 mr-2" /> PHPMailer/</div>
-                                <div className="ml-4 flex items-center text-orange-400"><Folder className="w-3 h-3 mr-2" /> src/</div>
-                                <div className="ml-8 space-y-1 text-slate-500">
-                                    <div>Exception.php</div>
-                                    <div>PHPMailer.php</div>
-                                    <div>SMTP.php</div>
-                                </div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> index.php</div>
                             </div>
                         </div>
                     </div>

@@ -386,8 +386,14 @@ export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: s
             content: `<?php
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE, PUT");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+
+// Handle CORS Preflight
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit();
+}
 
 // DB CONFIGURATION FROM ADMIN PANEL INPUTS
 $host = "${dbHost}"; 
@@ -399,6 +405,7 @@ try {
     $conn = new PDO("mysql:host=" . $host . ";dbname=" . $db_name, $username, $password);
     $conn->exec("set names utf8mb4");
 } catch(PDOException $exception) {
+    http_response_code(500);
     echo json_encode(["error" => "Connection error: " . $exception->getMessage()]);
     exit();
 }
@@ -409,7 +416,7 @@ try {
             folder: "api",
             desc: "Default file to prevent 403 Forbidden errors when accessing the /api folder.",
             content: `<?php
-header("Content-Type: application/json");
+include_once 'config.php';
 echo json_encode([
     "status" => "active", 
     "message" => "JEE Tracker API is running", 
@@ -423,6 +430,7 @@ echo json_encode([
             folder: "api",
             desc: "Diagnostic tool to check database connection and table counts.",
             content: `<?php
+error_reporting(0); // Suppress warnings for clean JSON
 include_once 'config.php';
 
 $response = [];
@@ -443,7 +451,7 @@ try {
     }
     $response['tables'] = $tables;
 
-} catch(PDOException $e) {
+} catch(Exception $e) {
     $response['status'] = 'ERROR';
     $response['message'] = $e->getMessage();
 }
