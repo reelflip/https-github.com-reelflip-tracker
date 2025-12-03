@@ -661,6 +661,73 @@ export const generateGitHubAction = (): string => {
 `;
 };
 
+// Provides data for UI Rendering
+export const getDeploymentPhases = () => {
+    return [
+        {
+            title: "Phase 1: Database Setup",
+            subtitle: "Hostinger hPanel",
+            color: "text-green-600",
+            bg: "bg-green-50",
+            steps: [
+                "Log in to Hostinger > Databases > Management.",
+                "Create a new MySQL Database (Save the password!).",
+                "Scroll down and click 'Enter phpMyAdmin'.",
+                "Import the 'database.sql' file (Download it from the block above)."
+            ]
+        },
+        {
+            title: "Phase 2: Backend API Setup",
+            subtitle: "File Manager",
+            color: "text-purple-600",
+            bg: "bg-purple-50",
+            steps: [
+                "Go to Files > File Manager > public_html.",
+                "Create a folder named 'api'.",
+                "Create specific PHP files inside 'api' (Download scripts from above).",
+                "Edit 'api/config.php' and PUT YOUR DATABASE PASSWORD.",
+                "Create folder 'api/PHPMailer/src' and upload PHPMailer files."
+            ]
+        },
+        {
+            title: "Phase 3: Frontend Build",
+            subtitle: "StackBlitz Terminal",
+            color: "text-blue-600",
+            bg: "bg-blue-50",
+            steps: [
+                "In StackBlitz terminal, run: `npm run build`.",
+                "Wait for the 'dist' folder to appear.",
+                "Click the StackBlitz logo (top-left) -> Export Project.",
+                "Unzip the project on your computer."
+            ]
+        },
+        {
+            title: "Phase 4: Configuration",
+            subtitle: "Local Code",
+            color: "text-orange-600",
+            bg: "bg-orange-50",
+            steps: [
+                "Open `src/config.ts` (or create it).",
+                "Set `API_BASE_URL` to 'https://your-domain.com/api'.",
+                "If you missed this before building, you might need to rebuild or edit the JS files."
+            ]
+        },
+        {
+            title: "Phase 5: Upload & Go Live",
+            subtitle: "Hostinger File Manager",
+            color: "text-indigo-600",
+            bg: "bg-indigo-50",
+            steps: [
+                "Go back to Hostinger File Manager > public_html.",
+                "Upload ALL files/folders from inside your local 'dist' folder.",
+                "Create a file named `.htaccess` in public_html and paste the code from the block below.",
+                "Done! Visit your website."
+            ]
+        }
+    ];
+};
+
+// Keeps the text version for the downloadable file
 export const generateFrontendGuide = (): string => {
     return `# HOSTINGER DEPLOYMENT MANUAL (ZERO-TO-HERO GUIDE)
 ======================================================
