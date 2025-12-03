@@ -388,6 +388,7 @@ header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE, PUT");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+header("Cache-Control: no-cache, no-store, must-revalidate");
 
 // Handle CORS Preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -426,6 +427,17 @@ echo json_encode([
     "info" => "Use endpoints like /login.php, /test_db.php etc."
 ]);
 ?>`
+        },
+        {
+            name: ".htaccess",
+            folder: "api",
+            desc: "Allow access to API folder files (Fix for 403 Errors)",
+            content: `<IfModule mod_rewrite.c>
+    RewriteEngine On
+</IfModule>
+# Allow access to files in this directory
+Order Allow,Deny
+Allow from all`
         },
         {
             name: "test_db.php",
@@ -861,6 +873,21 @@ export const generateFrontendGuide = (): string => {
 
 This guide assumes you have a clean Hostinger Shared Hosting plan and a domain (e.g., iitjeetracker.com).
 
+TROUBLESHOOTING 403 ERRORS (ACCESS FORBIDDEN)
+---------------------------------------------
+If you see "Server error (403)" or "Access Denied":
+1. **File Permissions:**
+   - Go to Hostinger File Manager.
+   - Right-click the \`api\` folder > Permissions. Set to **755**.
+   - Open \`api\` folder. Select all PHP files. Right-click > Permissions. Set to **644**.
+   - 600 or 400 is too restrictive; 777 is blocked by security.
+2. **ModSecurity:**
+   - Go to Hostinger hPanel > Security > ModSecurity.
+   - If enabled, try temporarily disabling it to check if it's blocking the JSON requests.
+3. **.htaccess in API:**
+   - Ensure you uploaded the \`.htaccess\` file inside the \`api\` folder (provided in the backend zip).
+   - This file forces Apache to allow access.
+
 PHASE 1: DATABASE SETUP (Hostinger hPanel)
 ------------------------------------------
 1. Log in to **Hostinger**.
@@ -895,7 +922,8 @@ PHASE 2: BACKEND API SETUP (File Manager)
      - \`api/get_common.php\`
      - \`api/verify.php\`
      - \`api/test_db.php\`
-     - \`api/index.php\` (Updated to prevent blank screen)
+     - \`api/index.php\`
+     - \`api/.htaccess\` (IMPORTANT)
 
 PHASE 3: FRONTEND BUILD (StackBlitz)
 ------------------------------------

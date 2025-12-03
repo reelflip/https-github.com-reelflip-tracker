@@ -80,17 +80,24 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
             body: JSON.stringify(payload)
         });
 
         const text = await response.text();
+        
+        // Handle 403 Forbidden specifically (Common Hostinger Issue)
+        if (response.status === 403) {
+            throw new Error(`Access Denied (403). Please check File Permissions (chmod 644) or ModSecurity in Hostinger.`);
+        }
+
         let data;
         try {
             data = JSON.parse(text);
         } catch (err) {
             console.error("Non-JSON response:", text);
-            throw new Error(`Server error (${response.status}). Please check your database connection.`);
+            throw new Error(`Server error (${response.status}). Expected JSON but got HTML/Text. Check API URL or PHP errors.`);
         }
 
         if (!response.ok) {
