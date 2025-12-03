@@ -43,7 +43,7 @@ CREATE TABLE users (
     password_hash VARCHAR(255) NOT NULL,
     full_name VARCHAR(100) NOT NULL,
     role ENUM('STUDENT', 'PARENT', 'ADMIN') NOT NULL,
-    is_verified BOOLEAN DEFAULT FALSE, 
+    is_verified BOOLEAN DEFAULT TRUE, 
     verification_token VARCHAR(100),
     target_year INT DEFAULT NULL,
     institute VARCHAR(100),
@@ -396,12 +396,6 @@ $db_name = "${dbName}";
 $username = "${dbUser}";
 $password = "${dbPass}";
 
-// GMAIL SMTP CONFIG
-define('SMTP_HOST', 'smtp.gmail.com');
-define('SMTP_USER', 'innfriend1@gmail.com'); 
-define('SMTP_PASS', 'YOUR_GMAIL_APP_PASSWORD_HERE'); // Generate from Google Account > Security > App Passwords
-define('SMTP_PORT', 587);
-
 try {
     $conn = new PDO("mysql:host=" . $host . ";dbname=" . $db_name, $username, $password);
     $conn->exec("set names utf8mb4");
@@ -409,6 +403,20 @@ try {
     echo json_encode(["error" => "Connection error: " . $exception->getMessage()]);
     exit();
 }
+?>`
+        },
+        {
+            name: "index.php",
+            folder: "api",
+            desc: "Default file to prevent 403 Forbidden errors when accessing the /api folder.",
+            content: `<?php
+header("Content-Type: application/json");
+echo json_encode([
+    "status" => "active", 
+    "message" => "JEE Tracker API is running", 
+    "timestamp" => date('c'),
+    "info" => "Use endpoints like /login.php, /test_db.php etc."
+]);
 ?>`
         },
         {
@@ -472,13 +480,8 @@ if(isset($data->email) && isset($data->password)) {
         }
 
         if(password_verify($password, $row['password_hash'])) {
-            if ($row['is_verified'] == 1 || $email == 'admin') {
-                unset($row['password_hash']);
-                echo json_encode(["message" => "Login successful", "user" => $row]);
-            } else {
-                http_response_code(403);
-                echo json_encode(["message" => "Please verify your email first."]);
-            }
+            unset($row['password_hash']);
+            echo json_encode(["message" => "Login successful", "user" => $row]);
         } else {
              http_response_code(401);
              echo json_encode(["message" => "Invalid password."]);
@@ -493,15 +496,8 @@ if(isset($data->email) && isset($data->password)) {
         {
             name: "register.php",
             folder: "api",
-            desc: "Handles user registration and email verification.",
+            desc: "Handles user registration (Auto-Verified).",
             content: `<?php
-use PHPMailer\\PHPMailer\\PHPMailer;
-use PHPMailer\\PHPMailer\\Exception;
-
-require 'PHPMailer/src/Exception.php';
-require 'PHPMailer/src/PHPMailer.php';
-require 'PHPMailer/src/SMTP.php';
-
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
 
@@ -512,7 +508,8 @@ if(isset($data->email) && isset($data->password)) {
     $role = $data->role;
     $token = bin2hex(random_bytes(16));
 
-    $query = "INSERT INTO users (email, password_hash, full_name, role, is_verified, verification_token, institute, target_year) VALUES (:email, :pass, :name, :role, 0, :token, :inst, :year)";
+    // is_verified set to 1 by default
+    $query = "INSERT INTO users (email, password_hash, full_name, role, is_verified, verification_token, institute, target_year) VALUES (:email, :pass, :name, :role, 1, :token, :inst, :year)";
     
     $stmt = $conn->prepare($query);
     $stmt->bindParam(":email", $email);
@@ -524,36 +521,22 @@ if(isset($data->email) && isset($data->password)) {
     $stmt->bindParam(":year", $data->targetYear);
 
     if($stmt->execute()) {
-        $mail = new PHPMailer(true);
-        try {
-            $mail->isSMTP();                                            
-            $mail->Host       = SMTP_HOST;                     
-            $mail->SMTPAuth   = true;                                   
-            $mail->Username   = SMTP_USER;                     
-            $mail->Password   = SMTP_PASS;                               
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;            
-            $mail->Port       = SMTP_PORT;                                    
-
-            $mail->setFrom(SMTP_USER, 'JEE Tracker Admin');
-            $mail->addAddress($email, $name);     
-
-            $mail->isHTML(true);                                  
-            $mail->Subject = 'Verify your JEE Tracker Account';
-            
-            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-            $domain = $_SERVER['HTTP_HOST'];
-            $verifyLink = "$protocol://$domain/api/verify.php?token=$token";
-
-            $mail->Body    = "<h3>Hi $name,</h3><p>Verify email: <a href='$verifyLink'>Click Here</a></p>";
-            
-            $mail->send();
-            echo json_encode(["message" => "Verification email sent."]);
-        } catch (Exception $e) {
-            echo json_encode(["message" => "Registered but email failed."]);
-        }
+        $newUserId = $conn->lastInsertId();
+        
+        // Return user object so frontend can auto-login
+        echo json_encode([
+            "message" => "Registration successful", 
+            "user" => [
+                "id" => $newUserId,
+                "name" => $name,
+                "email" => $email,
+                "role" => $role,
+                "isVerified" => true
+            ]
+        ]);
     } else {
         http_response_code(400);
-        echo json_encode(["message" => "Error registering user."]);
+        echo json_encode(["message" => "Error registering user. Email might be taken."]);
     }
 }
 ?>`
@@ -561,22 +544,9 @@ if(isset($data->email) && isset($data->password)) {
         {
             name: "verify.php",
             folder: "api",
-            desc: "Verifies the token from the email link.",
+            desc: "Legacy endpoint (No longer needed but kept for safety).",
             content: `<?php
-include_once 'config.php';
-
-if(isset($_GET['token'])) {
-    $token = $_GET['token'];
-    $query = "UPDATE users SET is_verified = 1, verification_token = NULL WHERE verification_token = :token";
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(":token", $token);
-    
-    if($stmt->execute() && $stmt->rowCount() > 0) {
-        echo "<h1>Account Verified! ✅</h1><p>You can now go back to the app and login.</p>";
-    } else {
-        echo "<h1>Invalid or expired token. ❌</h1>";
-    }
-}
+echo "<h1>Account Verified! ✅</h1><p>Email verification is no longer required.</p>";
 ?>`
         },
         {
@@ -804,8 +774,7 @@ export const getDeploymentPhases = () => {
                 "Go to Files > File Manager > public_html.",
                 "Create a folder named 'api'.",
                 "Create specific PHP files inside 'api' (Download scripts from above).",
-                "Edit 'api/config.php' and PUT YOUR DATABASE PASSWORD (or use the generator above).",
-                "Create folder 'api/PHPMailer/src' and upload PHPMailer files."
+                "Edit 'api/config.php' and PUT YOUR DATABASE PASSWORD (or use the generator above)."
             ]
         },
         {
@@ -888,12 +857,7 @@ PHASE 2: BACKEND API SETUP (File Manager)
      - \`api/get_common.php\`
      - \`api/verify.php\`
      - \`api/test_db.php\`
-5. **Install PHPMailer** (For Emails):
-   - Inside the \`api\` folder, create a folder named \`PHPMailer\`.
-   - Inside \`PHPMailer\`, create a folder named \`src\`.
-   - Download PHPMailer ZIP: https://github.com/PHPMailer/PHPMailer/archive/master.zip
-   - Extract it on your PC.
-   - Upload \`Exception.php\`, \`PHPMailer.php\`, and \`SMTP.php\` into the \`public_html/api/PHPMailer/src/\` folder.
+     - \`api/index.php\` (Updated to prevent blank screen)
 
 PHASE 3: FRONTEND BUILD (StackBlitz)
 ------------------------------------
@@ -954,7 +918,7 @@ PHASE 5: UPLOAD & GO LIVE
 --------
 Visit your domain. You should see the login screen.
 - Try logging in with: \`innfriend1@gmail.com\` / \`123456\`.
-- Try creating a new account (Email verification should work if you set up Gmail App Password in config.php).
+- Try creating a new account (Email verification is disabled, you will be logged in immediately).
 - Use the 'Live Connection Tester' in Admin Panel to verify everything is working.
 `;
 };
