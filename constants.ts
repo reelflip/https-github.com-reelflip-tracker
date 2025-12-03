@@ -39,12 +39,104 @@ export const DEFAULT_QUOTES: Quote[] = [
 ];
 
 export const INITIAL_FLASHCARDS: Flashcard[] = [
-    { id: 'fc1', subjectId: 'phys', front: 'Equation of Trajectory (Projectile Motion)', back: 'y = x tan(θ) - (gx²) / (2u² cos²θ)', difficulty: 'MEDIUM' },
-    { id: 'fc2', subjectId: 'phys', front: 'Moment of Inertia (Solid Sphere)', back: 'I = (2/5)MR²', difficulty: 'EASY' },
-    { id: 'fc3', subjectId: 'math', front: 'Sum of n terms of GP', back: 'Sn = a(r^n - 1) / (r - 1) for r > 1', difficulty: 'EASY' },
-    { id: 'fc4', subjectId: 'math', front: 'Condition for Orthogonality of two circles', back: '2g₁g₂ + 2f₁f₂ = c₁ + c₂', difficulty: 'HARD' },
-    { id: 'fc5', subjectId: 'chem', front: 'Bragg\'s Equation', back: 'nλ = 2d sin(θ)', difficulty: 'MEDIUM' },
-    { id: 'fc6', subjectId: 'chem', front: 'Nernst Equation (EMF of Cell)', back: 'E = E° - (0.0591/n) log Q', difficulty: 'HARD' }
+    // --- PHYSICS ---
+    // Mechanics
+    { id: 'ph_1', subjectId: 'phys', front: 'Equation of Trajectory (Projectile Motion)', back: 'y = x tan(θ) - (gx²) / (2u² cos²θ)', difficulty: 'MEDIUM' },
+    { id: 'ph_2', subjectId: 'phys', front: 'Maximum Range of Projectile', back: 'R_max = u² / g (at θ = 45°)', difficulty: 'EASY' },
+    { id: 'ph_3', subjectId: 'phys', front: 'Pseudo Force Direction', back: 'Opposite to the acceleration of the non-inertial frame. F_p = -ma', difficulty: 'EASY' },
+    { id: 'ph_4', subjectId: 'phys', front: 'Work-Energy Theorem', back: 'W_all_forces = ΔK (Change in Kinetic Energy)', difficulty: 'EASY' },
+    { id: 'ph_5', subjectId: 'phys', front: 'Center of Mass (Semi-Circular Ring)', back: 'y_cm = 2R / π', difficulty: 'HARD' },
+    { id: 'ph_6', subjectId: 'phys', front: 'Moment of Inertia (Solid Sphere)', back: 'I = (2/5)MR²', difficulty: 'MEDIUM' },
+    { id: 'ph_7', subjectId: 'phys', front: 'Moment of Inertia (Hollow Sphere)', back: 'I = (2/3)MR²', difficulty: 'MEDIUM' },
+    { id: 'ph_8', subjectId: 'phys', front: 'Escape Velocity', back: 'v_e = √(2GM / R) ≈ 11.2 km/s (Earth)', difficulty: 'MEDIUM' },
+    { id: 'ph_9', subjectId: 'phys', front: 'Bernoulli\'s Principle', back: 'P + ½ρv² + ρgh = Constant', difficulty: 'MEDIUM' },
+    { id: 'ph_10', subjectId: 'phys', front: 'Terminal Velocity formula', back: 'v_t = 2r²(ρ - σ)g / 9η', difficulty: 'HARD' },
+    
+    // Thermo & Waves
+    { id: 'ph_11', subjectId: 'phys', front: 'First Law of Thermodynamics', back: 'ΔQ = ΔU + ΔW', difficulty: 'EASY' },
+    { id: 'ph_12', subjectId: 'phys', front: 'Efficiency of Carnot Engine', back: 'η = 1 - (T_sink / T_source)', difficulty: 'MEDIUM' },
+    { id: 'ph_13', subjectId: 'phys', front: 'Time Period of Simple Pendulum', back: 'T = 2π √(L / g)', difficulty: 'EASY' },
+    { id: 'ph_14', subjectId: 'phys', front: 'Doppler Effect (Apparent Frequency)', back: 'f\' = f (v ± v_o) / (v ∓ v_s)', difficulty: 'HARD' },
+
+    // Electromagnetism
+    { id: 'ph_15', subjectId: 'phys', front: 'Coulomb\'s Law', back: 'F = k(q₁q₂) / r²', difficulty: 'EASY' },
+    { id: 'ph_16', subjectId: 'phys', front: 'Electric Field due to Infite Line Charge', back: 'E = λ / (2πε₀r)', difficulty: 'MEDIUM' },
+    { id: 'ph_17', subjectId: 'phys', front: 'Capacitance of Parallel Plate', back: 'C = (Kε₀A) / d', difficulty: 'EASY' },
+    { id: 'ph_18', subjectId: 'phys', front: 'Energy Stored in Capacitor', back: 'U = ½CV² = Q² / 2C', difficulty: 'EASY' },
+    { id: 'ph_19', subjectId: 'phys', front: 'Biot-Savart Law (Mag Field)', back: 'dB = (μ₀/4π) * (Idl x r) / r³', difficulty: 'HARD' },
+    { id: 'ph_20', subjectId: 'phys', front: 'Magnetic Field inside Solenoid', back: 'B = μ₀ni', difficulty: 'MEDIUM' },
+    { id: 'ph_21', subjectId: 'phys', front: 'Resonant Frequency (LCR Circuit)', back: 'ω = 1 / √(LC)', difficulty: 'MEDIUM' },
+
+    // Optics & Modern Physics
+    { id: 'ph_22', subjectId: 'phys', front: 'Lens Maker\'s Formula', back: '1/f = (μ - 1)(1/R₁ - 1/R₂)', difficulty: 'HARD' },
+    { id: 'ph_23', subjectId: 'phys', front: 'Young\'s Double Slit (Fringe Width)', back: 'β = Dλ / d', difficulty: 'MEDIUM' },
+    { id: 'ph_24', subjectId: 'phys', front: 'Einstein\'s Photoelectric Equation', back: 'K_max = hν - Φ (Work Function)', difficulty: 'MEDIUM' },
+    { id: 'ph_25', subjectId: 'phys', front: 'De-Broglie Wavelength', back: 'λ = h / p = h / mv', difficulty: 'EASY' },
+    { id: 'ph_26', subjectId: 'phys', front: 'Radioactive Decay Law', back: 'N = N₀ e^(-λt)', difficulty: 'MEDIUM' },
+
+    // --- CHEMISTRY ---
+    // Physical
+    { id: 'ch_1', subjectId: 'chem', front: 'Rydberg Formula (Hydrogen)', back: '1/λ = R (1/n₁² - 1/n₂²)', difficulty: 'MEDIUM' },
+    { id: 'ch_2', subjectId: 'chem', front: 'Ideal Gas Equation', back: 'PV = nRT', difficulty: 'EASY' },
+    { id: 'ch_3', subjectId: 'chem', front: 'Compressibility Factor (Z)', back: 'Z = PV / nRT', difficulty: 'MEDIUM' },
+    { id: 'ch_4', subjectId: 'chem', front: 'Gibbs Helmholtz Equation', back: 'ΔG = ΔH - TΔS', difficulty: 'MEDIUM' },
+    { id: 'ch_5', subjectId: 'chem', front: 'Work done (Isothermal Reversible)', back: 'W = -2.303 nRT log(V₂/V₁)', difficulty: 'HARD' },
+    { id: 'ch_6', subjectId: 'chem', front: 'Bragg\'s Equation', back: 'nλ = 2d sin(θ)', difficulty: 'MEDIUM' },
+    { id: 'ch_7', subjectId: 'chem', front: 'Raoult\'s Law', back: 'P_total = P_A°x_A + P_B°x_B', difficulty: 'EASY' },
+    { id: 'ch_8', subjectId: 'chem', front: 'Nernst Equation (EMF)', back: 'E = E° - (0.0591/n) log Q', difficulty: 'HARD' },
+    { id: 'ch_9', subjectId: 'chem', front: 'First Order Kinetics (Half Life)', back: 't_½ = 0.693 / k', difficulty: 'EASY' },
+    { id: 'ch_10', subjectId: 'chem', front: 'Arrhenius Equation', back: 'k = A e^(-Ea / RT)', difficulty: 'MEDIUM' },
+
+    // Inorganic
+    { id: 'ch_11', subjectId: 'chem', front: 'Bond Order Formula', back: 'BO = ½ (Nb - Na)', difficulty: 'EASY' },
+    { id: 'ch_12', subjectId: 'chem', front: 'Hybridization Formula', back: 'H = ½ (V + M - C + A)', difficulty: 'MEDIUM' },
+    { id: 'ch_13', subjectId: 'chem', front: 'Spin Only Magnetic Moment', back: 'μ = √(n(n+2)) BM', difficulty: 'MEDIUM' },
+    { id: 'ch_14', subjectId: 'chem', front: 'Flame Test: Sodium (Na)', back: 'Golden Yellow', difficulty: 'EASY' },
+    { id: 'ch_15', subjectId: 'chem', front: 'Flame Test: Copper (Cu)', back: 'Bluish Green', difficulty: 'EASY' },
+
+    // Organic
+    { id: 'ch_16', subjectId: 'chem', front: 'Markovnikov\'s Rule', back: 'Negative part of reagent goes to Carbon with fewer Hydrogens.', difficulty: 'EASY' },
+    { id: 'ch_17', subjectId: 'chem', front: 'Anti-Markovnikov (Peroxide Effect)', back: 'Only valid for HBr + Peroxide. Br goes to Carbon with MORE Hydrogens.', difficulty: 'MEDIUM' },
+    { id: 'ch_18', subjectId: 'chem', front: 'Lucas Reagent', back: 'Conc. HCl + Anhydrous ZnCl₂ (Distinguishes Alcohols)', difficulty: 'MEDIUM' },
+    { id: 'ch_19', subjectId: 'chem', front: 'Reimer-Tiemann Reaction Product', back: 'Salicylaldehyde (from Phenol)', difficulty: 'HARD' },
+    { id: 'ch_20', subjectId: 'chem', front: 'Cannizzaro Reaction Condition', back: 'Aldehydes with NO alpha-hydrogen + Conc. Base', difficulty: 'HARD' },
+    { id: 'ch_21', subjectId: 'chem', front: 'Aldol Condensation Condition', back: 'Aldehydes/Ketones WITH alpha-hydrogen + Dilute Base', difficulty: 'HARD' },
+    { id: 'ch_22', subjectId: 'chem', front: 'Hinsberg Reagent', back: 'Benzenesulfonyl chloride (Separates 1°, 2°, 3° Amines)', difficulty: 'HARD' },
+
+    // --- MATHEMATICS ---
+    // Algebra
+    { id: 'ma_1', subjectId: 'math', front: 'Sum of roots (Quadratic)', back: 'α + β = -b/a', difficulty: 'EASY' },
+    { id: 'ma_2', subjectId: 'math', front: 'Product of roots (Quadratic)', back: 'αβ = c/a', difficulty: 'EASY' },
+    { id: 'ma_3', subjectId: 'math', front: 'Sum of n terms of GP', back: 'Sn = a(r^n - 1) / (r - 1) for r > 1', difficulty: 'MEDIUM' },
+    { id: 'ma_4', subjectId: 'math', front: 'Sum of Infinite GP', back: 'S_inf = a / (1 - r) for |r| < 1', difficulty: 'EASY' },
+    { id: 'ma_5', subjectId: 'math', front: 'Logarithm Power Rule', back: 'log(a^b) = b log(a)', difficulty: 'EASY' },
+    { id: 'ma_6', subjectId: 'math', front: 'Binomial General Term', back: 'T_(r+1) = nCr (x)^(n-r) (y)^r', difficulty: 'MEDIUM' },
+    { id: 'ma_7', subjectId: 'math', front: 'Expansion of e^x', back: '1 + x + x²/2! + x³/3! + ...', difficulty: 'HARD' },
+
+    // Trigonometry
+    { id: 'ma_8', subjectId: 'math', front: 'sin(A+B)', back: 'sinAcosB + cosAsinB', difficulty: 'EASY' },
+    { id: 'ma_9', subjectId: 'math', front: 'cos(2A)', back: 'cos²A - sin²A = 2cos²A - 1', difficulty: 'MEDIUM' },
+    { id: 'ma_10', subjectId: 'math', front: 'Sine Rule', back: 'a/sinA = b/sinB = c/sinC = 2R', difficulty: 'MEDIUM' },
+    { id: 'ma_11', subjectId: 'math', front: 'Cosine Rule (side a)', back: 'a² = b² + c² - 2bc cosA', difficulty: 'MEDIUM' },
+
+    // Coordinate Geometry
+    { id: 'ma_12', subjectId: 'math', front: 'Slope Point Form', back: 'y - y₁ = m(x - x₁)', difficulty: 'EASY' },
+    { id: 'ma_13', subjectId: 'math', front: 'Distance of point from line', back: '|ax₁ + by₁ + c| / √(a² + b²)', difficulty: 'MEDIUM' },
+    { id: 'ma_14', subjectId: 'math', front: 'Condition for Orthogonality of 2 circles', back: '2g₁g₂ + 2f₁f₂ = c₁ + c₂', difficulty: 'HARD' },
+    { id: 'ma_15', subjectId: 'math', front: 'Length of Latus Rectum (Parabola y²=4ax)', back: '4a', difficulty: 'MEDIUM' },
+    { id: 'ma_16', subjectId: 'math', front: 'Eccentricity of Ellipse', back: 'e = √(1 - b²/a²) where a > b', difficulty: 'MEDIUM' },
+
+    // Calculus
+    { id: 'ma_17', subjectId: 'math', front: 'Limit (sin x / x) as x->0', back: '1', difficulty: 'EASY' },
+    { id: 'ma_18', subjectId: 'math', front: 'Derivative of tan(x)', back: 'sec²(x)', difficulty: 'EASY' },
+    { id: 'ma_19', subjectId: 'math', front: 'Integration by Parts', back: '∫uv dx = u∫v dx - ∫(u\' ∫v dx) dx', difficulty: 'HARD' },
+    { id: 'ma_20', subjectId: 'math', front: 'Area under curve y=f(x)', back: '∫ y dx (from a to b)', difficulty: 'EASY' },
+    
+    // Vectors & 3D
+    { id: 'ma_21', subjectId: 'math', front: 'Dot Product (a . b)', back: '|a||b| cosθ', difficulty: 'EASY' },
+    { id: 'ma_22', subjectId: 'math', front: 'Cross Product Magnitude', back: '|a||b| sinθ', difficulty: 'EASY' },
+    { id: 'ma_23', subjectId: 'math', front: 'Volume of Parallelepiped', back: '[a b c] (Scalar Triple Product)', difficulty: 'HARD' },
+    { id: 'ma_24', subjectId: 'math', front: 'Shortest Distance (Skew Lines)', back: '|(a₂-a₁) . (b₁ x b₂)| / |b₁ x b₂|', difficulty: 'HARD' }
 ];
 
 export const JEE_SYLLABUS: Subject[] = [
