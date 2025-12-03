@@ -90,11 +90,12 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             data = JSON.parse(text);
         } catch (err) {
             console.error("Non-JSON response:", text);
-            throw new Error("Server error. Please check your connection or database.");
+            throw new Error(`Server error (${response.status}). Please check your database connection.`);
         }
 
         if (!response.ok) {
-            throw new Error(data.message || 'Authentication failed');
+            // Prioritize specific error messages from the backend
+            throw new Error(data.error || data.message || (isRegistering ? 'Registration failed' : 'Login failed'));
         }
 
         if (isRegistering) {
@@ -106,7 +107,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
         } else {
             // Login Successful - Require User Object
             if (!data.user) {
-                throw new Error('Login failed: Invalid server response.');
+                throw new Error('Login successful but no user data received.');
             }
             onLogin(data.user);
         }
@@ -335,7 +336,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
                 {/* Error Message */}
                 {error && (
-                    <div className="flex items-center text-red-600 text-xs bg-red-50 p-3 rounded-lg border border-red-100 animate-in fade-in slide-in-from-top-1">
+                    <div className="flex items-center text-red-600 text-xs bg-red-50 p-3 rounded-lg border border-red-100 animate-in fade-in slide-in-from-top-1 break-words">
                         <AlertCircle className="w-4 h-4 mr-2 shrink-0" />
                         {error}
                     </div>

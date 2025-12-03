@@ -407,7 +407,8 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $exception) {
     http_response_code(500);
-    echo json_encode(["error" => "Connection error: " . $exception->getMessage()]);
+    // Use 'message' key instead of 'error' for consistency with frontend expectations
+    echo json_encode(["message" => "Connection error: " . $exception->getMessage()]);
     exit();
 }
 ?>`
