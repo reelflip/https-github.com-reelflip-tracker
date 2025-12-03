@@ -14,7 +14,10 @@ import {
   Lock,
   AlertCircle,
   HelpCircle,
-  ChevronDown
+  ChevronDown,
+  CheckCircle2,
+  Send,
+  RefreshCw
 } from 'lucide-react';
 
 interface AuthScreenProps {
@@ -22,9 +25,12 @@ interface AuthScreenProps {
 }
 
 const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
-  const [isRegistering, setIsRegistering] = useState(true);
+  const [isRegistering, setIsRegistering] = useState(false); // Default to login
   const [role, setRole] = useState<Role>('STUDENT');
   const [error, setError] = useState('');
+  
+  // Registration Flow State
+  const [verificationSent, setVerificationSent] = useState(false);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -40,48 +46,123 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const handleAuth = (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    
-    // Validate Password
-    if (formData.password !== '123456') {
-        setError('Invalid password. Default password is: 123456');
-        return;
-    }
 
-    // Determine Role
-    let finalRole = role;
-    // If logging in (not registering), detect role from email for demo purposes
+    // --- ADMIN LOGIN SHORTCUT ---
     if (!isRegistering) {
-        const lowerEmail = formData.email.toLowerCase();
-        if (lowerEmail.includes('admin')) finalRole = 'ADMIN';
-        else if (lowerEmail.includes('parent')) finalRole = 'PARENT';
-        else finalRole = 'STUDENT';
+        if (formData.email === 'admin' && formData.password === 'Ishika@123') {
+             onLogin({
+                 id: 'admin_001',
+                 name: 'System Administrator',
+                 email: 'admin',
+                 role: 'ADMIN',
+                 isVerified: true,
+                 avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
+             });
+             return;
+        }
     }
-
-    // Determine user ID and details based on mock data or new input
-    const mockUser: User = {
-      id: `new_${Date.now()}`,
-      name: formData.name || (finalRole === 'STUDENT' ? 'Student User' : finalRole === 'ADMIN' ? 'Admin User' : 'Parent User'),
-      email: formData.email || `${finalRole.toLowerCase()}@example.com`,
-      role: finalRole,
-      targetYear: finalRole === 'STUDENT' ? parseInt(formData.targetYear) : undefined,
-      institute: formData.institute,
-      avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.email || finalRole}`,
-      studentId: finalRole === 'PARENT' ? 'u1' : undefined
-    };
     
-    onLogin(mockUser);
+    // --- STANDARD VALIDATION ---
+    if (isRegistering) {
+        if (formData.password.length < 6) {
+            setError('Password must be at least 6 characters long.');
+            return;
+        }
+
+        // Simulate sending email
+        setVerificationSent(true);
+        return;
+    } 
+    else {
+        // --- LOGIN LOGIC (Simulated) ---
+        // In a real app, this would hit the PHP API. 
+        // Here we simulate checking the 'allUsers' state handled by App.tsx by passing a user object.
+        // Since App.tsx handles the actual user checking for the demo, we construct the attempt here.
+        
+        // Note: For this demo, we can't "Check" the App's state directly inside this child component 
+        // without lifting more state. 
+        // Instead, we will simulate the check here assuming success if valid format, 
+        // but App.tsx will handle the actual "New vs Existing" logic.
+        
+        // HOWEVER, to support the "Verification" requirement, we need to enforce it.
+        // Since we can't see the App's user list here, we rely on the user to have gone through the verification flow below if they just registered.
+        // If they are logging in as a student, we will assume they are verified for the sake of the demo UNLESS they just registered.
+        
+        const mockUser: User = {
+            id: `u_${formData.email}`,
+            name: 'Student User', // App.tsx will replace this with existing name if found
+            email: formData.email,
+            role: 'STUDENT', // Default to student for login attempt, App.tsx resolves actual role
+            isVerified: true // Assumption for login, but blocked if they just registered without verifying
+        };
+        onLogin(mockUser);
+    }
   };
 
-  const autoFillAdmin = () => {
-      setFormData(prev => ({
-          ...prev,
-          email: 'admin@system.jee',
-          password: '123456'
-      }));
-      setIsRegistering(false);
-      setRole('ADMIN');
-      setError('');
+  const handleSimulateVerification = () => {
+      // Create the verified user
+      const newUser: User = {
+        id: `new_${Date.now()}`,
+        name: formData.name,
+        email: formData.email,
+        role: role,
+        targetYear: role === 'STUDENT' ? parseInt(formData.targetYear) : undefined,
+        institute: formData.institute,
+        avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.email}`,
+        studentId: role === 'PARENT' ? 'u1' : undefined,
+        isVerified: true
+      };
+      
+      onLogin(newUser);
   };
+
+  // --- Verification View ---
+  if (verificationSent) {
+      return (
+          <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-inter">
+              <div className="bg-white w-full max-w-[480px] rounded-[2rem] shadow-xl overflow-hidden border border-slate-100 p-8 text-center space-y-6">
+                  <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+                      <Send className="w-8 h-8 text-blue-600" />
+                  </div>
+                  
+                  <div>
+                      <h2 className="text-2xl font-bold text-slate-800">Verify your email</h2>
+                      <p className="text-slate-500 mt-2 text-sm">
+                          We've sent a verification link to <span className="font-bold text-slate-700">{formData.email}</span>
+                      </p>
+                      <p className="text-xs text-slate-400 mt-2">
+                          Sent from <span className="font-mono bg-slate-100 px-1 py-0.5 rounded">innfriend1@gmail.com</span>
+                      </p>
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 text-xs text-blue-800 text-left">
+                      <strong>Instructions:</strong>
+                      <ul className="list-disc list-inside mt-1 space-y-1">
+                          <li>Open your Gmail inbox.</li>
+                          <li>Look for an email from "JEE Tracker Team".</li>
+                          <li>Click the "Verify Account" button inside.</li>
+                      </ul>
+                  </div>
+
+                  <div className="pt-4 space-y-3">
+                      <button 
+                          onClick={handleSimulateVerification}
+                          className="w-full bg-green-600 text-white font-bold py-3 rounded-xl hover:bg-green-700 shadow-lg shadow-green-200 transition-all flex items-center justify-center"
+                      >
+                          <CheckCircle2 className="w-5 h-5 mr-2" />
+                          Simulate Clicking Link
+                      </button>
+                      <button 
+                          onClick={() => setVerificationSent(false)}
+                          className="text-slate-400 text-xs hover:text-slate-600 underline"
+                      >
+                          Back to Registration
+                      </button>
+                  </div>
+              </div>
+          </div>
+      );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4 font-inter">
@@ -123,6 +204,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     onClick={() => {
                         setIsRegistering(!isRegistering);
                         setError('');
+                        setFormData(prev => ({ ...prev, password: '' })); // Clear pass
                     }}
                     className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
                 >
@@ -170,6 +252,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                 className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                                 value={formData.name}
                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
+                                required
                             />
                         </div>
                     </div>
@@ -216,15 +299,18 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
 
                 {/* Email Address */}
                 <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Email Address</label>
+                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">
+                        {isRegistering ? 'Email Address' : 'Email or Username'}
+                    </label>
                     <div className="relative group">
                         <Mail className="absolute left-4 top-3.5 text-slate-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
                         <input 
-                            type="email" 
-                            placeholder={isRegistering ? "student@example.com" : "Enter your email"}
+                            type="text" 
+                            placeholder={isRegistering ? "student@example.com" : "Email or 'admin'"}
                             className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                             value={formData.email}
                             onChange={(e) => setFormData({...formData, email: e.target.value})}
+                            required
                         />
                     </div>
                 </div>
@@ -236,10 +322,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         <Lock className="absolute left-4 top-3.5 text-slate-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
                         <input 
                             type="password" 
-                            placeholder={isRegistering ? "Create a strong password" : "Enter password"}
+                            placeholder={isRegistering ? "Create password" : "Enter password"}
                             className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                             value={formData.password}
                             onChange={(e) => setFormData({...formData, password: e.target.value})}
+                            required
                         />
                     </div>
                 </div>
@@ -291,13 +378,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     </div>
                 )}
 
-                {/* Helper Text for Password */}
-                <div className="text-center">
-                    <p className="text-xs text-slate-400">
-                        Default password is <span className="font-mono font-bold text-slate-600 bg-slate-100 px-1 py-0.5 rounded">123456</span>
-                    </p>
-                </div>
-
                 {/* Submit Button */}
                 <button 
                     type="submit" 
@@ -307,17 +387,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
                 </button>
             </form>
-        </div>
-
-        {/* Footer Admin Shortcut */}
-        <div className="bg-slate-50 p-4 border-t border-slate-100 flex justify-center">
-            <button 
-                onClick={autoFillAdmin}
-                className="flex items-center space-x-2 text-xs font-bold text-slate-400 hover:text-slate-600 transition-colors"
-            >
-                <Shield className="w-3 h-3" />
-                <span>Admin Portal</span>
-            </button>
         </div>
       </div>
     </div>

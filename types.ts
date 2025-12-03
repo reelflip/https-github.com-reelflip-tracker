@@ -6,6 +6,7 @@ export interface User {
   name: string;
   email: string;
   role: Role;
+  isVerified?: boolean; // New field for email verification
   targetYear?: number;
   avatarUrl?: string;
   parentId?: string; // If student, links to parent

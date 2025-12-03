@@ -25,9 +25,33 @@ export const COACHING_INSTITUTES = [
 export const TARGET_YEARS = [2025, 2026, 2027, 2028];
 
 export const MOCK_USERS: User[] = [
-  { id: 'u1', name: 'Arjun Sharma', email: 'arjun@student.jee', role: 'STUDENT', targetYear: 2025, institute: 'Allen Career Institute', avatarUrl: 'https://picsum.photos/100/100' },
-  { id: 'u2', name: 'Rajesh Sharma', email: 'rajesh@parent.jee', role: 'PARENT', studentId: 'u1' },
-  { id: 'u3', name: 'Admin User', email: 'admin@system.jee', role: 'ADMIN' },
+  { 
+      id: 'admin_001', 
+      name: 'System Administrator', 
+      email: 'admin', 
+      role: 'ADMIN',
+      isVerified: true
+  },
+  {
+      id: 'u_student_demo',
+      name: 'InnFriend Student',
+      email: 'innfriend1@gmail.com',
+      role: 'STUDENT',
+      isVerified: true,
+      institute: 'Allen Career Institute',
+      targetYear: 2025,
+      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=innfriend1',
+      parentId: 'u_parent_demo'
+  },
+  {
+      id: 'u_parent_demo',
+      name: 'Vikas Parent',
+      email: 'vikas.00@gmail.com',
+      role: 'PARENT',
+      isVerified: true,
+      studentId: 'u_student_demo',
+      avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=vikas'
+  }
 ];
 
 export const DEFAULT_QUOTES: Quote[] = [
