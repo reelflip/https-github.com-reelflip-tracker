@@ -4,8 +4,23 @@ import { Wind, Coffee, Music, Sun, Play, Pause, Volume2 } from 'lucide-react';
 
 const SOUND_URLS = {
     RAIN: 'https://assets.mixkit.co/active_storage/sfx/2436/2436-preview.mp3',
-    LOFI: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3', // Sample Lo-Fi beat
-    WHITE: 'https://cdn.pixabay.com/audio/2021/08/09/audio_88447e769f.mp3' // Sample White Noise
+    FOREST: 'https://assets.mixkit.co/active_storage/sfx/2434/2434-preview.mp3',
+    WAVES: 'https://assets.mixkit.co/active_storage/sfx/2432/2432-preview.mp3',
+    LOFI: 'https://cdn.pixabay.com/audio/2022/05/27/audio_1808fbf07a.mp3',
+    WHITE: 'https://cdn.pixabay.com/audio/2021/08/09/audio_88447e769f.mp3',
+    NIGHT: 'https://cdn.pixabay.com/audio/2021/08/04/audio_3109a9695b.mp3'
+};
+
+const getSoundLabel = (key: string) => {
+    switch(key) {
+        case 'RAIN': return 'Rain';
+        case 'FOREST': return 'Forest';
+        case 'WAVES': return 'Ocean';
+        case 'LOFI': return 'Lo-Fi';
+        case 'WHITE': return 'White Noise';
+        case 'NIGHT': return 'Night';
+        default: return key;
+    }
 };
 
 const WellnessCorner = () => {
@@ -153,19 +168,19 @@ const WellnessCorner = () => {
                             {activeSound && <Volume2 className="w-4 h-4 animate-pulse" />}
                         </h4>
                         <p className="text-sm text-purple-800/80 mb-3">Listening to binaural beats or white noise can reduce anxiety.</p>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-3 gap-3">
                              {(Object.keys(SOUND_URLS) as Array<keyof typeof SOUND_URLS>).map((sound) => (
                                  <button 
                                     key={sound}
                                     onClick={() => toggleSound(sound)}
-                                    className={`py-3 rounded-lg text-xs font-bold shadow-sm transition-all flex flex-col items-center justify-center space-y-1 ${
+                                    className={`py-3 px-2 rounded-lg text-xs font-bold shadow-sm transition-all flex flex-col items-center justify-center space-y-2 ${
                                         activeSound === sound 
                                         ? 'bg-purple-600 text-white shadow-md transform scale-105' 
                                         : 'bg-white text-purple-700 hover:bg-purple-100'
                                     }`}
                                  >
-                                     {activeSound === sound ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
-                                     <span>{sound === 'RAIN' ? 'Rain' : sound === 'LOFI' ? 'Lo-Fi' : 'White Noise'}</span>
+                                     {activeSound === sound ? <Pause className="w-5 h-5" /> : <Play className="w-5 h-5" />}
+                                     <span>{getSoundLabel(sound)}</span>
                                  </button>
                              ))}
                         </div>

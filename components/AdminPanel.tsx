@@ -1,17 +1,19 @@
 
 import React, { useState } from 'react';
 import { generateSQLSchema, generatePHPAuth, generateFrontendGuide } from '../services/generatorService';
-import { Download, Database, Code, Users, Radio, MessageSquare, FileText, Plus, Check, Terminal, Shield, Lock, Activity } from 'lucide-react';
-import { User, Question, Test, Notification } from '../types';
+import { Download, Database, Code, Users, Radio, MessageSquare, FileText, Plus, Check, Terminal, Shield, Lock, Activity, Trash2 } from 'lucide-react';
+import { User, Question, Test, Notification, Quote } from '../types';
 import { JEE_SYLLABUS } from '../constants';
 
 interface AdminPanelProps {
     users: User[];
     questionBank: Question[];
+    quotes: Quote[];
     onAddQuestion: (q: Question) => void;
     onCreateTest: (t: Test) => void;
     onSendNotification: (n: Notification) => void;
-    onSetQuote: (q: string) => void;
+    onAddQuote: (text: string, author: string) => void;
+    onDeleteQuote: (id: string) => void;
 }
 
 type TabView = 'BROADCAST' | 'QUESTION_BANK' | 'TEST_BUILDER' | 'SYSTEM' | 'USERS';
@@ -19,10 +21,12 @@ type TabView = 'BROADCAST' | 'QUESTION_BANK' | 'TEST_BUILDER' | 'SYSTEM' | 'USER
 const AdminPanel: React.FC<AdminPanelProps> = ({ 
     users, 
     questionBank, 
+    quotes,
     onAddQuestion, 
     onCreateTest, 
     onSendNotification,
-    onSetQuote 
+    onAddQuote,
+    onDeleteQuote
 }) => {
     const [view, setView] = useState<TabView>('BROADCAST');
     
@@ -30,6 +34,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const [notifTitle, setNotifTitle] = useState('');
     const [notifMsg, setNotifMsg] = useState('');
     const [quoteMsg, setQuoteMsg] = useState('');
+    const [quoteAuthor, setQuoteAuthor] = useState('');
 
     // Question Bank State
     const [qSubject, setQSubject] = useState('phys');
@@ -63,9 +68,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
     const submitQuote = () => {
         if (!quoteMsg) return;
-        onSetQuote(quoteMsg);
+        onAddQuote(quoteMsg, quoteAuthor);
         setQuoteMsg('');
-        alert('Motivation Quote Updated!');
+        setQuoteAuthor('');
     };
 
     const submitQuestion = () => {
@@ -201,20 +206,48 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                             </div>
                         </div>
 
-                        {/* Motivation */}
+                        {/* Motivation Quotes Manager */}
                         <div className="space-y-4">
                             <div className="flex items-center space-x-2 mb-2">
                                 <span className="bg-purple-100 p-2 rounded-lg text-purple-600"><Activity className="w-5 h-5"/></span>
-                                <h3 className="font-bold text-slate-800 text-lg">Set Daily Quote</h3>
+                                <h3 className="font-bold text-slate-800 text-lg">Manage Quotes</h3>
                             </div>
-                            <div className="space-y-3 bg-slate-50 p-5 rounded-xl border border-slate-100 h-full">
-                                <textarea 
-                                    placeholder="Enter a motivational quote to appear on student dashboards..." 
-                                    className="w-full p-3 border border-slate-200 rounded-lg text-sm h-32 resize-none focus:ring-2 focus:ring-purple-100 outline-none"
-                                    value={quoteMsg}
-                                    onChange={e => setQuoteMsg(e.target.value)}
-                                />
-                                <button onClick={submitQuote} className="w-full bg-purple-600 text-white px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-purple-700 shadow-lg shadow-purple-200 transition-transform active:scale-95">Update Dashboard</button>
+                            <div className="bg-slate-50 p-5 rounded-xl border border-slate-100 h-full flex flex-col">
+                                <div className="space-y-3 mb-4">
+                                     <input 
+                                        type="text" 
+                                        placeholder="Quote text..." 
+                                        className="w-full p-3 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-100 outline-none"
+                                        value={quoteMsg}
+                                        onChange={e => setQuoteMsg(e.target.value)}
+                                    />
+                                    <input 
+                                        type="text" 
+                                        placeholder="Author (Optional)" 
+                                        className="w-full p-3 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-purple-100 outline-none"
+                                        value={quoteAuthor}
+                                        onChange={e => setQuoteAuthor(e.target.value)}
+                                    />
+                                    <button onClick={submitQuote} className="w-full bg-purple-600 text-white px-4 py-2.5 rounded-lg text-sm font-bold hover:bg-purple-700 shadow-lg shadow-purple-200 transition-transform active:scale-95">Add Quote</button>
+                                </div>
+                                
+                                <div className="flex-1 overflow-y-auto max-h-64 space-y-2 pr-2 custom-scrollbar">
+                                    <h4 className="text-xs font-bold text-slate-500 uppercase">Active Quotes ({quotes.length})</h4>
+                                    {quotes.map(quote => (
+                                        <div key={quote.id} className="bg-white p-3 rounded-lg border border-slate-200 flex justify-between items-start group hover:border-purple-300">
+                                            <div>
+                                                <p className="text-sm text-slate-700 italic">"{quote.text}"</p>
+                                                {quote.author && <p className="text-xs text-slate-500 mt-1">- {quote.author}</p>}
+                                            </div>
+                                            <button 
+                                                onClick={() => onDeleteQuote(quote.id)}
+                                                className="text-slate-300 hover:text-red-500 transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>

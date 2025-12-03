@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal } from './types';
-import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS } from './constants';
+import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote } from './types';
+import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES } from './constants';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import SyllabusTracker from './components/SyllabusTracker';
@@ -47,7 +47,7 @@ function App() {
   const [notifications, setNotifications] = useState<Notification[]>([
     { id: 'n1', title: 'Welcome', message: 'Welcome to the new academic session!', date: new Date().toISOString().split('T')[0], type: 'INFO' }
   ]);
-  const [adminQuote, setAdminQuote] = useState<string | null>(null);
+  const [quotes, setQuotes] = useState<Quote[]>(DEFAULT_QUOTES);
 
   // Initialize some mock progress on load
   useEffect(() => {
@@ -205,8 +205,13 @@ function App() {
     setNotifications(prev => [n, ...prev]);
   };
 
-  const handleSetQuote = (q: string) => {
-    setAdminQuote(q);
+  const handleAddQuote = (text: string, author?: string) => {
+    const newQuote: Quote = { id: `q_${Date.now()}`, text, author };
+    setQuotes(prev => [...prev, newQuote]);
+  };
+
+  const handleDeleteQuote = (id: string) => {
+    setQuotes(prev => prev.filter(q => q.id !== id));
   };
 
   // Login Screen
@@ -238,10 +243,12 @@ function App() {
         return <AdminPanel 
           users={allUsers} 
           questionBank={questionBank}
+          quotes={quotes}
           onAddQuestion={handleAddQuestion}
           onCreateTest={handleCreateTest}
           onSendNotification={handleSendNotification}
-          onSetQuote={handleSetQuote}
+          onAddQuote={handleAddQuote}
+          onDeleteQuote={handleDeleteQuote}
         />;
     }
 
@@ -253,7 +260,7 @@ function App() {
                   progress={progress} 
                   onChangeTab={setActiveTab} 
                   notifications={notifications}
-                  adminQuote={adminQuote}
+                  quotes={quotes}
                   goals={goals}
                   onToggleGoal={handleToggleGoal}
                   onAddGoal={handleAddGoal}
@@ -306,7 +313,7 @@ function App() {
               progress={progress} 
               onChangeTab={() => {}} 
               notifications={notifications}
-              adminQuote={adminQuote}
+              quotes={quotes}
               goals={goals} // Parent views goals
               onToggleGoal={() => {}} // Parent cannot toggle
               onAddGoal={() => {}} // Parent cannot add

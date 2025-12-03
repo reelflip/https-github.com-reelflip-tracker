@@ -127,6 +127,12 @@ export interface DailyGoal {
   completed: boolean;
 }
 
+export interface Quote {
+  id: string;
+  text: string;
+  author?: string;
+}
+
 export interface MockDataState {
   users: User[];
   syllabus: Subject[];

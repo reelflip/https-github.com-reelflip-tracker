@@ -1,9 +1,18 @@
-import { Subject, User, Test, Question } from './types';
+
+import { Subject, User, Test, Question, Quote } from './types';
 
 export const MOCK_USERS: User[] = [
   { id: 'u1', name: 'Arjun Sharma', email: 'arjun@student.jee', role: 'STUDENT', targetYear: 2025, avatarUrl: 'https://picsum.photos/100/100' },
   { id: 'u2', name: 'Rajesh Sharma', email: 'rajesh@parent.jee', role: 'PARENT', studentId: 'u1' },
   { id: 'u3', name: 'Admin User', email: 'admin@system.jee', role: 'ADMIN' },
+];
+
+export const DEFAULT_QUOTES: Quote[] = [
+    { id: 'q1', text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
+    { id: 'q2', text: "Don't watch the clock; do what it does. Keep going.", author: "Sam Levenson" },
+    { id: 'q3', text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
+    { id: 'q4', text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
+    { id: 'q5', text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" }
 ];
 
 export const JEE_SYLLABUS: Subject[] = [

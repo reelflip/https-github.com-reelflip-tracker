@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Subject, TopicProgress, TopicStatus, Topic, User } from '../types';
 import { 
@@ -9,7 +10,9 @@ import {
   LayoutGrid,
   Filter,
   MoreHorizontal,
-  BookOpen
+  BookOpen,
+  Save,
+  Loader2
 } from 'lucide-react';
 
 interface SyllabusTrackerProps {
@@ -37,6 +40,15 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubjectFilter, setActiveSubjectFilter] = useState<string>('ALL');
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = () => {
+      setIsSaving(true);
+      // Simulate network request/DB sync
+      setTimeout(() => {
+          setIsSaving(false);
+      }, 800);
+  };
 
   // --- Statistics Calculation ---
   const stats = useMemo(() => {
@@ -131,7 +143,7 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
         </div>
       </div>
 
-      {/* --- Controls: Search & Filter --- */}
+      {/* --- Controls: Search & Filter & Save --- */}
       <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
@@ -144,23 +156,35 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
           />
         </div>
         
-        <div className="flex space-x-1 w-full md:w-auto overflow-x-auto no-scrollbar">
-          {['ALL', 'phys', 'chem', 'math'].map((filter) => {
-             const labels: Record<string, string> = { 'ALL': 'All', 'phys': 'Physics', 'chem': 'Chemistry', 'math': 'Maths' };
-             return (
-               <button
-                 key={filter}
-                 onClick={() => setActiveSubjectFilter(filter)}
-                 className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
-                   activeSubjectFilter === filter 
-                     ? 'bg-slate-800 text-white shadow-md' 
-                     : 'bg-white text-slate-500 hover:bg-slate-50'
-                 }`}
-               >
-                 {labels[filter]}
-               </button>
-             );
-          })}
+        <div className="flex flex-col md:flex-row gap-2 w-full md:w-auto">
+            <div className="flex space-x-1 w-full md:w-auto overflow-x-auto no-scrollbar">
+            {['ALL', 'phys', 'chem', 'math'].map((filter) => {
+                const labels: Record<string, string> = { 'ALL': 'All', 'phys': 'Physics', 'chem': 'Chemistry', 'math': 'Maths' };
+                return (
+                <button
+                    key={filter}
+                    onClick={() => setActiveSubjectFilter(filter)}
+                    className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
+                    activeSubjectFilter === filter 
+                        ? 'bg-slate-800 text-white shadow-md' 
+                        : 'bg-white text-slate-500 hover:bg-slate-50'
+                    }`}
+                >
+                    {labels[filter]}
+                </button>
+                );
+            })}
+            </div>
+            
+            {/* Main Save Button */}
+            <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex items-center justify-center space-x-2 px-6 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 active:scale-95 transition-all shadow-md shadow-green-200 disabled:opacity-70 disabled:cursor-not-allowed min-w-[120px]"
+            >
+                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                <span>{isSaving ? 'Saving...' : 'Save Progress'}</span>
+            </button>
         </div>
       </div>
 
@@ -271,6 +295,16 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
                                         </div>
                                       );
                                    })}
+                                </div>
+                                <div className="flex justify-end mt-4">
+                                     <button 
+                                        onClick={handleSave}
+                                        disabled={isSaving}
+                                        className="text-xs font-bold text-green-600 hover:text-green-700 flex items-center bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 hover:bg-green-100 transition-colors"
+                                     >
+                                         {isSaving ? <Loader2 className="w-3 h-3 mr-1 animate-spin"/> : <CheckCircle2 className="w-3 h-3 mr-1" />}
+                                         {isSaving ? 'Saving' : 'Save'}
+                                     </button>
                                 </div>
                              </div>
                            )}

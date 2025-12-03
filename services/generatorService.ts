@@ -1,5 +1,5 @@
 
-import { JEE_SYLLABUS } from '../constants';
+import { JEE_SYLLABUS, DEFAULT_QUOTES } from '../constants';
 
 export const generateSQLSchema = (): string => {
   let sql = `-- DATABASE SCHEMA FOR JEE TRACKER PRO
@@ -204,13 +204,20 @@ CREATE TABLE IF NOT EXISTS timetable_settings (
 );
 
 --
--- 8. NOTIFICATIONS
+-- 8. NOTIFICATIONS & QUOTES
 --
 CREATE TABLE IF NOT EXISTS notifications (
     id VARCHAR(50) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
     type ENUM('INFO', 'ALERT', 'SUCCESS') DEFAULT 'INFO',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS quotes (
+    id VARCHAR(50) PRIMARY KEY,
+    text TEXT NOT NULL,
+    author VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -244,6 +251,16 @@ CREATE TABLE IF NOT EXISTS notifications (
       }
     });
   });
+
+  // Seed Default Quotes
+  sql += `\n-- Seeding Default Quotes\n`;
+  sql += `INSERT IGNORE INTO quotes (id, text, author) VALUES \n`;
+  const quoteValues = DEFAULT_QUOTES.map(q => {
+      const safeText = q.text.replace(/'/g, "''");
+      const safeAuthor = q.author?.replace(/'/g, "''") || '';
+      return `('${q.id}', '${safeText}', '${safeAuthor}')`;
+  }).join(',\n');
+  sql += quoteValues + `;\n`;
 
   sql += `\n-- End of Schema\n`;
 

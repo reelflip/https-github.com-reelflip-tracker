@@ -1,7 +1,6 @@
 
 import React, { useEffect, useState } from 'react';
-import { User, TopicProgress, Notification, DailyGoal } from '../types';
-import { generateMotivation } from '../services/gemini';
+import { User, TopicProgress, Notification, DailyGoal, Quote } from '../types';
 import { Calendar, CheckCircle2, Trophy, ArrowRight, Bell, Flame, Plus, Square, CheckSquare, Target } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
@@ -10,30 +9,33 @@ interface DashboardProps {
   progress: Record<string, TopicProgress>;
   onChangeTab: (tab: string) => void;
   notifications?: Notification[];
-  adminQuote?: string | null;
+  quotes: Quote[];
   goals: DailyGoal[];
   onToggleGoal: (id: string) => void;
   onAddGoal: (text: string) => void;
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, progress, onChangeTab, notifications = [], adminQuote, goals, onToggleGoal, onAddGoal }) => {
-  const [motivation, setMotivation] = useState("Loading your daily dose of inspiration...");
+const Dashboard: React.FC<DashboardProps> = ({ user, progress, onChangeTab, notifications = [], quotes, goals, onToggleGoal, onAddGoal }) => {
+  const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [daysLeft, setDaysLeft] = useState(0);
   const [newGoalText, setNewGoalText] = useState('');
 
   useEffect(() => {
-    if (adminQuote) {
-        setMotivation(adminQuote);
-    } else {
-        generateMotivation().then(setMotivation);
-    }
+    // Cycle quotes every 10 seconds
+    const timer = setInterval(() => {
+        setCurrentQuoteIndex((prev) => (prev + 1) % (quotes.length || 1));
+    }, 10000);
     
     // Calculate days to exam (Mock date: June 15, 2025)
     const target = new Date('2025-06-15');
     const now = new Date();
     const diff = target.getTime() - now.getTime();
     setDaysLeft(Math.ceil(diff / (1000 * 3600 * 24)));
-  }, [adminQuote]);
+
+    return () => clearInterval(timer);
+  }, [quotes.length]);
+
+  const currentQuote = quotes.length > 0 ? quotes[currentQuoteIndex] : { text: "Loading motivation...", author: "" };
 
   const totalTopics = Object.keys(progress).length || 1; // Avoid divide by zero
   const completedTopics = Object.values(progress).filter((p: TopicProgress) => p.status === 'COMPLETED').length;
@@ -58,11 +60,28 @@ const Dashboard: React.FC<DashboardProps> = ({ user, progress, onChangeTab, noti
   return (
     <div className="space-y-6">
       {/* Welcome & Motivation */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden">
+      <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden transition-all duration-500">
         <div className="relative z-10">
             <h2 className="text-2xl font-bold mb-2">Hello, {user.name.split(' ')[0]}! 👋</h2>
-            <p className="text-blue-100 italic text-lg leading-relaxed opacity-90">"{motivation}"</p>
-            {adminQuote && <span className="text-xs text-blue-200 mt-2 block font-medium uppercase tracking-wide">- From Your Mentor</span>}
+            <div className="min-h-[80px] flex flex-col justify-center">
+                 <p className="text-blue-100 italic text-lg leading-relaxed opacity-90 animate-in fade-in slide-in-from-right-4 duration-700 key={currentQuoteIndex}">
+                    "{currentQuote.text}"
+                 </p>
+                 {currentQuote.author && (
+                    <span className="text-xs text-blue-200 mt-2 block font-medium uppercase tracking-wide animate-in fade-in delay-200">
+                        - {currentQuote.author}
+                    </span>
+                 )}
+            </div>
+            {/* Pagination Dots */}
+            <div className="flex space-x-1.5 mt-4">
+                {quotes.map((_, idx) => (
+                    <div 
+                        key={idx} 
+                        className={`h-1 rounded-full transition-all duration-300 ${idx === currentQuoteIndex ? 'w-6 bg-white' : 'w-1.5 bg-white/40'}`} 
+                    />
+                ))}
+            </div>
         </div>
         <div className="absolute top-4 right-4 bg-white/10 p-2 rounded-lg backdrop-blur-sm flex items-center space-x-1.5 border border-white/20">
              <Flame className="w-5 h-5 text-orange-400 fill-orange-400 animate-pulse" />
