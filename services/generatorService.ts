@@ -301,7 +301,6 @@ CREATE TABLE IF NOT EXISTS flashcards (
   }
 
   // 5. Seed Questions & Tests
-  // Extract unique questions from all tests to avoid duplication
   const allQuestions: Question[] = [];
   const questionIds = new Set();
   
@@ -438,45 +437,96 @@ if(isset($data->user_id) && isset($data->topic_id)) {
 <?php
 /**
  * api/get_dashboard.php
+ * Fetches Progress, Goals, Backlogs, Mistakes, and Timetable
  */
 include_once 'config.php';
 $user_id = $_GET['user_id'];
 if(!$user_id) exit();
 
+// 1. Progress
 $progress = [];
 $stmt = $conn->prepare("SELECT topic_id, status, ex1_solved, ex1_total, ex2_solved, ex2_total, ex3_solved, ex3_total, ex4_solved, ex4_total FROM topic_progress WHERE user_id = ?");
 $stmt->execute([$user_id]);
 while($row = $stmt->fetch(PDO::FETCH_ASSOC)) $progress[$row['topic_id']] = $row;
 
+// 2. Goals
 $goals = [];
 $stmt = $conn->prepare("SELECT id, goal_text as text, is_completed as completed FROM daily_goals WHERE user_id = ? AND created_at = CURRENT_DATE");
 $stmt->execute([$user_id]);
 while($row = $stmt->fetch(PDO::FETCH_ASSOC)) $goals[] = $row;
 
+// 3. Backlogs
 $backlogs = [];
 $stmt = $conn->prepare("SELECT id, title, subject_id, priority, deadline, status FROM backlogs WHERE user_id = ?");
 $stmt->execute([$user_id]);
 while($row = $stmt->fetch(PDO::FETCH_ASSOC)) $backlogs[] = $row;
 
-echo json_encode(["progress" => $progress, "goals" => $goals, "backlogs" => $backlogs]);
+// 4. Mistakes
+$mistakes = [];
+$stmt = $conn->prepare("SELECT id, question_text, subject_id, topic_id, test_name, user_notes, tags_json, created_at as date FROM mistake_notebook WHERE user_id = ? ORDER BY created_at DESC");
+$stmt->execute([$user_id]);
+while($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $row['tags'] = json_decode($row['tags_json']);
+    unset($row['tags_json']);
+    $mistakes[] = $row;
+}
+
+// 5. Timetable
+$timetable = null;
+$stmt = $conn->prepare("SELECT generated_slots_json FROM timetable_settings WHERE user_id = ?");
+$stmt->execute([$user_id]);
+if($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+    $timetable = json_decode($row['generated_slots_json']);
+}
+
+echo json_encode([
+    "progress" => $progress, 
+    "goals" => $goals, 
+    "backlogs" => $backlogs,
+    "mistakes" => $mistakes,
+    "timetable" => $timetable
+]);
+?>
+
+<?php
+/**
+ * api/get_common.php
+ * Fetches Global Data (Flashcards, Quotes, Tests, Notifications)
+ */
+include_once 'config.php';
+
+$flashcards = [];
+$stmt = $conn->query("SELECT id, subject_id as subjectId, front, back, difficulty FROM flashcards");
+while($row = $stmt->fetch(PDO::FETCH_ASSOC)) $flashcards[] = $row;
+
+$quotes = [];
+$stmt = $conn->query("SELECT id, text, author FROM quotes ORDER BY created_at DESC");
+while($row = $stmt->fetch(PDO::FETCH_ASSOC)) $quotes[] = $row;
+
+$notifications = [];
+$stmt = $conn->query("SELECT id, title, message, type, created_at as date FROM notifications ORDER BY created_at DESC LIMIT 10");
+while($row = $stmt->fetch(PDO::FETCH_ASSOC)) $notifications[] = $row;
+
+echo json_encode([
+    "flashcards" => $flashcards,
+    "quotes" => $quotes,
+    "notifications" => $notifications
+]);
 ?>
 
 <?php
 /**
  * api/manage_backlogs.php
- * Handle Add/Delete/Update for Backlogs
  */
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Add New
     if(isset($data->action) && $data->action === 'ADD') {
         $stmt = $conn->prepare("INSERT INTO backlogs (id, user_id, title, subject_id, priority, deadline, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$data->id, $data->user_id, $data->title, $data->subject_id, $data->priority, $data->deadline, 'PENDING']);
         echo json_encode(["message" => "Backlog Added"]);
     } 
-    // Toggle Status
     else if (isset($data->action) && $data->action === 'TOGGLE') {
         $stmt = $conn->prepare("UPDATE backlogs SET status = IF(status='PENDING', 'CLEARED', 'PENDING') WHERE id = ? AND user_id = ?");
         $stmt->execute([$data->id, $data->user_id]);
@@ -495,7 +545,6 @@ else if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
 <?php
 /**
  * api/manage_goals.php
- * Handle Add/Toggle for Daily Goals
  */
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
@@ -516,23 +565,40 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <?php
 /**
  * api/manage_mistakes.php
- * Handle Mistake Notebook
  */
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Add from Test
     if (isset($data->action) && $data->action === 'ADD') {
         $stmt = $conn->prepare("INSERT INTO mistake_notebook (id, user_id, question_text, subject_id, topic_id, test_name, user_notes, tags_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$data->id, $data->user_id, $data->question_text, $data->subject_id, $data->topic_id, $data->test_name, '', '[]']);
     }
-    // Update Note/Tags
     else if (isset($data->action) && $data->action === 'UPDATE') {
         $tags = json_encode($data->tags);
         $stmt = $conn->prepare("UPDATE mistake_notebook SET user_notes = ?, tags_json = ? WHERE id = ? AND user_id = ?");
         $stmt->execute([$data->user_notes, $tags, $data->id, $data->user_id]);
     }
+}
+?>
+
+<?php
+/**
+ * api/save_timetable.php
+ */
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+
+if(isset($data->user_id) && isset($data->slots)) {
+    $json = json_encode($data->slots);
+    $query = "INSERT INTO timetable_settings (user_id, config_json, generated_slots_json) 
+              VALUES (:uid, '{}', :slots) 
+              ON DUPLICATE KEY UPDATE generated_slots_json=:slots";
+    $stmt = $conn->prepare($query);
+    $stmt->bindParam(":uid", $data->user_id);
+    $stmt->bindParam(":slots", $json);
+    $stmt->execute();
+    echo json_encode(["message" => "Timetable Saved"]);
 }
 ?>`;
 };
@@ -590,14 +656,27 @@ const handleAuth = async (e) => {
 
 Step 3: App.tsx (Initial Load)
 ------------------------------
+// Fetch User Data & Global Data
 useEffect(() => {
   if (currentUser) {
+    // 1. User Specific Data
     fetch(\`\${API_BASE_URL}/get_dashboard.php?user_id=\${currentUser.id}\`)
       .then(res => res.json())
       .then(data => {
          setProgress(data.progress || {});
          setGoals(data.goals || []);
          setBacklogs(data.backlogs || []);
+         setMistakes(data.mistakes || []);
+         if(data.timetable) setTimetable(data.timetable);
+      });
+
+    // 2. Global Data (Flashcards, Quotes, etc)
+    fetch(\`\${API_BASE_URL}/get_common.php\`)
+      .then(res => res.json())
+      .then(data => {
+         setFlashcards(data.flashcards || []);
+         setQuotes(data.quotes || []);
+         setNotifications(data.notifications || []);
       });
   }
 }, [currentUser]);
@@ -606,7 +685,6 @@ useEffect(() => {
 Step 4: SyllabusTracker.tsx (Save Progress)
 -------------------------------------------
 const handleUpdateProgress = (topicId, updates) => {
-  // Optimistic update first...
   fetch(\`\${API_BASE_URL}/sync_progress.php\`, {
       method: 'POST',
       body: JSON.stringify({ user_id: currentUser.id, topic_id: topicId, ...updates })
@@ -616,7 +694,6 @@ const handleUpdateProgress = (topicId, updates) => {
 
 Step 5: BacklogManager.tsx (Sync Backlogs)
 ------------------------------------------
-// Add Backlog
 const handleAddBacklog = (item) => {
     fetch(\`\${API_BASE_URL}/manage_backlogs.php\`, {
         method: 'POST',
@@ -624,19 +701,30 @@ const handleAddBacklog = (item) => {
     });
 };
 
-// Delete Backlog
-const handleDelete = (id) => {
-    fetch(\`\${API_BASE_URL}/manage_backlogs.php?id=\${id}&user_id=\${currentUser.id}\`, { method: 'DELETE' });
-};
-
 
 Step 6: Dashboard.tsx (Sync Goals)
 ----------------------------------
-// Toggle Goal
 const toggleGoal = (id) => {
     fetch(\`\${API_BASE_URL}/manage_goals.php\`, {
         method: 'POST',
         body: JSON.stringify({ action: 'TOGGLE', id, user_id: currentUser.id })
+    });
+};
+
+Step 7: TimetableGenerator.tsx (Save Schedule)
+----------------------------------------------
+// Inside handleGenerate
+fetch(\`\${API_BASE_URL}/save_timetable.php\`, {
+    method: 'POST',
+    body: JSON.stringify({ user_id: currentUser.id, slots: generatedSlots })
+});
+
+Step 8: MistakeNotebook.tsx (Update Notes)
+------------------------------------------
+const saveEdit = (id, note) => {
+    fetch(\`\${API_BASE_URL}/manage_mistakes.php\`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'UPDATE', id, user_id: currentUser.id, user_notes: note, tags: [...] })
     });
 };
 `;
