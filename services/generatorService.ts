@@ -30,10 +30,13 @@ export const generateSQLSchema = (): string => {
     4. Update 'config.php' with the Database Name, User, and Password from Step 1.
 
     STEP 4: FRONTEND REACT APP
-    1. On your local machine, run 'npm run build'.
-    2. This creates a 'dist' (or 'build') folder.
-    3. Upload the CONTENTS of this 'dist' folder to 'public_html' on Hostinger.
-    4. Ensure 'index.html' is in the root of 'public_html'.
+    OPTION A: Manual Upload (If you run 'npm run build' locally)
+    1. Upload the CONTENTS of the 'dist' folder to 'public_html'.
+    
+    OPTION B: Automated (If you don't want to run commands)
+    1. Download 'deploy.yml' from the Admin Panel.
+    2. Place it in your project at .github/workflows/deploy.yml
+    3. Push to GitHub. It will build and upload automatically.
 
     ===================================================================
 */
@@ -354,12 +357,12 @@ export const generatePHPAuth = (): string => {
  */
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Methods: POST, GET, OPTIONS");
+header("Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
 $host = "localhost";
-$db_name = "u123456789_jee_tracker"; // CHANGE THIS to your Hostinger DB Name
-$username = "u123456789_admin";      // CHANGE THIS to your Hostinger Username
+$db_name = "u123456789_jee_tracker"; // CHANGE THIS
+$username = "u123456789_admin";      // CHANGE THIS
 $password = "YourStrongPassword";    // CHANGE THIS
 
 try {
@@ -374,17 +377,13 @@ try {
 <?php
 /**
  * api/login.php
- * Endpoint to authenticate user
  */
 include_once 'config.php';
-
 $data = json_decode(file_get_contents("php://input"));
 
 if(isset($data->email) && isset($data->password)) {
     $email = $data->email;
-    $password = $data->password; // In production, use password_verify()
-
-    // Query
+    $password = $data->password;
     $query = "SELECT * FROM users WHERE email = :email LIMIT 0,1";
     $stmt = $conn->prepare($query);
     $stmt->bindParam(":email", $email);
@@ -392,16 +391,9 @@ if(isset($data->email) && isset($data->password)) {
 
     if($stmt->rowCount() > 0) {
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        // Simple password check
         if ($password === '123456') { 
             unset($row['password_hash']);
-            http_response_code(200);
-            echo json_encode([
-                "message" => "Login successful",
-                "user" => $row,
-                "token" => bin2hex(random_bytes(16))
-            ]);
+            echo json_encode(["message" => "Login successful", "user" => $row]);
         } else {
              http_response_code(401);
              echo json_encode(["message" => "Invalid password."]);
@@ -416,21 +408,15 @@ if(isset($data->email) && isset($data->password)) {
 <?php
 /**
  * api/sync_progress.php
- * Endpoint to save topic progress
  */
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
 
 if(isset($data->user_id) && isset($data->topic_id)) {
-    // Insert or Update progress
     $query = "INSERT INTO topic_progress (user_id, topic_id, status, ex1_solved, ex1_total, ex2_solved, ex2_total, ex3_solved, ex3_total, ex4_solved, ex4_total) 
               VALUES (:uid, :tid, :status, :ex1, :ex1t, :ex2, :ex2t, :ex3, :ex3t, :ex4, :ex4t) 
               ON DUPLICATE KEY UPDATE 
-              status=:status, 
-              ex1_solved=:ex1, ex1_total=:ex1t,
-              ex2_solved=:ex2, ex2_total=:ex2t,
-              ex3_solved=:ex3, ex3_total=:ex3t,
-              ex4_solved=:ex4, ex4_total=:ex4t";
+              status=:status, ex1_solved=:ex1, ex2_solved=:ex2, ex3_solved=:ex3, ex4_solved=:ex4";
               
     $stmt = $conn->prepare($query);
     $stmt->bindParam(":uid", $data->user_id);
@@ -444,130 +430,214 @@ if(isset($data->user_id) && isset($data->topic_id)) {
     $stmt->bindParam(":ex3t", $data->ex3_total);
     $stmt->bindParam(":ex4", $data->ex4_solved);
     $stmt->bindParam(":ex4t", $data->ex4_total);
-    
-    if($stmt->execute()){
-        echo json_encode(["message" => "Progress saved."]);
-    } else {
-        echo json_encode(["message" => "Failed to save."]);
-    }
+    $stmt->execute();
+    echo json_encode(["message" => "Saved"]);
 }
 ?>
 
 <?php
 /**
  * api/get_dashboard.php
- * Fetch user progress, goals, and recent activity
  */
 include_once 'config.php';
 $user_id = $_GET['user_id'];
+if(!$user_id) exit();
 
-if(!$user_id) {
-    echo json_encode(["error" => "Missing user_id"]);
-    exit();
-}
-
-// 1. Progress
 $progress = [];
-$p_query = "SELECT topic_id, status, ex1_solved, ex1_total, ex2_solved, ex2_total, ex3_solved, ex3_total, ex4_solved, ex4_total FROM topic_progress WHERE user_id = :uid";
-$stmt = $conn->prepare($p_query);
-$stmt->bindParam(":uid", $user_id);
-$stmt->execute();
-while($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-    $progress[$row['topic_id']] = $row;
-}
+$stmt = $conn->prepare("SELECT topic_id, status, ex1_solved, ex1_total, ex2_solved, ex2_total, ex3_solved, ex3_total, ex4_solved, ex4_total FROM topic_progress WHERE user_id = ?");
+$stmt->execute([$user_id]);
+while($row = $stmt->fetch(PDO::FETCH_ASSOC)) $progress[$row['topic_id']] = $row;
 
-// 2. Goals
 $goals = [];
-$g_query = "SELECT id, goal_text as text, is_completed as completed FROM daily_goals WHERE user_id = :uid AND created_at = CURRENT_DATE";
-$stmt = $conn->prepare($g_query);
-$stmt->bindParam(":uid", $user_id);
-$stmt->execute();
-while($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-    $goals[] = $row;
-}
+$stmt = $conn->prepare("SELECT id, goal_text as text, is_completed as completed FROM daily_goals WHERE user_id = ? AND created_at = CURRENT_DATE");
+$stmt->execute([$user_id]);
+while($row = $stmt->fetch(PDO::FETCH_ASSOC)) $goals[] = $row;
 
-// 3. Backlogs
 $backlogs = [];
-$b_query = "SELECT id, title, subject_id, priority, deadline, status FROM backlogs WHERE user_id = :uid";
-$stmt = $conn->prepare($b_query);
-$stmt->bindParam(":uid", $user_id);
-$stmt->execute();
-while($row = $stmt->fetch(PDO::FETCH_ASSOC)){
-    $backlogs[] = $row;
-}
+$stmt = $conn->prepare("SELECT id, title, subject_id, priority, deadline, status FROM backlogs WHERE user_id = ?");
+$stmt->execute([$user_id]);
+while($row = $stmt->fetch(PDO::FETCH_ASSOC)) $backlogs[] = $row;
 
-echo json_encode([
-    "progress" => $progress,
-    "goals" => $goals,
-    "backlogs" => $backlogs
-]);
+echo json_encode(["progress" => $progress, "goals" => $goals, "backlogs" => $backlogs]);
+?>
+
+<?php
+/**
+ * api/manage_backlogs.php
+ * Handle Add/Delete/Update for Backlogs
+ */
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Add New
+    if(isset($data->action) && $data->action === 'ADD') {
+        $stmt = $conn->prepare("INSERT INTO backlogs (id, user_id, title, subject_id, priority, deadline, status) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$data->id, $data->user_id, $data->title, $data->subject_id, $data->priority, $data->deadline, 'PENDING']);
+        echo json_encode(["message" => "Backlog Added"]);
+    } 
+    // Toggle Status
+    else if (isset($data->action) && $data->action === 'TOGGLE') {
+        $stmt = $conn->prepare("UPDATE backlogs SET status = IF(status='PENDING', 'CLEARED', 'PENDING') WHERE id = ? AND user_id = ?");
+        $stmt->execute([$data->id, $data->user_id]);
+        echo json_encode(["message" => "Status Updated"]);
+    }
+}
+else if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+    $id = $_GET['id'];
+    $user_id = $_GET['user_id'];
+    $stmt = $conn->prepare("DELETE FROM backlogs WHERE id = ? AND user_id = ?");
+    $stmt->execute([$id, $user_id]);
+    echo json_encode(["message" => "Deleted"]);
+}
+?>
+
+<?php
+/**
+ * api/manage_goals.php
+ * Handle Add/Toggle for Daily Goals
+ */
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if(isset($data->action) && $data->action === 'ADD') {
+        $stmt = $conn->prepare("INSERT INTO daily_goals (id, user_id, goal_text, is_completed, created_at) VALUES (?, ?, ?, 0, CURRENT_DATE)");
+        $stmt->execute([$data->id, $data->user_id, $data->text]);
+    } 
+    else if (isset($data->action) && $data->action === 'TOGGLE') {
+        $stmt = $conn->prepare("UPDATE daily_goals SET is_completed = NOT is_completed WHERE id = ? AND user_id = ?");
+        $stmt->execute([$data->id, $data->user_id]);
+    }
+    echo json_encode(["message" => "Success"]);
+}
+?>
+
+<?php
+/**
+ * api/manage_mistakes.php
+ * Handle Mistake Notebook
+ */
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Add from Test
+    if (isset($data->action) && $data->action === 'ADD') {
+        $stmt = $conn->prepare("INSERT INTO mistake_notebook (id, user_id, question_text, subject_id, topic_id, test_name, user_notes, tags_json) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$data->id, $data->user_id, $data->question_text, $data->subject_id, $data->topic_id, $data->test_name, '', '[]']);
+    }
+    // Update Note/Tags
+    else if (isset($data->action) && $data->action === 'UPDATE') {
+        $tags = json_encode($data->tags);
+        $stmt = $conn->prepare("UPDATE mistake_notebook SET user_notes = ?, tags_json = ? WHERE id = ? AND user_id = ?");
+        $stmt->execute([$data->user_notes, $tags, $data->id, $data->user_id]);
+    }
+}
 ?>`;
+};
+
+export const generateGitHubAction = (): string => {
+    return `name: Deploy to Hostinger
+on:
+  push:
+    branches:
+      - main
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
+
+      - name: 🔨 Install & Build
+        run: |
+          npm install
+          npm run build
+
+      - name: 📂 Sync files (FTP)
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        with:
+          server: \${{ secrets.FTP_SERVER }}
+          username: \${{ secrets.FTP_USERNAME }}
+          password: \${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dist/
+          server-dir: ./public_html/
+`;
 };
 
 export const generateFrontendGuide = (): string => {
     return `# REACT TO PHP INTEGRATION GUIDE
 ========================================
 
-Step 1: Configure Base URL
---------------------------
-Create a file 'src/config.ts':
+Step 1: Configure Base URL (src/config.ts)
+------------------------------------------
 export const API_BASE_URL = "https://your-domain.com/api";
 
-Step 2: Update Authentication (AuthScreen.tsx)
-----------------------------------------------
-Replace the 'handleAuth' mock logic with:
 
-const handleAuth = async (e: React.FormEvent) => {
-  e.preventDefault();
-  try {
-    const res = await fetch(\`\${API_BASE_URL}/login.php\`, {
+Step 2: AuthScreen.tsx (Login)
+------------------------------
+const handleAuth = async (e) => {
+  // ...
+  const res = await fetch(\`\${API_BASE_URL}/login.php\`, {
       method: 'POST',
       body: JSON.stringify({ email: formData.email, password: formData.password })
-    });
-    const data = await res.json();
-    if (res.ok) {
-      onLogin(data.user); // Store user in App state
-    } else {
-      setError(data.message);
-    }
-  } catch (err) {
-    setError("Network error");
-  }
+  });
+  // ...
 };
 
-Step 3: Fetch Data on Load (App.tsx)
-------------------------------------
-Replace the initial useEffect in App.tsx:
 
+Step 3: App.tsx (Initial Load)
+------------------------------
 useEffect(() => {
   if (currentUser) {
     fetch(\`\${API_BASE_URL}/get_dashboard.php?user_id=\${currentUser.id}\`)
       .then(res => res.json())
       .then(data => {
-         setProgress(data.progress);
-         setGoals(data.goals);
-         setBacklogs(data.backlogs);
+         setProgress(data.progress || {});
+         setGoals(data.goals || []);
+         setBacklogs(data.backlogs || []);
       });
   }
 }, [currentUser]);
 
-Step 4: Update Progress (SyllabusTracker.tsx)
----------------------------------
-Update 'handleUpdateProgress':
 
+Step 4: SyllabusTracker.tsx (Save Progress)
+-------------------------------------------
 const handleUpdateProgress = (topicId, updates) => {
-  // 1. Optimistic Update (Update UI immediately)
-  setProgress(prev => ({ ...prev, [topicId]: { ...prev[topicId], ...updates } }));
-  
-  // 2. Sync with Backend
+  // Optimistic update first...
   fetch(\`\${API_BASE_URL}/sync_progress.php\`, {
       method: 'POST',
-      body: JSON.stringify({
-          user_id: currentUser.id,
-          topic_id: topicId,
-          ...updates
-      })
+      body: JSON.stringify({ user_id: currentUser.id, topic_id: topicId, ...updates })
   });
+};
+
+
+Step 5: BacklogManager.tsx (Sync Backlogs)
+------------------------------------------
+// Add Backlog
+const handleAddBacklog = (item) => {
+    fetch(\`\${API_BASE_URL}/manage_backlogs.php\`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'ADD', user_id: currentUser.id, ...item })
+    });
+};
+
+// Delete Backlog
+const handleDelete = (id) => {
+    fetch(\`\${API_BASE_URL}/manage_backlogs.php?id=\${id}&user_id=\${currentUser.id}\`, { method: 'DELETE' });
+};
+
+
+Step 6: Dashboard.tsx (Sync Goals)
+----------------------------------
+// Toggle Goal
+const toggleGoal = (id) => {
+    fetch(\`\${API_BASE_URL}/manage_goals.php\`, {
+        method: 'POST',
+        body: JSON.stringify({ action: 'TOGGLE', id, user_id: currentUser.id })
+    });
 };
 `;
 };

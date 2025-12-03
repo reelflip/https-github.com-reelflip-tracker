@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { generateSQLSchema, generatePHPAuth, generateFrontendGuide } from '../services/generatorService';
-import { Download, Database, Code, Users, Radio, MessageSquare, FileText, Plus, Check, Terminal, Shield, Lock, Activity, Trash2 } from 'lucide-react';
+import { generateSQLSchema, generatePHPAuth, generateFrontendGuide, generateGitHubAction } from '../services/generatorService';
+import { Download, Database, Code, Users, Radio, MessageSquare, FileText, Plus, Check, Terminal, Shield, Lock, Activity, Trash2, Rocket } from 'lucide-react';
 import { User, Question, Test, Notification, Quote } from '../types';
 import { JEE_SYLLABUS } from '../constants';
 
@@ -489,6 +489,27 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                             </div>
                             <pre className="overflow-x-auto h-48 text-purple-400 no-scrollbar p-2 bg-black/20 rounded-lg">
                                 {generatePHPAuth()}
+                            </pre>
+                        </div>
+
+                        {/* Automated Deploy (GitHub Action) */}
+                        <div className="bg-slate-800 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-xl font-mono text-xs border border-slate-700">
+                            <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
+                                <h3 className="text-white font-bold flex items-center"><Rocket className="mr-2 w-4 h-4 text-orange-400"/> Automated Deployment</h3>
+                                <button 
+                                    onClick={() => downloadFile('deploy.yml', generateGitHubAction())}
+                                    className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-1.5 rounded flex items-center shadow-lg transition-colors"
+                                >
+                                    <Download className="w-3 h-3 mr-1" /> Download .yml
+                                </button>
+                            </div>
+                             <div className="p-3 bg-orange-900/20 rounded border border-orange-500/30 mb-4">
+                                <p className="text-orange-300 font-sans text-sm">
+                                    Use this if you cannot run 'npm build' locally. GitHub will build and upload your site for you.
+                                </p>
+                            </div>
+                            <pre className="overflow-x-auto h-24 text-slate-300 whitespace-pre-wrap no-scrollbar p-2 bg-black/40 rounded-lg border border-slate-700/50">
+                                {generateGitHubAction()}
                             </pre>
                         </div>
                         
