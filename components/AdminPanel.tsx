@@ -1,7 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { generateSQLSchema, generatePHPAuth, generateFrontendGuide, generateGitHubAction } from '../services/generatorService';
-import { Download, Database, Code, Users, Radio, MessageSquare, FileText, Plus, Check, Terminal, Shield, Lock, Activity, Trash2, Rocket } from 'lucide-react';
+import { Database, Users, Radio, FileText, Plus, Check, Shield, Trash2 } from 'lucide-react';
 import { User, Question, Test, Notification, Quote } from '../types';
 import { JEE_SYLLABUS } from '../constants';
 
@@ -18,7 +17,7 @@ interface AdminPanelProps {
     onDeleteQuote: (id: string) => void;
 }
 
-type TabView = 'BROADCAST' | 'QUESTION_BANK' | 'TEST_BUILDER' | 'SYSTEM' | 'USERS';
+type TabView = 'BROADCAST' | 'QUESTION_BANK' | 'TEST_BUILDER' | 'USERS';
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ 
     users, 
@@ -38,11 +37,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     useEffect(() => {
         if (activeTab === 'users') {
             setView('USERS');
-        } else if (activeTab === 'system') {
-            setView('SYSTEM');
         } else if (activeTab === 'dashboard') {
             // Only reset to broadcast if we are currently on a tab that implies a sidebar change
-            if (view === 'USERS' || view === 'SYSTEM') {
+            if (view === 'USERS') {
                 setView('BROADCAST');
             }
         }
@@ -74,8 +71,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         // Sync back to parent sidebar
         if (tabId === 'USERS') {
             onTabChange('users');
-        } else if (tabId === 'SYSTEM') {
-            onTabChange('system');
         } else {
             onTabChange('dashboard');
         }
@@ -152,30 +147,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         }
     };
 
-    const downloadFile = (filename: string, content: string) => {
-        const element = document.createElement('a');
-        const file = new Blob([content], { type: 'text/plain' });
-        element.href = URL.createObjectURL(file);
-        element.download = filename;
-        document.body.appendChild(element);
-        element.click();
-        document.body.removeChild(element);
-    };
-
     // Helper to get topics for dropdown
     const availableTopics = JEE_SYLLABUS.find(s => s.id === qSubject)?.chapters.flatMap(c => c.topics) || [];
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
             {/* Header Banner */}
-            <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
                 <div className="relative z-10 flex items-center justify-between">
                     <div>
                         <h2 className="text-3xl font-bold mb-2">Admin Command Center</h2>
-                        <p className="text-slate-400 text-lg max-w-xl">Manage content, users, and system configurations from a single control panel.</p>
+                        <p className="text-blue-100 text-lg max-w-xl">Manage content, users, and announcements.</p>
                     </div>
                     <div className="hidden md:block bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
-                        <Shield className="w-10 h-10 text-blue-400" />
+                        <Shield className="w-10 h-10 text-white" />
                     </div>
                 </div>
                 {/* Decor */}
@@ -189,7 +174,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     { id: 'BROADCAST', label: 'Broadcasts', icon: Radio },
                     { id: 'QUESTION_BANK', label: 'Question Bank', icon: Database },
                     { id: 'TEST_BUILDER', label: 'Test Builder', icon: FileText },
-                    { id: 'SYSTEM', label: 'System Docs', icon: Code },
                     { id: 'USERS', label: 'Users', icon: Users },
                 ].map(tab => (
                     <button 
@@ -239,7 +223,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         {/* Motivation Quotes Manager */}
                         <div className="space-y-4">
                             <div className="flex items-center space-x-2 mb-2">
-                                <span className="bg-purple-100 p-2 rounded-lg text-purple-600"><Activity className="w-5 h-5"/></span>
+                                <span className="bg-purple-100 p-2 rounded-lg text-purple-600"><Shield className="w-5 h-5"/></span>
                                 <h3 className="font-bold text-slate-800 text-lg">Manage Quotes</h3>
                             </div>
                             <div className="bg-slate-50 p-5 rounded-xl border border-slate-100 h-full flex flex-col">
@@ -454,83 +438,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         <button onClick={submitTest} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-transform active:scale-[0.99] flex items-center justify-center">
                             <Shield className="w-5 h-5 mr-2" /> Publish Test to Students
                         </button>
-                    </div>
-                )}
-
-                {/* 4. SYSTEM DOCS */}
-                {view === 'SYSTEM' && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
-                        {/* SQL Schema */}
-                        <div className="bg-slate-900 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-lg font-mono text-xs border border-slate-800">
-                            <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-                                <h3 className="text-white font-bold flex items-center"><Database className="mr-2 w-4 h-4 text-green-400"/> MySQL Schema</h3>
-                                <button 
-                                    onClick={() => downloadFile('database.sql', generateSQLSchema())}
-                                    className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded flex items-center transition-colors border border-slate-600"
-                                >
-                                    <Download className="w-3 h-3 mr-1" /> Download
-                                </button>
-                            </div>
-                            <pre className="overflow-x-auto h-48 text-green-400 no-scrollbar p-2 bg-black/20 rounded-lg">
-                                {generateSQLSchema()}
-                            </pre>
-                        </div>
-
-                        {/* PHP Backend */}
-                        <div className="bg-slate-900 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-lg font-mono text-xs border border-slate-800">
-                            <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-                                <h3 className="text-white font-bold flex items-center"><Code className="mr-2 w-4 h-4 text-purple-400"/> PHP Backend API</h3>
-                                <button 
-                                    onClick={() => downloadFile('api_scripts.php', generatePHPAuth())}
-                                    className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded flex items-center transition-colors border border-slate-600"
-                                >
-                                    <Download className="w-3 h-3 mr-1" /> Download
-                                </button>
-                            </div>
-                            <pre className="overflow-x-auto h-48 text-purple-400 no-scrollbar p-2 bg-black/20 rounded-lg">
-                                {generatePHPAuth()}
-                            </pre>
-                        </div>
-
-                        {/* Automated Deploy (GitHub Action) */}
-                        <div className="bg-slate-800 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-xl font-mono text-xs border border-slate-700">
-                            <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-                                <h3 className="text-white font-bold flex items-center"><Rocket className="mr-2 w-4 h-4 text-orange-400"/> Automated Deployment</h3>
-                                <button 
-                                    onClick={() => downloadFile('deploy.yml', generateGitHubAction())}
-                                    className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-1.5 rounded flex items-center shadow-lg transition-colors"
-                                >
-                                    <Download className="w-3 h-3 mr-1" /> Download .yml
-                                </button>
-                            </div>
-                             <div className="p-3 bg-orange-900/20 rounded border border-orange-500/30 mb-4">
-                                <p className="text-orange-300 font-sans text-sm">
-                                    Use this if you cannot run 'npm build' locally. GitHub will build and upload your site for you.
-                                </p>
-                            </div>
-                            <pre className="overflow-x-auto h-24 text-slate-300 whitespace-pre-wrap no-scrollbar p-2 bg-black/40 rounded-lg border border-slate-700/50">
-                                {generateGitHubAction()}
-                            </pre>
-                        </div>
-                        
-                        {/* Integration Guide */}
-                        <div className="md:col-span-2 bg-slate-800 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-xl font-mono text-xs border border-slate-700">
-                            <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-                                <h3 className="text-white font-bold flex items-center"><Terminal className="mr-2 w-4 h-4 text-blue-400"/> Developer Integration Guide</h3>
-                                <button 
-                                    onClick={() => downloadFile('INTEGRATION_GUIDE.md', generateFrontendGuide())}
-                                    className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-1.5 rounded flex items-center shadow-lg transition-colors"
-                                >
-                                    <Download className="w-3 h-3 mr-1" /> Download Guide
-                                </button>
-                            </div>
-                            <div className="p-3 bg-blue-900/20 rounded border border-blue-500/30 mb-4">
-                                <p className="text-blue-300 font-sans text-sm">Follow these steps to connect this React App to the PHP/MySQL backend after deployment.</p>
-                            </div>
-                            <pre className="overflow-x-auto h-80 text-slate-300 whitespace-pre-wrap no-scrollbar p-4 bg-black/40 rounded-xl border border-slate-700/50">
-                                {generateFrontendGuide()}
-                            </pre>
-                        </div>
                     </div>
                 )}
 

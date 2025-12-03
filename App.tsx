@@ -8,6 +8,7 @@ import SyllabusTracker from './components/SyllabusTracker';
 import TestCenter from './components/TestCenter';
 import FocusZone from './components/FocusZone';
 import AdminPanel from './components/AdminPanel';
+import SystemDocs from './components/SystemDocs';
 import AuthScreen from './components/AuthScreen';
 import TimetableGenerator from './components/TimetableGenerator';
 import Analytics from './components/Analytics';
@@ -259,6 +260,9 @@ function App() {
     }
 
     if (currentUser.role === 'ADMIN') {
+        if (activeTab === 'system') {
+            return <SystemDocs />;
+        }
         return <AdminPanel 
           users={allUsers} 
           questionBank={questionBank}
