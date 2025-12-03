@@ -1,0 +1,26 @@
+name: Deploy to Hostinger
+on:
+  push:
+    branches:
+      - main
+jobs:
+  web-deploy:
+    name: 🎉 Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: 🚚 Get latest code
+        uses: actions/checkout@v3
+
+      - name: 🔨 Install & Build
+        run: |
+          npm install
+          npm run build
+
+      - name: 📂 Sync files (FTP)
+        uses: SamKirkland/FTP-Deploy-Action@4.3.0
+        with:
+          server: 145.79.212.113
+          username: "u131922718"
+          password: "9sHZ>k[mOpsNFsU^"
+          local-dir: ./dist/
+          server-dir: ./public_html/
