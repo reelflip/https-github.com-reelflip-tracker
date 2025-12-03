@@ -13,7 +13,8 @@ import {
   Lock,
   AlertCircle,
   HelpCircle,
-  ChevronDown
+  ChevronDown,
+  Loader2
 } from 'lucide-react';
 
 interface AuthScreenProps {
@@ -24,6 +25,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false); // Default to login
   const [role, setRole] = useState<Role>('STUDENT');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   
   // Form State
   const [formData, setFormData] = useState({
@@ -36,60 +38,69 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     securityAnswer: ''
   });
 
-  const handleAuth = (e: React.FormEvent) => {
+  const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setIsLoading(true);
 
-    // --- ADMIN LOGIN SHORTCUT ---
-    if (!isRegistering) {
-        if (formData.email === 'admin' && formData.password === 'Ishika@123') {
-             onLogin({
-                 id: 'admin_001',
-                 name: 'System Administrator',
-                 email: 'admin',
-                 role: 'ADMIN',
-                 isVerified: true,
-                 avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
-             });
-             return;
-        }
+    // --- ADMIN FAILSAFE SHORTCUT (Optional, for recovery) ---
+    if (!isRegistering && formData.email === 'admin' && formData.password === 'Ishika@123') {
+         onLogin({
+             id: 'admin_001',
+             name: 'System Administrator',
+             email: 'admin',
+             role: 'ADMIN',
+             isVerified: true,
+             avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
+         });
+         setIsLoading(false);
+         return;
     }
     
-    // --- STANDARD VALIDATION ---
-    if (isRegistering) {
-        if (formData.password.length < 6) {
-            setError('Password must be at least 6 characters long.');
-            return;
-        }
-
-        // Direct Registration (No Email Verification)
-        const newUser: User = {
-            id: `new_${Date.now()}`,
+    try {
+        const endpoint = isRegistering ? '/api/register.php' : '/api/login.php';
+        
+        // Prepare payload
+        const payload = isRegistering ? {
             name: formData.name,
             email: formData.email,
+            password: formData.password,
             role: role,
-            targetYear: role === 'STUDENT' ? parseInt(formData.targetYear) : undefined,
             institute: formData.institute,
-            avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.email}`,
-            studentId: role === 'PARENT' ? 'u1' : undefined,
-            isVerified: true // Auto-verify
-        };
-        
-        onLogin(newUser);
-        return;
-    } 
-    else {
-        // --- LOGIN LOGIC (Simulated) ---
-        // In a real app, this would hit the PHP API. 
-        
-        const mockUser: User = {
-            id: `u_${formData.email}`,
-            name: 'Student User', // App.tsx will replace this with existing name if found
+            targetYear: parseInt(formData.targetYear) || 2025
+        } : {
             email: formData.email,
-            role: 'STUDENT', // Default to student for login attempt, App.tsx resolves actual role
-            isVerified: true
+            password: formData.password
         };
-        onLogin(mockUser);
+
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        const text = await response.text();
+        let data;
+        try {
+            data = JSON.parse(text);
+        } catch (err) {
+            console.error("Non-JSON response:", text);
+            throw new Error("Server error. Please check your connection or database.");
+        }
+
+        if (!response.ok || !data.user) {
+            throw new Error(data.message || 'Authentication failed');
+        }
+
+        // Success!
+        onLogin(data.user);
+
+    } catch (err: any) {
+        setError(err.message || "An unexpected error occurred.");
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -310,10 +321,15 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 {/* Submit Button */}
                 <button 
                     type="submit" 
-                    className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-all shadow-lg shadow-blue-200/50 flex items-center justify-center space-x-2 group mt-4"
+                    disabled={isLoading}
+                    className="w-full bg-blue-600 text-white font-bold py-3.5 rounded-xl hover:bg-blue-700 active:bg-blue-800 transition-all shadow-lg shadow-blue-200/50 flex items-center justify-center space-x-2 group mt-4 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
-                    <span>{isRegistering ? 'Create Account' : 'Sign In'}</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
+                    {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (
+                        <>
+                            <span>{isRegistering ? 'Create Account' : 'Sign In'}</span>
+                            <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" strokeWidth={3} />
+                        </>
+                    )}
                 </button>
             </form>
         </div>

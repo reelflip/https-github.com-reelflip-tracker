@@ -404,6 +404,7 @@ $password = "${dbPass}";
 try {
     $conn = new PDO("mysql:host=" . $host . ";dbname=" . $db_name, $username, $password);
     $conn->exec("set names utf8mb4");
+    $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $exception) {
     http_response_code(500);
     echo json_encode(["error" => "Connection error: " . $exception->getMessage()]);
@@ -471,31 +472,36 @@ if(isset($data->email) && isset($data->password)) {
     $email = $data->email;
     $password = $data->password;
     
-    $query = "SELECT * FROM users WHERE email = :email LIMIT 0,1";
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(":email", $email);
-    $stmt->execute();
+    try {
+        $query = "SELECT * FROM users WHERE email = :email LIMIT 0,1";
+        $stmt = $conn->prepare($query);
+        $stmt->bindParam(":email", $email);
+        $stmt->execute();
 
-    if($stmt->rowCount() > 0) {
-        $row = $stmt->fetch(PDO::FETCH_ASSOC);
-        
-        // Admin Override check (For recovery, can be removed in prod)
-        if ($email === 'admin' && $password === 'Ishika@123') {
-             unset($row['password_hash']);
-             echo json_encode(["message" => "Login successful", "user" => $row]);
-             exit();
-        }
+        if($stmt->rowCount() > 0) {
+            $row = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Admin Override check (For recovery, can be removed in prod)
+            if ($email === 'admin' && $password === 'Ishika@123') {
+                 unset($row['password_hash']);
+                 echo json_encode(["message" => "Login successful", "user" => $row]);
+                 exit();
+            }
 
-        if(password_verify($password, $row['password_hash'])) {
-            unset($row['password_hash']);
-            echo json_encode(["message" => "Login successful", "user" => $row]);
+            if(password_verify($password, $row['password_hash'])) {
+                unset($row['password_hash']);
+                echo json_encode(["message" => "Login successful", "user" => $row]);
+            } else {
+                 http_response_code(401);
+                 echo json_encode(["message" => "Invalid password."]);
+            }
         } else {
-             http_response_code(401);
-             echo json_encode(["message" => "Invalid password."]);
+            http_response_code(401);
+            echo json_encode(["message" => "User not found."]);
         }
-    } else {
-        http_response_code(401);
-        echo json_encode(["message" => "User not found."]);
+    } catch(PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["message" => "Database error: " . $e->getMessage()]);
     }
 }
 ?>`
@@ -514,34 +520,50 @@ if(isset($data->email) && isset($data->password)) {
     $name = $data->name;
     $role = $data->role;
 
-    // is_verified set to 1 by default, no token needed
-    $query = "INSERT INTO users (email, password_hash, full_name, role, is_verified, institute, target_year) VALUES (:email, :pass, :name, :role, 1, :inst, :year)";
-    
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(":email", $email);
-    $stmt->bindParam(":pass", $password);
-    $stmt->bindParam(":name", $name);
-    $stmt->bindParam(":role", $role);
-    $stmt->bindParam(":inst", $data->institute);
-    $stmt->bindParam(":year", $data->targetYear);
+    try {
+        // Check if email exists
+        $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
+        $check->execute([$email]);
+        if($check->rowCount() > 0) {
+            http_response_code(409);
+            echo json_encode(["message" => "Email already exists. Please login."]);
+            exit();
+        }
 
-    if($stmt->execute()) {
-        $newUserId = $conn->lastInsertId();
+        // is_verified set to 1 by default, no token needed
+        $query = "INSERT INTO users (email, password_hash, full_name, role, is_verified, institute, target_year) VALUES (:email, :pass, :name, :role, 1, :inst, :year)";
         
-        // Return user object so frontend can auto-login
-        echo json_encode([
-            "message" => "Registration successful", 
-            "user" => [
-                "id" => $newUserId,
-                "name" => $name,
-                "email" => $email,
-                "role" => $role,
-                "isVerified" => true
-            ]
-        ]);
-    } else {
-        http_response_code(400);
-        echo json_encode(["message" => "Error registering user. Email might be taken."]);
+        $stmt = $conn->prepare($query);
+        $stmt->bindParam(":email", $email);
+        $stmt->bindParam(":pass", $password);
+        $stmt->bindParam(":name", $name);
+        $stmt->bindParam(":role", $role);
+        $stmt->bindParam(":inst", $data->institute);
+        $stmt->bindParam(":year", $data->targetYear);
+
+        if($stmt->execute()) {
+            $newUserId = $conn->lastInsertId();
+            
+            // Return user object so frontend can auto-login
+            echo json_encode([
+                "message" => "Registration successful", 
+                "user" => [
+                    "id" => $newUserId,
+                    "name" => $name,
+                    "email" => $email,
+                    "role" => $role,
+                    "isVerified" => true,
+                    "institute" => $data->institute,
+                    "targetYear" => $data->targetYear
+                ]
+            ]);
+        } else {
+            http_response_code(400);
+            echo json_encode(["message" => "Error registering user."]);
+        }
+    } catch(PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["message" => "Database error: " . $e->getMessage()]);
     }
 }
 ?>`
@@ -562,38 +584,48 @@ echo "<h1>Account Verified! ✅</h1><p>Email verification is no longer required.
 include_once 'config.php';
 $user_id = $_GET['user_id'];
 
-// Get Progress
-$progQuery = $conn->prepare("SELECT * FROM topic_progress WHERE user_id = ?");
-$progQuery->execute([$user_id]);
-$progress = $progQuery->fetchAll(PDO::FETCH_ASSOC);
+if (!$user_id) {
+    echo json_encode(["error" => "No User ID provided"]);
+    exit();
+}
 
-// Get Goals
-$goalsQuery = $conn->prepare("SELECT * FROM daily_goals WHERE user_id = ? AND created_at = CURDATE()");
-$goalsQuery->execute([$user_id]);
-$goals = $goalsQuery->fetchAll(PDO::FETCH_ASSOC);
+try {
+    // Get Progress
+    $progQuery = $conn->prepare("SELECT * FROM topic_progress WHERE user_id = ?");
+    $progQuery->execute([$user_id]);
+    $progress = $progQuery->fetchAll(PDO::FETCH_ASSOC);
 
-// Get Backlogs
-$blogQuery = $conn->prepare("SELECT * FROM backlogs WHERE user_id = ?");
-$blogQuery->execute([$user_id]);
-$backlogs = $blogQuery->fetchAll(PDO::FETCH_ASSOC);
+    // Get Goals
+    $goalsQuery = $conn->prepare("SELECT * FROM daily_goals WHERE user_id = ? AND created_at = CURDATE()");
+    $goalsQuery->execute([$user_id]);
+    $goals = $goalsQuery->fetchAll(PDO::FETCH_ASSOC);
 
-// Get Mistakes
-$mistakeQuery = $conn->prepare("SELECT * FROM mistake_notebook WHERE user_id = ?");
-$mistakeQuery->execute([$user_id]);
-$mistakes = $mistakeQuery->fetchAll(PDO::FETCH_ASSOC);
+    // Get Backlogs
+    $blogQuery = $conn->prepare("SELECT * FROM backlogs WHERE user_id = ?");
+    $blogQuery->execute([$user_id]);
+    $backlogs = $blogQuery->fetchAll(PDO::FETCH_ASSOC);
 
-// Get Timetable
-$ttQuery = $conn->prepare("SELECT generated_slots_json FROM timetable_settings WHERE user_id = ?");
-$ttQuery->execute([$user_id]);
-$timetable = $ttQuery->fetch(PDO::FETCH_ASSOC);
+    // Get Mistakes
+    $mistakeQuery = $conn->prepare("SELECT * FROM mistake_notebook WHERE user_id = ?");
+    $mistakeQuery->execute([$user_id]);
+    $mistakes = $mistakeQuery->fetchAll(PDO::FETCH_ASSOC);
 
-echo json_encode([
-    "progress" => $progress,
-    "goals" => $goals,
-    "backlogs" => $backlogs,
-    "mistakes" => $mistakes,
-    "timetable" => $timetable ? json_decode($timetable['generated_slots_json']) : null
-]);
+    // Get Timetable
+    $ttQuery = $conn->prepare("SELECT generated_slots_json FROM timetable_settings WHERE user_id = ?");
+    $ttQuery->execute([$user_id]);
+    $timetable = $ttQuery->fetch(PDO::FETCH_ASSOC);
+
+    echo json_encode([
+        "progress" => $progress,
+        "goals" => $goals,
+        "backlogs" => $backlogs,
+        "mistakes" => $mistakes,
+        "timetable" => $timetable ? json_decode($timetable['generated_slots_json']) : null
+    ]);
+} catch(Exception $e) {
+    http_response_code(500);
+    echo json_encode(["error" => $e->getMessage()]);
+}
 ?>`
         },
         {

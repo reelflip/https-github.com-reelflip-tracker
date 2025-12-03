@@ -1,5 +1,4 @@
 
-
 import React, { useState, useEffect } from 'react';
 import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem } from './types';
 import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS } from './constants';
@@ -57,7 +56,7 @@ function App() {
   const [quotes, setQuotes] = useState<Quote[]>(DEFAULT_QUOTES);
   const [flashcards, setFlashcards] = useState<Flashcard[]>(INITIAL_FLASHCARDS);
 
-  // Initialize some mock progress on load
+  // Initialize some mock progress on load (Fallback)
   useEffect(() => {
     const initialProgress: Record<string, TopicProgress> = {};
     JEE_SYLLABUS.forEach(sub => {
@@ -65,7 +64,7 @@ function App() {
         ch.topics.forEach(t => {
           initialProgress[t.id] = {
             topicId: t.id,
-            status: Math.random() > 0.7 ? 'COMPLETED' : 'NOT_STARTED',
+            status: 'NOT_STARTED',
             ex1Solved: 0, ex1Total: 25, ex2Solved: 0, ex2Total: 15,
             ex3Solved: 0, ex3Total: 10, ex4Solved: 0, ex4Total: 10
           };
@@ -74,6 +73,79 @@ function App() {
     });
     setProgress(initialProgress);
   }, []);
+
+  // --- FETCH REAL DATA FROM API ---
+  useEffect(() => {
+    if (currentUser && currentUser.role !== 'ADMIN') {
+        const fetchDashboardData = async () => {
+            try {
+                const response = await fetch(`/api/get_dashboard.php?user_id=${currentUser.id}`);
+                if (!response.ok) return;
+                
+                const data = await response.json();
+                
+                // Merge Progress
+                if (data.progress && Array.isArray(data.progress)) {
+                    const dbProgress: Record<string, TopicProgress> = {};
+                    data.progress.forEach((p: any) => {
+                        dbProgress[p.topic_id] = {
+                            topicId: p.topic_id,
+                            status: p.status,
+                            ex1Solved: parseInt(p.ex1_solved), ex1Total: parseInt(p.ex1_total),
+                            ex2Solved: parseInt(p.ex2_solved), ex2Total: parseInt(p.ex2_total),
+                            ex3Solved: parseInt(p.ex3_solved), ex3Total: parseInt(p.ex3_total),
+                            ex4Solved: parseInt(p.ex4_solved), ex4Total: parseInt(p.ex4_total)
+                        };
+                    });
+                    setProgress(prev => ({ ...prev, ...dbProgress }));
+                }
+
+                // Merge Goals
+                if (data.goals && Array.isArray(data.goals)) {
+                    const dbGoals = data.goals.map((g: any) => ({
+                        id: g.id,
+                        text: g.goal_text,
+                        completed: g.is_completed == 1
+                    }));
+                    setGoals(dbGoals);
+                }
+
+                // Merge Backlogs
+                if (data.backlogs && Array.isArray(data.backlogs)) {
+                    const dbBacklogs = data.backlogs.map((b: any) => ({
+                        id: b.id,
+                        title: b.title,
+                        subjectId: b.subject_id,
+                        priority: b.priority,
+                        deadline: b.deadline,
+                        status: b.status
+                    }));
+                    setBacklogs(dbBacklogs);
+                }
+
+                // Merge Mistakes
+                if (data.mistakes && Array.isArray(data.mistakes)) {
+                    const dbMistakes = data.mistakes.map((m: any) => ({
+                        id: m.id,
+                        questionText: m.question_text,
+                        subjectId: m.subject_id,
+                        topicId: m.topic_id,
+                        testName: m.test_name,
+                        date: m.created_at,
+                        userNotes: m.user_notes,
+                        tags: m.tags_json ? JSON.parse(m.tags_json) : []
+                    }));
+                    setMistakes(dbMistakes);
+                }
+
+            } catch (error) {
+                console.error("Failed to fetch dashboard data:", error);
+            }
+        };
+
+        fetchDashboardData();
+    }
+  }, [currentUser]);
 
   const handleUpdateProgress = (topicId: string, updates: Partial<TopicProgress>) => {
     setProgress(prev => ({
@@ -238,15 +310,9 @@ function App() {
   // Login Screen
   if (!currentUser) {
     return <AuthScreen onLogin={(user) => {
-        // Check if user exists in our local "DB" (allUsers)
-        const existing = allUsers.find(u => u.email === user.email);
-        if (existing) {
-            setCurrentUser(existing);
-        } else {
-            // Register new
-            setAllUsers(prev => [...prev, user]);
-            setCurrentUser(user);
-        }
+        // Just set the user directly, no need to check local allUsers anymore
+        // as we trust the API response
+        setCurrentUser(user);
     }} />;
   }
 
