@@ -1,11 +1,11 @@
 
 import React, { useState } from 'react';
-import { Calendar, Clock, Moon, BookOpen, Briefcase, ChevronRight, RefreshCw, Brain, PenTool, Layers, Coffee, Zap, Sun as SunIcon, RotateCw } from 'lucide-react';
+import { Calendar, Clock, Moon, BookOpen, Briefcase, RefreshCw, Brain, PenTool, Layers, Coffee, Zap, Sun as SunIcon, RotateCw } from 'lucide-react';
 
 const TimetableGenerator = () => {
   // State
   const [coachingDays, setCoachingDays] = useState<string[]>(['Mon', 'Wed', 'Fri']);
-  const [coachingStart, setCoachingStart] = useState('06:00'); // Default changed to morning for testing
+  const [coachingStart, setCoachingStart] = useState('06:00');
   const [coachingEnd, setCoachingEnd] = useState('09:00');
   
   const [schoolEnabled, setSchoolEnabled] = useState(true);
@@ -32,13 +32,12 @@ const TimetableGenerator = () => {
   const toMins = (t: string) => {
       if(!t) return 0;
       const [h, m] = t.split(':').map(Number);
-      return h * 60 + m;
+      return (h || 0) * 60 + (m || 0);
   };
 
   const fromMins = (m: number) => {
       let h = Math.floor(m / 60);
-      const mn = m % 60;
-      // Handle day overflow if needed, though simpler to assume single day
+      const mn = Math.floor(m % 60);
       if (h >= 24) h = h - 24;
       const ampm = h >= 12 ? 'PM' : 'AM';
       const displayH = h % 12 || 12;
@@ -53,7 +52,8 @@ const TimetableGenerator = () => {
     // 1. Initial Wake Up
     slots.push({
         time: fromMins(currentMins),
-        label: 'Wake Up & Hydrate',
+        endTime: fromMins(currentMins + 30),
+        label: 'Wake Up & Routine',
         type: 'routine',
         icon: <SunIcon className="w-4 h-4" />
     });
@@ -72,7 +72,7 @@ const TimetableGenerator = () => {
         });
     }
 
-    // Assuming today is a coaching day for generation purposes
+    // Assume today is a coaching day for generation purposes
     if (coachingDays.length > 0) {
          fixedBlocks.push({
             start: toMins(coachingStart),
@@ -82,20 +82,19 @@ const TimetableGenerator = () => {
         });
     }
 
-    // Sort blocks by start time to handle morning coaching correctly
+    // Sort blocks by start time (Crucial for Morning Coaching)
     fixedBlocks.sort((a, b) => a.start - b.start);
 
     // --- GAP FILLER LOGIC ---
-    // Added isAfterCoaching parameter to prioritize revision
     const fillGap = (start: number, end: number, isAfterCoaching: boolean) => {
         let now = start;
-        let coachingRevisionDone = !isAfterCoaching; // If not after coaching, consider it done. If after, it's pending.
+        let coachingRevisionDone = !isAfterCoaching; 
 
         while (now < end) {
             const duration = end - now;
             const hour = Math.floor(now / 60);
 
-            // A. MEALS (High Priority if time matches)
+            // A. MEALS
             // Breakfast (7-9 AM)
             if (hour >= 7 && hour < 9 && duration >= 20 && !slots.some(s => s.label.includes('Breakfast'))) {
                  const len = Math.min(30, duration);
@@ -113,39 +112,36 @@ const TimetableGenerator = () => {
             // Dinner (7:30-9:30 PM)
             if (hour >= 19.5 && hour < 21.5 && duration >= 30 && !slots.some(s => s.label.includes('Dinner'))) {
                  const len = Math.min(45, duration);
-                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Dinner & Relax', type: 'routine' });
+                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Dinner & Relax', type: 'routine', icon: <Coffee className="w-4 h-4" /> });
                  now += len;
                  continue;
             }
 
             // B. COACHING REVISION (Specific Priority)
             if (!coachingRevisionDone && duration >= 20) {
-                const revLen = Math.min(60, duration); // Allocate up to 1 hour
+                const revLen = Math.min(60, duration);
                 slots.push({ 
                     time: fromMins(now), 
                     endTime: fromMins(now + revLen), 
                     label: 'Class Notes Revision', 
                     type: 'revision', 
-                    subtext: "Immediately revise today's coaching topics while fresh.",
+                    subtext: "Immediately revise today's coaching topics.",
                     icon: <RotateCw className="w-4 h-4" />
                 });
                 now += revLen;
-                coachingRevisionDone = true; // Mark as done so we don't repeat in this gap
+                coachingRevisionDone = true; 
                 continue;
             }
 
             // C. STUDY SLOTS
             if (duration < 30) {
-                // Too small for study -> Transit/Relax
                 slots.push({ time: fromMins(now), endTime: fromMins(end), label: 'Transit / Relax', type: 'routine' });
                 now = end;
             } else if (duration < 60) {
-                // Short session -> Revision
                 slots.push({ time: fromMins(now), endTime: fromMins(now + duration), label: 'Quick Revision / Flashcards', type: 'revision' });
                 now += duration;
             } else {
                 // Deep work block
-                // Subject logic based on time of day
                 let subject = 'Physics'; 
                 let type = 'theory';
                 let label = 'Physics: Concepts';
@@ -159,11 +155,11 @@ const TimetableGenerator = () => {
                 } else if (hour >= 18) {
                     subject = 'Chemistry';
                     type = 'theory';
-                    label = 'Chemistry: NCERT & Memorization';
-                    subtext = 'End day with inorganic/organic reading.';
+                    label = 'Chemistry & Backlogs';
+                    subtext = 'NCERT Reading / Clearing Backlogs.';
                 }
 
-                // Cap block at 2 hours (120 mins) to allow breaks or switching
+                // Cap block at 2 hours (120 mins)
                 const blockLen = Math.min(duration, 120); 
                 slots.push({ 
                     time: fromMins(now), 
@@ -175,7 +171,7 @@ const TimetableGenerator = () => {
                 });
                 now += blockLen;
                 
-                // If we capped the block, add a small break
+                // Break insertion logic
                 if (now < end && blockLen >= 90) {
                     const breakLen = Math.min(15, end - now);
                     slots.push({ time: fromMins(now), endTime: fromMins(now + breakLen), label: 'Short Break', type: 'routine' });
@@ -194,9 +190,8 @@ const TimetableGenerator = () => {
             fillGap(currentMins, block.start, isAfterCoaching);
         }
         
-        // Add the Fixed Block (if not overlapped completely)
+        // Add the Fixed Block
         if (currentMins < block.end) {
-             // If block started before currentMins (overlap), adjust start
              const effectiveStart = Math.max(currentMins, block.start);
              slots.push({
                 time: fromMins(effectiveStart),
@@ -206,11 +201,9 @@ const TimetableGenerator = () => {
                 subtext: block.subtext
             });
             currentMins = block.end;
-            
-            // Update flag: Is the block we just finished a coaching block?
             isAfterCoaching = (block.type === 'coaching');
         } else {
-            // Block was skipped/overlapped, so flag shouldn't necessarily persist unless it was indeed coaching
+            // Block was overlapped
             isAfterCoaching = false; 
         }
     }
@@ -235,7 +228,6 @@ const TimetableGenerator = () => {
     <div className="max-w-2xl mx-auto pb-10">
         {!generatedSchedule ? (
             <div className="bg-white rounded-xl shadow-lg border border-slate-100 overflow-hidden animate-in fade-in slide-in-from-top-4">
-                {/* Header Card */}
                 <div className="bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white">
                     <div className="flex items-center space-x-3 mb-2">
                         <Calendar className="w-6 h-6" />
@@ -244,58 +236,38 @@ const TimetableGenerator = () => {
                     <p className="text-orange-100 text-sm opacity-90">Auto-allocates Revision, Practice, and Subjects based on your day.</p>
                 </div>
 
-                {/* Form Container */}
                 <div className="p-6 space-y-8">
-                    
-                    {/* Coaching Section */}
                     <section>
                         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-4 flex items-center">
                             <BookOpen className="w-4 h-4 mr-2" /> Coaching Schedule
                         </h3>
-                        
-                        {/* Day Selectors */}
                         <div className="flex space-x-2 mb-6 overflow-x-auto no-scrollbar pb-1">
-                            {days.map(day => {
-                                const isSelected = coachingDays.includes(day);
-                                return (
-                                    <button
-                                        key={day}
-                                        onClick={() => toggleDay(day)}
-                                        className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
-                                            isSelected 
-                                            ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
-                                            : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                                        }`}
-                                    >
-                                        {day}
-                                    </button>
-                                );
-                            })}
+                            {days.map(day => (
+                                <button
+                                    key={day}
+                                    onClick={() => toggleDay(day)}
+                                    className={`px-4 py-1.5 rounded-full text-xs font-bold transition-all ${
+                                        coachingDays.includes(day)
+                                        ? 'bg-blue-600 text-white shadow-md shadow-blue-200' 
+                                        : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                                    }`}
+                                >
+                                    {day}
+                                </button>
+                            ))}
                         </div>
-
-                        {/* Time Inputs */}
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
                                 <label className="text-xs text-slate-400 font-medium ml-1">Start Time</label>
                                 <div className="relative">
-                                    <input 
-                                        type="time" 
-                                        value={coachingStart}
-                                        onChange={(e) => setCoachingStart(e.target.value)}
-                                        className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none"
-                                    />
+                                    <input type="time" value={coachingStart} onChange={(e) => setCoachingStart(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs text-slate-400 font-medium ml-1">End Time</label>
                                 <div className="relative">
-                                    <input 
-                                        type="time" 
-                                        value={coachingEnd}
-                                        onChange={(e) => setCoachingEnd(e.target.value)}
-                                        className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none"
-                                    />
+                                    <input type="time" value={coachingEnd} onChange={(e) => setCoachingEnd(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
@@ -304,42 +276,27 @@ const TimetableGenerator = () => {
 
                     <hr className="border-slate-100" />
 
-                    {/* School Section */}
                     <section>
                         <div className="flex justify-between items-center mb-4">
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide flex items-center">
                                 <Briefcase className="w-4 h-4 mr-2" /> School / College
                             </h3>
-                            <button 
-                                onClick={() => setSchoolEnabled(!schoolEnabled)}
-                                className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${schoolEnabled ? 'bg-green-500' : 'bg-slate-200'}`}
-                            >
+                            <button onClick={() => setSchoolEnabled(!schoolEnabled)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${schoolEnabled ? 'bg-green-500' : 'bg-slate-200'}`}>
                                 <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${schoolEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
                             </button>
                         </div>
-                        
                         <div className={`grid grid-cols-2 gap-4 transition-opacity duration-200 ${schoolEnabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
                             <div className="space-y-1">
                                 <label className="text-xs text-slate-400 font-medium ml-1">Starts</label>
                                 <div className="relative">
-                                    <input 
-                                        type="time" 
-                                        value={schoolStart}
-                                        onChange={(e) => setSchoolStart(e.target.value)}
-                                        className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none"
-                                    />
+                                    <input type="time" value={schoolStart} onChange={(e) => setSchoolStart(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs text-slate-400 font-medium ml-1">Ends</label>
                                 <div className="relative">
-                                    <input 
-                                        type="time" 
-                                        value={schoolEnd}
-                                        onChange={(e) => setSchoolEnd(e.target.value)}
-                                        className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none"
-                                    />
+                                    <input type="time" value={schoolEnd} onChange={(e) => setSchoolEnd(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
@@ -348,7 +305,6 @@ const TimetableGenerator = () => {
 
                     <hr className="border-slate-100" />
 
-                    {/* Sleep Section */}
                     <section>
                         <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide mb-4 flex items-center">
                             <Moon className="w-4 h-4 mr-2" /> Sleep Cycle
@@ -357,35 +313,21 @@ const TimetableGenerator = () => {
                             <div className="space-y-1">
                                 <label className="text-xs text-slate-400 font-medium ml-1">Wake Up</label>
                                 <div className="relative">
-                                    <input 
-                                        type="time" 
-                                        value={wakeTime}
-                                        onChange={(e) => setWakeTime(e.target.value)}
-                                        className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none"
-                                    />
+                                    <input type="time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
                             <div className="space-y-1">
                                 <label className="text-xs text-slate-400 font-medium ml-1">Bed Time</label>
                                 <div className="relative">
-                                    <input 
-                                        type="time" 
-                                        value={bedTime}
-                                        onChange={(e) => setBedTime(e.target.value)}
-                                        className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none"
-                                    />
+                                    <input type="time" value={bedTime} onChange={(e) => setBedTime(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
                         </div>
                     </section>
 
-                    {/* Button */}
-                    <button 
-                        onClick={handleGenerate}
-                        className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-slate-800 transition-colors flex items-center justify-center space-x-2"
-                    >
+                    <button onClick={handleGenerate} className="w-full bg-slate-900 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-slate-800 transition-colors flex items-center justify-center space-x-2">
                         <Zap className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                         <span>Generate Smart Timetable</span>
                     </button>
@@ -400,10 +342,7 @@ const TimetableGenerator = () => {
                         </span>
                         Optimized Daily Schedule
                     </h3>
-                    <button 
-                        onClick={() => setGeneratedSchedule(null)}
-                        className="flex items-center text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors px-3 py-2 rounded-lg hover:bg-slate-50"
-                    >
+                    <button onClick={() => setGeneratedSchedule(null)} className="flex items-center text-sm font-medium text-slate-500 hover:text-blue-600 transition-colors px-3 py-2 rounded-lg hover:bg-slate-50">
                         <RefreshCw className="w-4 h-4 mr-2" />
                         Regenerate
                     </button>
@@ -411,7 +350,6 @@ const TimetableGenerator = () => {
                 
                 <div className="relative border-l-2 border-slate-100 ml-3 space-y-8 pb-4">
                     {generatedSchedule.map((slot: any, idx: number) => {
-                         // Determine styles based on activity type
                          let bg = 'bg-slate-50';
                          let border = 'border-slate-100';
                          let text = 'text-slate-700';
@@ -436,7 +374,6 @@ const TimetableGenerator = () => {
 
                          return (
                             <div key={idx} className="relative pl-8">
-                                {/* Dot */}
                                 <div className={`absolute -left-[9px] top-0 w-4 h-4 rounded-full border-2 border-white shadow-sm z-10 ${
                                     slot.type === 'sleep' ? 'bg-slate-800' :
                                     slot.type === 'theory' ? 'bg-purple-500' :
@@ -447,14 +384,12 @@ const TimetableGenerator = () => {
                                     'bg-slate-400'
                                 }`}></div>
                                 
-                                {/* Time */}
                                 <div className="text-xs font-mono font-bold text-slate-400 mb-1 flex items-center">
                                     {slot.time} 
                                     {slot.endTime && <span className="text-slate-300 mx-1">-</span>} 
                                     {slot.endTime}
                                 </div>
                                 
-                                {/* Content Card */}
                                 <div className={`rounded-lg p-4 relative group transition-all hover:shadow-md border ${bg} ${border}`}>
                                     <div className={`font-bold flex items-start justify-between ${text}`}>
                                         <div className="flex items-center gap-2">
