@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote } from './types';
-import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES } from './constants';
+import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard } from './types';
+import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS } from './constants';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
 import SyllabusTracker from './components/SyllabusTracker';
@@ -14,6 +14,7 @@ import Analytics from './components/Analytics';
 import ProfileSettings from './components/ProfileSettings';
 import MistakeNotebook from './components/MistakeNotebook';
 import WellnessCorner from './components/WellnessCorner';
+import FlashcardDeck from './components/FlashcardDeck';
 
 // Initial global questions combined from constants and potential future additions
 const INITIAL_QUESTIONS: Question[] = MOCK_TESTS.flatMap(t => t.questions).reduce((acc, current) => {
@@ -48,6 +49,7 @@ function App() {
     { id: 'n1', title: 'Welcome', message: 'Welcome to the new academic session!', date: new Date().toISOString().split('T')[0], type: 'INFO' }
   ]);
   const [quotes, setQuotes] = useState<Quote[]>(DEFAULT_QUOTES);
+  const [flashcards, setFlashcards] = useState<Flashcard[]>(INITIAL_FLASHCARDS);
 
   // Initialize some mock progress on load
   useEffect(() => {
@@ -269,6 +271,8 @@ function App() {
                 return <SyllabusTracker user={currentUser} subjects={JEE_SYLLABUS} progress={progress} onUpdateProgress={handleUpdateProgress} />;
             case 'tests':
                 return <TestCenter availableTests={allTests} attempts={testAttempts} onCompleteTest={handleCompleteTest} />;
+            case 'flashcards':
+                return <FlashcardDeck cards={flashcards} />;
             case 'mistakes':
                 return <MistakeNotebook mistakes={mistakes} onUpdateMistake={handleUpdateMistake} onDeleteMistake={handleDeleteMistake} />;
             case 'focus':

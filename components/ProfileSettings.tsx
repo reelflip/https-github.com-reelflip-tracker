@@ -1,6 +1,8 @@
 
+
 import React, { useState } from 'react';
 import { User } from '../types';
+import { COACHING_INSTITUTES, TARGET_YEARS } from '../constants';
 import { 
   User as UserIcon, 
   Mail, 
@@ -15,7 +17,8 @@ import {
   UserPlus,
   AlertCircle,
   XCircle,
-  Copy
+  Copy,
+  ChevronDown
 } from 'lucide-react';
 
 interface ProfileSettingsProps {
@@ -216,27 +219,35 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 uppercase ml-1">Target Year</label>
                         <div className="relative">
-                            <Calendar className="absolute left-3 top-3 text-slate-400 w-4 h-4" />
-                            <input 
-                                type="number" 
+                            <Calendar className="absolute left-3 top-3 text-slate-400 w-4 h-4 z-10" />
+                            <select 
+                                className="w-full pl-10 pr-8 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
                                 value={formData.targetYear}
                                 onChange={(e) => setFormData({...formData, targetYear: parseInt(e.target.value)})}
-                                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                            />
+                            >
+                                {TARGET_YEARS.map(year => (
+                                    <option key={year} value={year}>{year}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-4 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
                         </div>
                     </div>
 
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 uppercase ml-1">Coaching Institute</label>
                         <div className="relative">
-                            <Building className="absolute left-3 top-3 text-slate-400 w-4 h-4" />
-                            <input 
-                                type="text" 
-                                placeholder="e.g. Allen, FIITJEE"
+                            <Building className="absolute left-3 top-3 text-slate-400 w-4 h-4 z-10" />
+                            <select 
+                                className="w-full pl-10 pr-8 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
                                 value={formData.institute}
                                 onChange={(e) => setFormData({...formData, institute: e.target.value})}
-                                className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
-                            />
+                            >
+                                <option value="" disabled>Select Institute</option>
+                                {COACHING_INSTITUTES.map((inst) => (
+                                    <option key={inst} value={inst}>{inst}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-4 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
                         </div>
                     </div>
 

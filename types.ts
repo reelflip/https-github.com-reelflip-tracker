@@ -133,6 +133,14 @@ export interface Quote {
   author?: string;
 }
 
+export interface Flashcard {
+    id: string;
+    subjectId: 'phys' | 'chem' | 'math';
+    front: string; // The Concept or Question
+    back: string;  // The Formula or Reaction
+    difficulty: 'HARD' | 'MEDIUM' | 'EASY';
+}
+
 export interface MockDataState {
   users: User[];
   syllabus: Subject[];

@@ -1,8 +1,31 @@
 
-import { Subject, User, Test, Question, Quote } from './types';
+
+import { Subject, User, Test, Question, Quote, Flashcard } from './types';
+
+export const COACHING_INSTITUTES = [
+    "Allen Career Institute",
+    "FIITJEE",
+    "Aakash Byju's",
+    "Resonance",
+    "Sri Chaitanya",
+    "Narayana Group",
+    "Physics Wallah (Vidyapeeth)",
+    "Unacademy Centers",
+    "Bansal Classes",
+    "Vibrant Academy",
+    "Motion Education",
+    "Reliable Institute",
+    "Bakliwal Tutorials",
+    "Pace IIT & Medical",
+    "VMC (Vidyamandir Classes)",
+    "Super 30",
+    "Self Study / Online Only"
+];
+
+export const TARGET_YEARS = [2025, 2026, 2027, 2028];
 
 export const MOCK_USERS: User[] = [
-  { id: 'u1', name: 'Arjun Sharma', email: 'arjun@student.jee', role: 'STUDENT', targetYear: 2025, avatarUrl: 'https://picsum.photos/100/100' },
+  { id: 'u1', name: 'Arjun Sharma', email: 'arjun@student.jee', role: 'STUDENT', targetYear: 2025, institute: 'Allen Career Institute', avatarUrl: 'https://picsum.photos/100/100' },
   { id: 'u2', name: 'Rajesh Sharma', email: 'rajesh@parent.jee', role: 'PARENT', studentId: 'u1' },
   { id: 'u3', name: 'Admin User', email: 'admin@system.jee', role: 'ADMIN' },
 ];
@@ -13,6 +36,15 @@ export const DEFAULT_QUOTES: Quote[] = [
     { id: 'q3', text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
     { id: 'q4', text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
     { id: 'q5', text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" }
+];
+
+export const INITIAL_FLASHCARDS: Flashcard[] = [
+    { id: 'fc1', subjectId: 'phys', front: 'Equation of Trajectory (Projectile Motion)', back: 'y = x tan(θ) - (gx²) / (2u² cos²θ)', difficulty: 'MEDIUM' },
+    { id: 'fc2', subjectId: 'phys', front: 'Moment of Inertia (Solid Sphere)', back: 'I = (2/5)MR²', difficulty: 'EASY' },
+    { id: 'fc3', subjectId: 'math', front: 'Sum of n terms of GP', back: 'Sn = a(r^n - 1) / (r - 1) for r > 1', difficulty: 'EASY' },
+    { id: 'fc4', subjectId: 'math', front: 'Condition for Orthogonality of two circles', back: '2g₁g₂ + 2f₁f₂ = c₁ + c₂', difficulty: 'HARD' },
+    { id: 'fc5', subjectId: 'chem', front: 'Bragg\'s Equation', back: 'nλ = 2d sin(θ)', difficulty: 'MEDIUM' },
+    { id: 'fc6', subjectId: 'chem', front: 'Nernst Equation (EMF of Cell)', back: 'E = E° - (0.0591/n) log Q', difficulty: 'HARD' }
 ];
 
 export const JEE_SYLLABUS: Subject[] = [

@@ -1,5 +1,8 @@
+
+
 import React, { useState } from 'react';
 import { User, Role } from '../types';
+import { COACHING_INSTITUTES, TARGET_YEARS } from '../constants';
 import { 
   TrendingUp,
   User as UserIcon, 
@@ -10,7 +13,8 @@ import {
   Shield,
   Lock,
   AlertCircle,
-  HelpCircle
+  HelpCircle,
+  ChevronDown
 } from 'lucide-react';
 
 interface AuthScreenProps {
@@ -60,6 +64,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
       email: formData.email || `${finalRole.toLowerCase()}@example.com`,
       role: finalRole,
       targetYear: finalRole === 'STUDENT' ? parseInt(formData.targetYear) : undefined,
+      institute: formData.institute,
       avatarUrl: `https://api.dicebear.com/7.x/avataaars/svg?seed=${formData.email || finalRole}`,
       studentId: finalRole === 'PARENT' ? 'u1' : undefined
     };
@@ -176,27 +181,34 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Institute</label>
                             <div className="relative">
-                                <Building className="absolute left-4 top-3.5 text-slate-400 w-4 h-4" />
-                                <input 
-                                    type="text" 
-                                    placeholder="Bakliwal"
-                                    className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
+                                <Building className="absolute left-4 top-3.5 text-slate-400 w-4 h-4 z-10" />
+                                <select 
+                                    className="w-full pl-10 pr-8 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
                                     value={formData.institute}
                                     onChange={(e) => setFormData({...formData, institute: e.target.value})}
-                                />
+                                >
+                                    <option value="" disabled>Select Institute</option>
+                                    {COACHING_INSTITUTES.map((inst) => (
+                                        <option key={inst} value={inst}>{inst}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-4 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
                             </div>
                         </div>
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Target Year</label>
                             <div className="relative">
-                                <Calendar className="absolute left-4 top-3.5 text-slate-400 w-4 h-4" />
-                                <input 
-                                    type="text" 
-                                    placeholder="2025"
-                                    className="w-full pl-10 pr-3 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none"
+                                <Calendar className="absolute left-4 top-3.5 text-slate-400 w-4 h-4 z-10" />
+                                <select 
+                                    className="w-full pl-10 pr-8 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
                                     value={formData.targetYear}
                                     onChange={(e) => setFormData({...formData, targetYear: e.target.value})}
-                                />
+                                >
+                                    {TARGET_YEARS.map(year => (
+                                        <option key={year} value={year}>{year}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-4 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
                             </div>
                         </div>
                     </div>
