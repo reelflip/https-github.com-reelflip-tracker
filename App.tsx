@@ -76,7 +76,8 @@ function App() {
 
   // --- FETCH REAL DATA FROM API ---
   useEffect(() => {
-    if (currentUser && currentUser.role !== 'ADMIN') {
+    if (currentUser) {
+        // 1. Fetch User Dashboard Data (Progress, Goals, etc.)
         const fetchDashboardData = async () => {
             try {
                 const response = await fetch(`/api/get_dashboard.php?user_id=${currentUser.id}`);
@@ -91,10 +92,10 @@ function App() {
                         dbProgress[p.topic_id] = {
                             topicId: p.topic_id,
                             status: p.status,
-                            ex1Solved: parseInt(p.ex1_solved), ex1Total: parseInt(p.ex1_total),
-                            ex2Solved: parseInt(p.ex2_solved), ex2Total: parseInt(p.ex2_total),
-                            ex3Solved: parseInt(p.ex3_solved), ex3Total: parseInt(p.ex3_total),
-                            ex4Solved: parseInt(p.ex4_solved), ex4Total: parseInt(p.ex4_total)
+                            ex1Solved: parseInt(p.ex1_solved || 0), ex1Total: parseInt(p.ex1_total || 30),
+                            ex2Solved: parseInt(p.ex2_solved || 0), ex2Total: parseInt(p.ex2_total || 20),
+                            ex3Solved: parseInt(p.ex3_solved || 0), ex3Total: parseInt(p.ex3_total || 15),
+                            ex4Solved: parseInt(p.ex4_solved || 0), ex4Total: parseInt(p.ex4_total || 10)
                         };
                     });
                     setProgress(prev => ({ ...prev, ...dbProgress }));
@@ -143,7 +144,29 @@ function App() {
             }
         };
 
-        fetchDashboardData();
+        // 2. Fetch Common Data (Quotes, Notifications, Flashcards)
+        const fetchCommonData = async () => {
+            try {
+                const response = await fetch(`/api/get_common.php`);
+                if (!response.ok) return;
+                const data = await response.json();
+
+                if (data.quotes && Array.isArray(data.quotes)) setQuotes(data.quotes);
+                if (data.notifications && Array.isArray(data.notifications)) setNotifications(data.notifications);
+                if (data.flashcards && Array.isArray(data.flashcards)) setFlashcards(data.flashcards);
+                
+                // Note: We are NOT overwriting 'tests' yet because get_common doesn't return full question structure
+                // We will rely on MOCK_TESTS + any separate fetching logic for full tests later.
+                
+            } catch (error) {
+                console.error("Failed to fetch common data:", error);
+            }
+        };
+
+        if (currentUser.role !== 'ADMIN') {
+            fetchDashboardData();
+        }
+        fetchCommonData();
     }
   }, [currentUser]);
 
@@ -177,8 +200,6 @@ function App() {
         
         if (newMistakes.length > 0) {
             setMistakes(prev => [...newMistakes, ...prev]);
-            // Optional: Alert user
-            // alert(`${newMistakes.length} mistakes added to your notebook.`);
         }
     }
   };
@@ -326,7 +347,9 @@ function App() {
         />;
     }
 
-    if (currentUser.role === 'ADMIN') {
+    const role = currentUser.role.toUpperCase(); // Normalize role
+
+    if (role === 'ADMIN') {
         if (activeTab === 'system') {
             return <SystemDocs />;
         }
@@ -344,7 +367,7 @@ function App() {
         />;
     }
 
-    if (currentUser.role === 'STUDENT') {
+    if (role === 'STUDENT') {
         switch (activeTab) {
             case 'dashboard':
                 return <Dashboard 
@@ -380,7 +403,7 @@ function App() {
         }
     }
 
-    if (currentUser.role === 'PARENT') {
+    if (role === 'PARENT') {
         // Find connected student
         const connectedStudent = allUsers.find(u => u.id === currentUser.studentId);
         
@@ -417,6 +440,17 @@ function App() {
           </div>
         );
     }
+
+    // Fallback if role is unrecognized
+    return (
+        <div className="flex flex-col items-center justify-center min-h-screen text-slate-500">
+            <h2 className="text-xl font-bold text-red-500 mb-2">Access Error</h2>
+            <p>Unknown User Role: {currentUser.role}</p>
+            <button onClick={() => setCurrentUser(null)} className="mt-4 text-blue-600 hover:underline">
+                Return to Login
+            </button>
+        </div>
+    );
   };
 
   return (

@@ -116,7 +116,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             if (!data.user) {
                 throw new Error('Login successful but no user data received.');
             }
-            onLogin(data.user);
+            
+            // Normalize User Data (Ensure role matches TypeScript ENUM)
+            const normalizedUser: User = {
+                ...data.user,
+                role: (data.user.role || 'STUDENT').toUpperCase() as Role
+            };
+            
+            onLogin(normalizedUser);
         }
 
     } catch (err: any) {
