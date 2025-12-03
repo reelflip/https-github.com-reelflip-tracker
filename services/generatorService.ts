@@ -44,7 +44,6 @@ CREATE TABLE users (
     full_name VARCHAR(100) NOT NULL,
     role ENUM('STUDENT', 'PARENT', 'ADMIN') NOT NULL,
     is_verified BOOLEAN DEFAULT TRUE, 
-    verification_token VARCHAR(100),
     target_year INT DEFAULT NULL,
     institute VARCHAR(100),
     school VARCHAR(100),
@@ -496,7 +495,7 @@ if(isset($data->email) && isset($data->password)) {
         {
             name: "register.php",
             folder: "api",
-            desc: "Handles user registration (Auto-Verified).",
+            desc: "Handles user registration (Auto-Verified, No Token).",
             content: `<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
@@ -506,17 +505,15 @@ if(isset($data->email) && isset($data->password)) {
     $password = password_hash($data->password, PASSWORD_BCRYPT);
     $name = $data->name;
     $role = $data->role;
-    $token = bin2hex(random_bytes(16));
 
-    // is_verified set to 1 by default
-    $query = "INSERT INTO users (email, password_hash, full_name, role, is_verified, verification_token, institute, target_year) VALUES (:email, :pass, :name, :role, 1, :token, :inst, :year)";
+    // is_verified set to 1 by default, no token needed
+    $query = "INSERT INTO users (email, password_hash, full_name, role, is_verified, institute, target_year) VALUES (:email, :pass, :name, :role, 1, :inst, :year)";
     
     $stmt = $conn->prepare($query);
     $stmt->bindParam(":email", $email);
     $stmt->bindParam(":pass", $password);
     $stmt->bindParam(":name", $name);
     $stmt->bindParam(":role", $role);
-    $stmt->bindParam(":token", $token);
     $stmt->bindParam(":inst", $data->institute);
     $stmt->bindParam(":year", $data->targetYear);
 
