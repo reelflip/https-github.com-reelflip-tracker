@@ -1,19 +1,19 @@
 
 import React, { useState } from 'react';
-import { Calendar, Clock, Moon, BookOpen, Briefcase, ChevronRight, RefreshCw, Brain, PenTool, Layers, Coffee, Zap } from 'lucide-react';
+import { Calendar, Clock, Moon, BookOpen, Briefcase, ChevronRight, RefreshCw, Brain, PenTool, Layers, Coffee, Zap, Sun as SunIcon, RotateCw } from 'lucide-react';
 
 const TimetableGenerator = () => {
   // State
   const [coachingDays, setCoachingDays] = useState<string[]>(['Mon', 'Wed', 'Fri']);
-  const [coachingStart, setCoachingStart] = useState('17:30'); // 05:30 PM
-  const [coachingEnd, setCoachingEnd] = useState('20:30');   // 08:30 PM
+  const [coachingStart, setCoachingStart] = useState('06:00'); // Default changed to morning for testing
+  const [coachingEnd, setCoachingEnd] = useState('09:00');
   
   const [schoolEnabled, setSchoolEnabled] = useState(true);
-  const [schoolStart, setSchoolStart] = useState('08:00');
-  const [schoolEnd, setSchoolEnd] = useState('14:00'); // 02:00 PM
+  const [schoolStart, setSchoolStart] = useState('10:00');
+  const [schoolEnd, setSchoolEnd] = useState('16:00'); 
   
-  const [wakeTime, setWakeTime] = useState('06:00');
-  const [bedTime, setBedTime] = useState('23:00'); // 11:00 PM
+  const [wakeTime, setWakeTime] = useState('05:30');
+  const [bedTime, setBedTime] = useState('22:30'); 
 
   const [generatedSchedule, setGeneratedSchedule] = useState<any[] | null>(null);
 
@@ -27,189 +27,209 @@ const TimetableGenerator = () => {
     }
   };
 
-  // Helper to add minutes to HH:MM string and return HH:MM
-  const addMinutes = (time: string, mins: number) => {
-     const [h, m] = time.split(':').map(Number);
-     const date = new Date();
-     date.setHours(h, m + mins);
-     const nh = date.getHours().toString().padStart(2, '0');
-     const nm = date.getMinutes().toString().padStart(2, '0');
-     return `${nh}:${nm}`;
+  // --- Utility Functions ---
+
+  const toMins = (t: string) => {
+      if(!t) return 0;
+      const [h, m] = t.split(':').map(Number);
+      return h * 60 + m;
   };
 
-  // Helper to get duration in minutes between two times
-  const getDuration = (start: string, end: string) => {
-      const [sh, sm] = start.split(':').map(Number);
-      const [eh, em] = end.split(':').map(Number);
-      return (eh * 60 + em) - (sh * 60 + sm);
+  const fromMins = (m: number) => {
+      let h = Math.floor(m / 60);
+      const mn = m % 60;
+      // Handle day overflow if needed, though simpler to assume single day
+      if (h >= 24) h = h - 24;
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const displayH = h % 12 || 12;
+      return `${displayH}:${mn.toString().padStart(2, '0')} ${ampm}`;
   };
 
   const handleGenerate = () => {
-    const slots = [];
-    
-    // --- 1. WAKE UP & ROUTINE ---
-    slots.push({ 
-        time: wakeTime, 
-        label: 'Wake Up & Hydrate', 
+    let slots: any[] = [];
+    let currentMins = toMins(wakeTime);
+    const endOfDayMins = toMins(bedTime);
+
+    // 1. Initial Wake Up
+    slots.push({
+        time: fromMins(currentMins),
+        label: 'Wake Up & Hydrate',
         type: 'routine',
-        icon: <SunIcon className="w-4 h-4" /> 
+        icon: <SunIcon className="w-4 h-4" />
     });
+    currentMins += 30; // 30 mins freshen up
 
-    let currentTime = addMinutes(wakeTime, 30); // 30 mins freshen up
+    // 2. Define Fixed Blocks (School & Coaching)
+    const fixedBlocks: { start: number; end: number; label: string; type: string; subtext?: string }[] = [];
 
-    // --- 2. MORNING SLOT (High Focus) ---
-    // Check gap before school or general morning
-    const morningLimit = schoolEnabled ? schoolStart : '12:00';
-    const morningDuration = getDuration(currentTime, morningLimit);
-
-    if (morningDuration >= 60) {
-        // Enough time for a solid session
-        const sessionEnd = addMinutes(currentTime, Math.min(morningDuration, 120)); // Cap at 2 hours
-        slots.push({ 
-            time: currentTime, 
-            endTime: sessionEnd, 
-            label: 'Physics: Concepts & Theory', 
-            subtext: 'Morning is best for heavy concepts. Read notes or watch lectures.',
-            type: 'theory',
-            subject: 'Physics'
-        });
-        currentTime = sessionEnd;
-    } 
-    
-    // Fill remaining time before school with revision
-    if (schoolEnabled && getDuration(currentTime, schoolStart) > 20) {
-        slots.push({
-            time: currentTime,
-            endTime: schoolStart,
-            label: 'Quick Revision: Formula Flashcards',
-            type: 'revision'
-        });
-        currentTime = schoolStart;
-    }
-
-    // --- 3. SCHOOL BLOCK ---
     if (schoolEnabled) {
-        slots.push({ 
-            time: schoolStart, 
-            endTime: schoolEnd, 
-            label: 'School / College', 
-            subtext: 'Try to solve easy MCQs during free periods.',
-            type: 'school' 
+        fixedBlocks.push({
+            start: toMins(schoolStart),
+            end: toMins(schoolEnd),
+            label: 'School / College',
+            type: 'school',
+            subtext: 'Try to solve easy MCQs during free periods.'
         });
-        currentTime = schoolEnd;
     }
 
-    // --- 4. AFTERNOON (Lunch & Rest) ---
-    const lunchEnd = addMinutes(currentTime, 45);
-    slots.push({ 
-        time: currentTime, 
-        endTime: lunchEnd, 
-        label: 'Lunch & Power Nap', 
-        type: 'routine',
-        icon: <Coffee className="w-4 h-4" />
-    });
-    currentTime = lunchEnd;
+    // Assuming today is a coaching day for generation purposes
+    if (coachingDays.length > 0) {
+         fixedBlocks.push({
+            start: toMins(coachingStart),
+            end: toMins(coachingEnd),
+            label: 'Coaching Classes',
+            type: 'coaching'
+        });
+    }
 
-    // --- 5. MID-DAY SLOT (Practice) ---
-    // Gap before Coaching or Evening
-    const eveningLimit = coachingDays.length > 0 ? coachingStart : '18:00';
-    let afternoonDuration = getDuration(currentTime, eveningLimit);
+    // Sort blocks by start time to handle morning coaching correctly
+    fixedBlocks.sort((a, b) => a.start - b.start);
 
-    if (afternoonDuration > 60) {
-        // Math Practice (Active work prevents sleepiness)
-        const sessionTime = Math.min(afternoonDuration, 180); // Max 3 hours
-        const practiceEnd = addMinutes(currentTime, sessionTime);
+    // --- GAP FILLER LOGIC ---
+    // Added isAfterCoaching parameter to prioritize revision
+    const fillGap = (start: number, end: number, isAfterCoaching: boolean) => {
+        let now = start;
+        let coachingRevisionDone = !isAfterCoaching; // If not after coaching, consider it done. If after, it's pending.
+
+        while (now < end) {
+            const duration = end - now;
+            const hour = Math.floor(now / 60);
+
+            // A. MEALS (High Priority if time matches)
+            // Breakfast (7-9 AM)
+            if (hour >= 7 && hour < 9 && duration >= 20 && !slots.some(s => s.label.includes('Breakfast'))) {
+                 const len = Math.min(30, duration);
+                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Breakfast', type: 'routine', icon: <Coffee className="w-4 h-4" /> });
+                 now += len;
+                 continue;
+            }
+            // Lunch (12-2 PM)
+            if (hour >= 12 && hour < 14 && duration >= 30 && !slots.some(s => s.label.includes('Lunch'))) {
+                 const len = Math.min(45, duration);
+                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Lunch & Power Nap', type: 'routine', icon: <Coffee className="w-4 h-4" /> });
+                 now += len;
+                 continue;
+            }
+            // Dinner (7:30-9:30 PM)
+            if (hour >= 19.5 && hour < 21.5 && duration >= 30 && !slots.some(s => s.label.includes('Dinner'))) {
+                 const len = Math.min(45, duration);
+                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Dinner & Relax', type: 'routine' });
+                 now += len;
+                 continue;
+            }
+
+            // B. COACHING REVISION (Specific Priority)
+            if (!coachingRevisionDone && duration >= 20) {
+                const revLen = Math.min(60, duration); // Allocate up to 1 hour
+                slots.push({ 
+                    time: fromMins(now), 
+                    endTime: fromMins(now + revLen), 
+                    label: 'Class Notes Revision', 
+                    type: 'revision', 
+                    subtext: "Immediately revise today's coaching topics while fresh.",
+                    icon: <RotateCw className="w-4 h-4" />
+                });
+                now += revLen;
+                coachingRevisionDone = true; // Mark as done so we don't repeat in this gap
+                continue;
+            }
+
+            // C. STUDY SLOTS
+            if (duration < 30) {
+                // Too small for study -> Transit/Relax
+                slots.push({ time: fromMins(now), endTime: fromMins(end), label: 'Transit / Relax', type: 'routine' });
+                now = end;
+            } else if (duration < 60) {
+                // Short session -> Revision
+                slots.push({ time: fromMins(now), endTime: fromMins(now + duration), label: 'Quick Revision / Flashcards', type: 'revision' });
+                now += duration;
+            } else {
+                // Deep work block
+                // Subject logic based on time of day
+                let subject = 'Physics'; 
+                let type = 'theory';
+                let label = 'Physics: Concepts';
+                let subtext = 'Morning is best for heavy concepts.';
+
+                if (hour >= 12 && hour < 18) {
+                    subject = 'Maths';
+                    type = 'practice';
+                    label = 'Maths: Problem Solving';
+                    subtext = 'Active problem solving prevents afternoon slump.';
+                } else if (hour >= 18) {
+                    subject = 'Chemistry';
+                    type = 'theory';
+                    label = 'Chemistry: NCERT & Memorization';
+                    subtext = 'End day with inorganic/organic reading.';
+                }
+
+                // Cap block at 2 hours (120 mins) to allow breaks or switching
+                const blockLen = Math.min(duration, 120); 
+                slots.push({ 
+                    time: fromMins(now), 
+                    endTime: fromMins(now + blockLen), 
+                    label: label, 
+                    type: type, 
+                    subject: subject,
+                    subtext: subtext
+                });
+                now += blockLen;
+                
+                // If we capped the block, add a small break
+                if (now < end && blockLen >= 90) {
+                    const breakLen = Math.min(15, end - now);
+                    slots.push({ time: fromMins(now), endTime: fromMins(now + breakLen), label: 'Short Break', type: 'routine' });
+                    now += breakLen;
+                }
+            }
+        }
+    };
+
+    // 3. Iterate through Day
+    let isAfterCoaching = false;
+
+    for (const block of fixedBlocks) {
+        // Fill time before this block
+        if (currentMins < block.start) {
+            fillGap(currentMins, block.start, isAfterCoaching);
+        }
         
-        // Split if long session
-        if (sessionTime > 120) {
-             const part1End = addMinutes(currentTime, sessionTime / 2);
+        // Add the Fixed Block (if not overlapped completely)
+        if (currentMins < block.end) {
+             // If block started before currentMins (overlap), adjust start
+             const effectiveStart = Math.max(currentMins, block.start);
              slots.push({
-                 time: currentTime,
-                 endTime: part1End,
-                 label: 'Maths: Problem Solving (Exercise 1)',
-                 type: 'practice',
-                 subject: 'Maths'
-             });
-             slots.push({
-                time: part1End,
-                endTime: practiceEnd,
-                label: 'Maths: Deep Practice (Exercise 2)',
-                type: 'practice',
-                subject: 'Maths'
+                time: fromMins(effectiveStart),
+                endTime: fromMins(block.end),
+                label: block.label,
+                type: block.type,
+                subtext: block.subtext
             });
+            currentMins = block.end;
+            
+            // Update flag: Is the block we just finished a coaching block?
+            isAfterCoaching = (block.type === 'coaching');
         } else {
-            slots.push({
-                time: currentTime,
-                endTime: practiceEnd,
-                label: 'Maths: Problem Solving',
-                type: 'practice',
-                subject: 'Maths'
-            });
+            // Block was skipped/overlapped, so flag shouldn't necessarily persist unless it was indeed coaching
+            isAfterCoaching = false; 
         }
-        currentTime = practiceEnd;
     }
 
-    // --- 6. COACHING BLOCK ---
-    if (coachingDays.length > 0 && getDuration(currentTime, coachingStart) >= 0) {
-        // If there's a small gap, fill with revision
-        if (getDuration(currentTime, coachingStart) > 30) {
-             slots.push({
-                time: currentTime,
-                endTime: coachingStart,
-                label: 'Pre-Class Revision',
-                type: 'revision'
-             });
-        }
-
-        slots.push({ 
-            time: coachingStart, 
-            endTime: coachingEnd, 
-            label: 'Coaching Classes', 
-            type: 'coaching' 
-        });
-        currentTime = coachingEnd;
+    // 4. Fill remaining time until Bed
+    if (currentMins < endOfDayMins) {
+        fillGap(currentMins, endOfDayMins, isAfterCoaching);
     }
 
-    // --- 7. EVENING ROUTINE ---
-    const dinnerEnd = addMinutes(currentTime, 45);
-    slots.push({ 
-        time: currentTime, 
-        endTime: dinnerEnd, 
-        label: 'Dinner & Relax', 
-        type: 'routine' 
-    });
-    currentTime = dinnerEnd;
-
-    // --- 8. NIGHT SLOT (Chemistry/Backlog) ---
-    // Time until bed
-    const nightDuration = getDuration(currentTime, bedTime);
-    
-    if (nightDuration > 45) {
-        slots.push({
-            time: currentTime,
-            endTime: bedTime,
-            label: 'Chemistry: NCERT Reading & Memorization',
-            subtext: 'Inorganic/Organic requires daily reading. End day with Backlog clearing.',
-            type: 'theory',
-            subject: 'Chemistry'
-        });
-    }
-
-    // --- 9. SLEEP ---
-    slots.push({ 
-        time: bedTime, 
-        label: 'Sleep & Recovery', 
-        subtext: '7 hours of sleep is non-negotiable for memory retention.',
+    // 5. Sleep
+    slots.push({
+        time: fromMins(endOfDayMins),
+        label: 'Sleep & Recovery',
         type: 'sleep',
         icon: <Moon className="w-4 h-4" />
     });
 
     setGeneratedSchedule(slots);
   };
-
-  const SunIcon = ({className}: {className?: string}) => (
-    <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg>
-  );
 
   return (
     <div className="max-w-2xl mx-auto pb-10">
@@ -456,10 +476,6 @@ const TimetableGenerator = () => {
                             </div>
                         );
                     })}
-                </div>
-
-                <div className="mt-6 pt-4 border-t border-slate-100 text-center">
-                    <p className="text-xs text-slate-400">Schedule generated based on standard JEE toppers' routines.</p>
                 </div>
             </div>
         )}
