@@ -14,7 +14,8 @@ import {
   AlertCircle,
   HelpCircle,
   ChevronDown,
-  Loader2
+  Loader2,
+  CheckCircle2
 } from 'lucide-react';
 
 interface AuthScreenProps {
@@ -25,6 +26,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const [isRegistering, setIsRegistering] = useState(false); // Default to login
   const [role, setRole] = useState<Role>('STUDENT');
   const [error, setError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   
   // Form State
@@ -41,6 +43,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   const handleAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setSuccessMessage('');
     setIsLoading(true);
 
     // --- ADMIN FAILSAFE SHORTCUT (Optional, for recovery) ---
@@ -94,8 +97,15 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             throw new Error(data.message || 'Authentication failed');
         }
 
-        // Success!
-        onLogin(data.user);
+        if (isRegistering) {
+            // Registration Successful: Don't login automatically
+            setIsRegistering(false); // Switch to Login view
+            setSuccessMessage("Registration successful! Please log in with your credentials.");
+            setFormData(prev => ({ ...prev, password: '' })); // Clear password for security
+        } else {
+            // Login Successful
+            onLogin(data.user);
+        }
 
     } catch (err: any) {
         setError(err.message || "An unexpected error occurred.");
@@ -144,6 +154,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     onClick={() => {
                         setIsRegistering(!isRegistering);
                         setError('');
+                        setSuccessMessage('');
                         setFormData(prev => ({ ...prev, password: '' })); // Clear pass
                     }}
                     className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
@@ -307,6 +318,14 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                                 />
                             </div>
                         </div>
+                    </div>
+                )}
+
+                {/* Success Message */}
+                {successMessage && (
+                    <div className="flex items-center text-green-700 text-xs bg-green-50 p-3 rounded-lg border border-green-200 animate-in fade-in slide-in-from-top-1">
+                        <CheckCircle2 className="w-4 h-4 mr-2 shrink-0" />
+                        {successMessage}
                     </div>
                 )}
 
