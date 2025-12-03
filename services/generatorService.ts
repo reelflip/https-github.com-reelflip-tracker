@@ -348,13 +348,14 @@ export const generateHtaccess = (): string => {
 </IfModule>`;
 };
 
-export const generatePHPAuth = (): string => {
-  return `
-/* ========================================================
-   FILE: api/config.php
-   ACTION: Create this file inside 'api' folder.
-   ======================================================== */
-<?php
+// Export individual file objects
+export const getBackendFiles = () => {
+    return [
+        {
+            name: "config.php",
+            folder: "api",
+            desc: "Database connection & settings. Edit password here.",
+            content: `<?php
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE");
@@ -378,116 +379,46 @@ try {
     echo json_encode(["error" => "Connection error: " . $exception->getMessage()]);
     exit();
 }
-?>
-
-
-/* ========================================================
-   FILE: api/register.php
-   ACTION: Create this file inside 'api' folder.
-   ======================================================== */
-<?php
-use PHPMailer\\PHPMailer\\PHPMailer;
-use PHPMailer\\PHPMailer\\Exception;
-
-// IMPORTANT: Ensure /api/PHPMailer/src/ folder exists with these files
-require 'PHPMailer/src/Exception.php';
-require 'PHPMailer/src/PHPMailer.php';
-require 'PHPMailer/src/SMTP.php';
-
-include_once 'config.php';
-$data = json_decode(file_get_contents("php://input"));
-
-if(isset($data->email) && isset($data->password)) {
-    $email = $data->email;
-    $password = password_hash($data->password, PASSWORD_BCRYPT);
-    $name = $data->name;
-    $role = $data->role;
-    $token = bin2hex(random_bytes(16)); // Verification Token
-
-    // Insert user with is_verified = 0
-    $query = "INSERT INTO users (email, password_hash, full_name, role, is_verified, verification_token, institute, target_year) VALUES (:email, :pass, :name, :role, 0, :token, :inst, :year)";
-    
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(":email", $email);
-    $stmt->bindParam(":pass", $password);
-    $stmt->bindParam(":name", $name);
-    $stmt->bindParam(":role", $role);
-    $stmt->bindParam(":token", $token);
-    $stmt->bindParam(":inst", $data->institute);
-    $stmt->bindParam(":year", $data->targetYear);
-
-    if($stmt->execute()) {
-        // --- SEND EMAIL VIA GMAIL SMTP ---
-        $mail = new PHPMailer(true);
-
-        try {
-            $mail->isSMTP();                                            
-            $mail->Host       = SMTP_HOST;                     
-            $mail->SMTPAuth   = true;                                   
-            $mail->Username   = SMTP_USER;                     
-            $mail->Password   = SMTP_PASS;                               
-            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;            
-            $mail->Port       = SMTP_PORT;                                    
-
-            $mail->setFrom(SMTP_USER, 'JEE Tracker Admin');
-            $mail->addAddress($email, $name);     
-
-            $mail->isHTML(true);                                  
-            $mail->Subject = 'Verify your JEE Tracker Account';
-            
-            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-            $domain = $_SERVER['HTTP_HOST'];
-            $verifyLink = "$protocol://$domain/api/verify.php?token=$token";
-
-            $mail->Body    = "
-                <h3>Hi $name,</h3>
-                <p>Welcome to JEE Tracker. Please verify your email to unlock your account.</p>
-                <p><a href='$verifyLink' style='background:#2563eb; color:white; padding:10px 20px; text-decoration:none; border-radius:5px;'>Verify Account</a></p>
-                <p>Or copy this link: $verifyLink</p>
-            ";
-            $mail->AltBody = "Hi $name, Please verify your account: $verifyLink";
-
-            $mail->send();
-            echo json_encode(["message" => "Registration successful. Verification email sent."]);
-        } catch (Exception $e) {
-            echo json_encode(["message" => "User registered, but email could not be sent. Mailer Error: {$mail->ErrorInfo}"]);
-        }
-
-    } else {
-        http_response_code(400);
-        echo json_encode(["message" => "User already exists or error occurred."]);
-    }
-}
-?>
-
-
-/* ========================================================
-   FILE: api/verify.php
-   ACTION: Create this file inside 'api' folder.
-   ======================================================== */
-<?php
+?>`
+        },
+        {
+            name: "test_db.php",
+            folder: "api",
+            desc: "Diagnostic tool to check database connection and table counts.",
+            content: `<?php
 include_once 'config.php';
 
-if(isset($_GET['token'])) {
-    $token = $_GET['token'];
-    $query = "UPDATE users SET is_verified = 1, verification_token = NULL WHERE verification_token = :token";
-    $stmt = $conn->prepare($query);
-    $stmt->bindParam(":token", $token);
-    
-    if($stmt->execute() && $stmt->rowCount() > 0) {
-        echo "<h1>Account Verified! ✅</h1><p>You can now go back to the app and login.</p>";
-    } else {
-        echo "<h1>Invalid or expired token. ❌</h1>";
+$response = [];
+
+try {
+    // 1. Check Connection
+    $response['status'] = 'CONNECTED';
+    $response['db_name'] = $db_name;
+    $response['server_info'] = $conn->getAttribute(PDO::ATTR_SERVER_INFO);
+
+    // 2. Get Table Stats
+    $tables = [];
+    $stmt = $conn->query("SHOW TABLES");
+    while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
+        $table = $row[0];
+        $count = $conn->query("SELECT COUNT(*) FROM $table")->fetchColumn();
+        $tables[] = ["name" => $table, "rows" => $count];
     }
+    $response['tables'] = $tables;
+
+} catch(PDOException $e) {
+    $response['status'] = 'ERROR';
+    $response['message'] = $e->getMessage();
 }
-?>
 
-
-/* ========================================================
-   FILE: api/login.php
-   ACTION: Create this file inside 'api' folder.
-   ======================================================== */
-<?php
+echo json_encode($response);
+?>`
+        },
+        {
+            name: "login.php",
+            folder: "api",
+            desc: "Handles user authentication.",
+            content: `<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
 
@@ -527,54 +458,102 @@ if(isset($data->email) && isset($data->password)) {
         echo json_encode(["message" => "User not found."]);
     }
 }
-?>
+?>`
+        },
+        {
+            name: "register.php",
+            folder: "api",
+            desc: "Handles user registration and email verification.",
+            content: `<?php
+use PHPMailer\\PHPMailer\\PHPMailer;
+use PHPMailer\\PHPMailer\\Exception;
 
+require 'PHPMailer/src/Exception.php';
+require 'PHPMailer/src/PHPMailer.php';
+require 'PHPMailer/src/SMTP.php';
 
-/* ========================================================
-   FILE: api/sync_progress.php
-   ACTION: Create this file inside 'api' folder.
-   ======================================================== */
-<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
 
-if(isset($data->user_id) && isset($data->topic_id)) {
-    // Check if exists
-    $check = $conn->prepare("SELECT id FROM topic_progress WHERE user_id = ? AND topic_id = ?");
-    $check->execute([$data->user_id, $data->topic_id]);
+if(isset($data->email) && isset($data->password)) {
+    $email = $data->email;
+    $password = password_hash($data->password, PASSWORD_BCRYPT);
+    $name = $data->name;
+    $role = $data->role;
+    $token = bin2hex(random_bytes(16));
+
+    $query = "INSERT INTO users (email, password_hash, full_name, role, is_verified, verification_token, institute, target_year) VALUES (:email, :pass, :name, :role, 0, :token, :inst, :year)";
     
-    if($check->rowCount() > 0) {
-        $sql = "UPDATE topic_progress SET status=?, ex1_solved=?, ex1_total=?, ex2_solved=?, ex2_total=?, ex3_solved=?, ex3_total=?, ex4_solved=?, ex4_total=? WHERE user_id=? AND topic_id=?";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([
-            $data->status, 
-            $data->ex1Solved, $data->ex1Total, 
-            $data->ex2Solved, $data->ex2Total, 
-            $data->ex3Solved, $data->ex3Total,
-            $data->ex4Solved, $data->ex4Total,
-            $data->user_id, $data->topic_id
-        ]);
+    $stmt = $conn->prepare($query);
+    $stmt->bindParam(":email", $email);
+    $stmt->bindParam(":pass", $password);
+    $stmt->bindParam(":name", $name);
+    $stmt->bindParam(":role", $role);
+    $stmt->bindParam(":token", $token);
+    $stmt->bindParam(":inst", $data->institute);
+    $stmt->bindParam(":year", $data->targetYear);
+
+    if($stmt->execute()) {
+        $mail = new PHPMailer(true);
+        try {
+            $mail->isSMTP();                                            
+            $mail->Host       = SMTP_HOST;                     
+            $mail->SMTPAuth   = true;                                   
+            $mail->Username   = SMTP_USER;                     
+            $mail->Password   = SMTP_PASS;                               
+            $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;            
+            $mail->Port       = SMTP_PORT;                                    
+
+            $mail->setFrom(SMTP_USER, 'JEE Tracker Admin');
+            $mail->addAddress($email, $name);     
+
+            $mail->isHTML(true);                                  
+            $mail->Subject = 'Verify your JEE Tracker Account';
+            
+            $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
+            $domain = $_SERVER['HTTP_HOST'];
+            $verifyLink = "$protocol://$domain/api/verify.php?token=$token";
+
+            $mail->Body    = "<h3>Hi $name,</h3><p>Verify email: <a href='$verifyLink'>Click Here</a></p>";
+            
+            $mail->send();
+            echo json_encode(["message" => "Verification email sent."]);
+        } catch (Exception $e) {
+            echo json_encode(["message" => "Registered but email failed."]);
+        }
     } else {
-        $sql = "INSERT INTO topic_progress (user_id, topic_id, status, ex1_solved, ex1_total, ex2_solved, ex2_total, ex3_solved, ex3_total, ex4_solved, ex4_total) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([
-            $data->user_id, $data->topic_id, $data->status,
-            $data->ex1Solved, $data->ex1Total, 
-            $data->ex2Solved, $data->ex2Total, 
-            $data->ex3Solved, $data->ex3Total,
-            $data->ex4Solved, $data->ex4Total
-        ]);
+        http_response_code(400);
+        echo json_encode(["message" => "Error registering user."]);
     }
-    echo json_encode(["message" => "Progress saved"]);
 }
-?>
+?>`
+        },
+        {
+            name: "verify.php",
+            folder: "api",
+            desc: "Verifies the token from the email link.",
+            content: `<?php
+include_once 'config.php';
 
-
-/* ========================================================
-   FILE: api/get_dashboard.php
-   ACTION: Create this file inside 'api' folder.
-   ======================================================== */
-<?php
+if(isset($_GET['token'])) {
+    $token = $_GET['token'];
+    $query = "UPDATE users SET is_verified = 1, verification_token = NULL WHERE verification_token = :token";
+    $stmt = $conn->prepare($query);
+    $stmt->bindParam(":token", $token);
+    
+    if($stmt->execute() && $stmt->rowCount() > 0) {
+        echo "<h1>Account Verified! ✅</h1><p>You can now go back to the app and login.</p>";
+    } else {
+        echo "<h1>Invalid or expired token. ❌</h1>";
+    }
+}
+?>`
+        },
+        {
+            name: "get_dashboard.php",
+            folder: "api",
+            desc: "Fetches all user data (progress, goals, mistakes, timetable).",
+            content: `<?php
 include_once 'config.php';
 $user_id = $_GET['user_id'];
 
@@ -610,13 +589,13 @@ echo json_encode([
     "mistakes" => $mistakes,
     "timetable" => $timetable ? json_decode($timetable['generated_slots_json']) : null
 ]);
-?>
-
-/* ========================================================
-   FILE: api/get_common.php
-   ACTION: Create this file inside 'api' folder.
-   ======================================================== */
-<?php
+?>`
+        },
+        {
+            name: "get_common.php",
+            folder: "api",
+            desc: "Fetches shared data (quotes, tests, flashcards, notifications).",
+            content: `<?php
 include_once 'config.php';
 
 // Quotes
@@ -630,7 +609,6 @@ $notifs = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC LIM
 
 // Tests
 $tests = $conn->query("SELECT * FROM tests")->fetchAll(PDO::FETCH_ASSOC);
-// Note: In real app, you would fetch questions for each test here or lazy load them.
 
 echo json_encode([
     "quotes" => $quotes,
@@ -638,18 +616,129 @@ echo json_encode([
     "notifications" => $notifs,
     "tests" => $tests
 ]);
-?>
-
-/* ========================================================
-   FILE: api/manage_goals.php
-   ACTION: Create this file inside 'api' folder.
-   ======================================================== */
-<?php
+?>`
+        },
+        {
+            name: "sync_progress.php",
+            folder: "api",
+            desc: "Saves syllabus progress updates.",
+            content: `<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
-// Basic CRUD for goals...
-?>
-`;
+
+if(isset($data->user_id) && isset($data->topic_id)) {
+    // Check if exists
+    $check = $conn->prepare("SELECT id FROM topic_progress WHERE user_id = ? AND topic_id = ?");
+    $check->execute([$data->user_id, $data->topic_id]);
+    
+    if($check->rowCount() > 0) {
+        $sql = "UPDATE topic_progress SET status=?, ex1_solved=?, ex1_total=?, ex2_solved=?, ex2_total=?, ex3_solved=?, ex3_total=?, ex4_solved=?, ex4_total=? WHERE user_id=? AND topic_id=?";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            $data->status, 
+            $data->ex1Solved, $data->ex1Total, 
+            $data->ex2Solved, $data->ex2Total, 
+            $data->ex3Solved, $data->ex3Total,
+            $data->ex4Solved, $data->ex4Total,
+            $data->user_id, $data->topic_id
+        ]);
+    } else {
+        $sql = "INSERT INTO topic_progress (user_id, topic_id, status, ex1_solved, ex1_total, ex2_solved, ex2_total, ex3_solved, ex3_total, ex4_solved, ex4_total) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([
+            $data->user_id, $data->topic_id, $data->status,
+            $data->ex1Solved, $data->ex1Total, 
+            $data->ex2Solved, $data->ex2Total, 
+            $data->ex3Solved, $data->ex3Total,
+            $data->ex4Solved, $data->ex4Total
+        ]);
+    }
+    echo json_encode(["message" => "Progress saved"]);
+}
+?>`
+        },
+        {
+            name: "manage_goals.php",
+            folder: "api",
+            desc: "Add/Update/Delete Daily Goals.",
+            content: `<?php
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'POST') {
+    // Add Goal
+    $stmt = $conn->prepare("INSERT INTO daily_goals (id, user_id, goal_text, is_completed) VALUES (?, ?, ?, 0)");
+    $stmt->execute([$data->id, $data->user_id, $data->text]);
+    echo json_encode(["message" => "Goal added"]);
+} elseif ($method === 'PUT') {
+    // Toggle Status
+    $stmt = $conn->prepare("UPDATE daily_goals SET is_completed = NOT is_completed WHERE id = ?");
+    $stmt->execute([$data->id]);
+    echo json_encode(["message" => "Goal toggled"]);
+}
+?>`
+        },
+        {
+            name: "manage_backlogs.php",
+            folder: "api",
+            desc: "Manage backlog items.",
+            content: `<?php
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'POST') {
+    $stmt = $conn->prepare("INSERT INTO backlogs (id, user_id, title, subject_id, priority, deadline, status) VALUES (?, ?, ?, ?, ?, ?, 'PENDING')");
+    $stmt->execute([$data->id, $data->user_id, $data->title, $data->subjectId, $data->priority, $data->deadline]);
+    echo json_encode(["message" => "Backlog added"]);
+} elseif ($method === 'PUT') {
+    $stmt = $conn->prepare("UPDATE backlogs SET status = IF(status='PENDING','CLEARED','PENDING') WHERE id = ?");
+    $stmt->execute([$data->id]);
+    echo json_encode(["message" => "Status updated"]);
+} elseif ($method === 'DELETE') {
+    $stmt = $conn->prepare("DELETE FROM backlogs WHERE id = ?");
+    $stmt->execute([$_GET['id']]);
+    echo json_encode(["message" => "Deleted"]);
+}
+?>`
+        },
+        {
+            name: "manage_mistakes.php",
+            folder: "api",
+            desc: "Manage mistake notebook.",
+            content: `<?php
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+$method = $_SERVER['REQUEST_METHOD'];
+
+if ($method === 'POST') {
+    $stmt = $conn->prepare("INSERT INTO mistake_notebook (id, user_id, question_text, subject_id, topic_id, test_name, user_notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$data->id, $data->user_id, $data->questionText, $data->subjectId, $data->topicId, $data->testName, $data->userNotes]);
+} elseif ($method === 'PUT') {
+    $stmt = $conn->prepare("UPDATE mistake_notebook SET user_notes = ?, tags_json = ? WHERE id = ?");
+    $stmt->execute([$data->userNotes, json_encode($data->tags), $data->id]);
+} elseif ($method === 'DELETE') {
+    $stmt = $conn->prepare("DELETE FROM mistake_notebook WHERE id = ?");
+    $stmt->execute([$_GET['id']]);
+}
+?>`
+        },
+        {
+            name: "save_timetable.php",
+            folder: "api",
+            desc: "Save generated timetable config.",
+            content: `<?php
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+
+// Insert or Update
+$stmt = $conn->prepare("INSERT INTO timetable_settings (user_id, config_json, generated_slots_json) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE config_json=VALUES(config_json), generated_slots_json=VALUES(generated_slots_json)");
+$stmt->execute([$data->user_id, json_encode($data->config), json_encode($data->slots)]);
+echo json_encode(["message" => "Timetable saved"]);
+?>`
+        }
+    ];
 };
 
 export const generateGitHubAction = (): string => {
