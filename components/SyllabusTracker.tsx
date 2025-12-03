@@ -12,7 +12,8 @@ import {
   MoreHorizontal,
   BookOpen,
   Save,
-  Loader2
+  Loader2,
+  Target
 } from 'lucide-react';
 
 interface SyllabusTrackerProps {
@@ -101,7 +102,21 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
   };
 
   return (
-    <div className="space-y-8 font-inter">
+    <div className="space-y-8 font-inter animate-in fade-in slide-in-from-bottom-4">
+      {/* Header Banner */}
+      <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
+          <div className="relative z-10">
+              <div className="flex items-center space-x-3 mb-2">
+                 <BookOpen className="w-8 h-8 text-white" />
+                 <h1 className="text-3xl font-bold">Comprehensive Syllabus Tracker</h1>
+              </div>
+              <p className="text-blue-100 text-lg opacity-90 max-w-2xl">Track your completion status, exercise progress, and revision cycles chapter by chapter.</p>
+          </div>
+          {/* Decorative circles */}
+          <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white opacity-10"></div>
+          <div className="absolute bottom-0 right-20 w-32 h-32 rounded-full bg-white opacity-10"></div>
+      </div>
+
       {/* --- Top Stats Overview --- */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {/* Student Overview */}
