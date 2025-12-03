@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { generateSQLSchema, generatePHPAuth, generateFrontendGuide } from '../services/generatorService';
 import { Download, Database, Code, Users, Radio, MessageSquare, FileText, Plus, Check, Terminal, Shield, Lock, Activity, Trash2 } from 'lucide-react';
 import { User, Question, Test, Notification, Quote } from '../types';
@@ -9,6 +9,8 @@ interface AdminPanelProps {
     users: User[];
     questionBank: Question[];
     quotes: Quote[];
+    activeTab: string;
+    onTabChange: (tab: string) => void;
     onAddQuestion: (q: Question) => void;
     onCreateTest: (t: Test) => void;
     onSendNotification: (n: Notification) => void;
@@ -22,6 +24,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     users, 
     questionBank, 
     quotes,
+    activeTab,
+    onTabChange,
     onAddQuestion, 
     onCreateTest, 
     onSendNotification,
@@ -30,6 +34,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 }) => {
     const [view, setView] = useState<TabView>('BROADCAST');
     
+    // Sync sidebar activeTab with internal view
+    useEffect(() => {
+        if (activeTab === 'users') {
+            setView('USERS');
+        } else if (activeTab === 'system') {
+            setView('SYSTEM');
+        } else if (activeTab === 'dashboard') {
+            // Only reset to broadcast if we are currently on a tab that implies a sidebar change
+            if (view === 'USERS' || view === 'SYSTEM') {
+                setView('BROADCAST');
+            }
+        }
+    }, [activeTab]);
+
     // Broadcast State
     const [notifTitle, setNotifTitle] = useState('');
     const [notifMsg, setNotifMsg] = useState('');
@@ -50,6 +68,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const [testDifficulty, setTestDifficulty] = useState<'MAINS' | 'ADVANCED' | 'CUSTOM'>('CUSTOM');
 
     // --- Actions ---
+
+    const handleTabClick = (tabId: TabView) => {
+        setView(tabId);
+        // Sync back to parent sidebar
+        if (tabId === 'USERS') {
+            onTabChange('users');
+        } else if (tabId === 'SYSTEM') {
+            onTabChange('system');
+        } else {
+            onTabChange('dashboard');
+        }
+    };
 
     const submitNotification = () => {
         if (!notifTitle || !notifMsg) return;
@@ -164,7 +194,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 ].map(tab => (
                     <button 
                         key={tab.id}
-                        onClick={() => setView(tab.id as TabView)}
+                        onClick={() => handleTabClick(tab.id as TabView)}
                         className={`flex items-center px-4 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
                             view === tab.id 
                             ? 'bg-blue-600 text-white shadow-md' 

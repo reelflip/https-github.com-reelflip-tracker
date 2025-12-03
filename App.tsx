@@ -263,6 +263,8 @@ function App() {
           users={allUsers} 
           questionBank={questionBank}
           quotes={quotes}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
           onAddQuestion={handleAddQuestion}
           onCreateTest={handleCreateTest}
           onSendNotification={handleSendNotification}
