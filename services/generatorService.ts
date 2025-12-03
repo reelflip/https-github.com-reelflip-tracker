@@ -1,5 +1,4 @@
 
-
 import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, MOCK_USERS } from '../constants';
 import { Question } from '../types';
 
@@ -11,9 +10,34 @@ SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+05:30";
 
 --
+-- 0. CLEANUP (Drop existing tables to ensure fresh schema)
+--
+SET FOREIGN_KEY_CHECKS = 0;
+
+DROP TABLE IF EXISTS timetable_settings;
+DROP TABLE IF EXISTS backlogs;
+DROP TABLE IF EXISTS daily_goals;
+DROP TABLE IF EXISTS mistake_notebook;
+DROP TABLE IF EXISTS attempt_details;
+DROP TABLE IF EXISTS test_attempts;
+DROP TABLE IF EXISTS test_questions;
+DROP TABLE IF EXISTS tests;
+DROP TABLE IF EXISTS questions;
+DROP TABLE IF EXISTS topic_progress;
+DROP TABLE IF EXISTS topics;
+DROP TABLE IF EXISTS chapters;
+DROP TABLE IF EXISTS subjects;
+DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS notifications;
+DROP TABLE IF EXISTS quotes;
+DROP TABLE IF EXISTS flashcards;
+
+SET FOREIGN_KEY_CHECKS = 1;
+
+--
 -- 1. USERS TABLE
 --
-CREATE TABLE IF NOT EXISTS users (
+CREATE TABLE users (
     id INT AUTO_INCREMENT PRIMARY KEY,
     email VARCHAR(191) UNIQUE NOT NULL,
     password_hash VARCHAR(255) NOT NULL,
@@ -38,12 +62,12 @@ CREATE TABLE IF NOT EXISTS users (
 --
 -- 2. SYLLABUS TABLES (Subjects -> Chapters -> Topics)
 --
-CREATE TABLE IF NOT EXISTS subjects (
+CREATE TABLE subjects (
     id VARCHAR(50) PRIMARY KEY,
     name VARCHAR(100) NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS chapters (
+CREATE TABLE chapters (
     id VARCHAR(50) PRIMARY KEY,
     subject_id VARCHAR(50) NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -51,7 +75,7 @@ CREATE TABLE IF NOT EXISTS chapters (
     FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS topics (
+CREATE TABLE topics (
     id VARCHAR(50) PRIMARY KEY,
     chapter_id VARCHAR(50) NOT NULL,
     name VARCHAR(255) NOT NULL,
@@ -62,7 +86,7 @@ CREATE TABLE IF NOT EXISTS topics (
 --
 -- 3. PROGRESS TRACKING (Chapter to Exercise)
 --
-CREATE TABLE IF NOT EXISTS topic_progress (
+CREATE TABLE topic_progress (
     id INT AUTO_INCREMENT PRIMARY KEY,
     user_id INT NOT NULL,
     topic_id VARCHAR(50) NOT NULL,
@@ -86,7 +110,7 @@ CREATE TABLE IF NOT EXISTS topic_progress (
 --
 -- 4. TESTS & QUESTIONS
 --
-CREATE TABLE IF NOT EXISTS questions (
+CREATE TABLE questions (
     id VARCHAR(50) PRIMARY KEY,
     subject_id VARCHAR(50),
     topic_id VARCHAR(50),
@@ -97,7 +121,7 @@ CREATE TABLE IF NOT EXISTS questions (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS tests (
+CREATE TABLE tests (
     id VARCHAR(50) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     duration_minutes INT NOT NULL,
@@ -106,7 +130,7 @@ CREATE TABLE IF NOT EXISTS tests (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS test_questions (
+CREATE TABLE test_questions (
     test_id VARCHAR(50),
     question_id VARCHAR(50),
     question_order INT,
@@ -118,7 +142,7 @@ CREATE TABLE IF NOT EXISTS test_questions (
 --
 -- 5. ANALYTICS (Test Attempts)
 --
-CREATE TABLE IF NOT EXISTS test_attempts (
+CREATE TABLE test_attempts (
     id VARCHAR(50) PRIMARY KEY,
     user_id INT NOT NULL,
     test_id VARCHAR(50) NOT NULL,
@@ -132,7 +156,7 @@ CREATE TABLE IF NOT EXISTS test_attempts (
     FOREIGN KEY (test_id) REFERENCES tests(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS attempt_details (
+CREATE TABLE attempt_details (
     id INT AUTO_INCREMENT PRIMARY KEY,
     attempt_id VARCHAR(50) NOT NULL,
     question_id VARCHAR(50) NOT NULL,
@@ -144,7 +168,7 @@ CREATE TABLE IF NOT EXISTS attempt_details (
 --
 -- 6. MISTAKE NOTEBOOK
 --
-CREATE TABLE IF NOT EXISTS mistake_notebook (
+CREATE TABLE mistake_notebook (
     id VARCHAR(50) PRIMARY KEY,
     user_id INT NOT NULL,
     question_text TEXT,
@@ -160,7 +184,7 @@ CREATE TABLE IF NOT EXISTS mistake_notebook (
 --
 -- 7. TIMETABLE, GOALS & BACKLOGS
 --
-CREATE TABLE IF NOT EXISTS daily_goals (
+CREATE TABLE daily_goals (
     id VARCHAR(50) PRIMARY KEY,
     user_id INT NOT NULL,
     goal_text VARCHAR(255) NOT NULL,
@@ -169,7 +193,7 @@ CREATE TABLE IF NOT EXISTS daily_goals (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS backlogs (
+CREATE TABLE backlogs (
     id VARCHAR(50) PRIMARY KEY,
     user_id INT NOT NULL,
     title VARCHAR(255) NOT NULL,
@@ -181,7 +205,7 @@ CREATE TABLE IF NOT EXISTS backlogs (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS timetable_settings (
+CREATE TABLE timetable_settings (
     user_id INT PRIMARY KEY,
     config_json JSON NOT NULL,
     generated_slots_json JSON,
@@ -192,7 +216,7 @@ CREATE TABLE IF NOT EXISTS timetable_settings (
 --
 -- 8. NOTIFICATIONS, QUOTES & FLASHCARDS
 --
-CREATE TABLE IF NOT EXISTS notifications (
+CREATE TABLE notifications (
     id VARCHAR(50) PRIMARY KEY,
     title VARCHAR(255) NOT NULL,
     message TEXT NOT NULL,
@@ -200,14 +224,14 @@ CREATE TABLE IF NOT EXISTS notifications (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS quotes (
+CREATE TABLE quotes (
     id VARCHAR(50) PRIMARY KEY,
     text TEXT NOT NULL,
     author VARCHAR(100),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS flashcards (
+CREATE TABLE flashcards (
     id VARCHAR(50) PRIMARY KEY,
     subject_id ENUM('phys', 'chem', 'math') NOT NULL,
     front TEXT NOT NULL,
@@ -227,7 +251,6 @@ CREATE TABLE IF NOT EXISTS flashcards (
   sql += `('phys', 'Physics'),\n('chem', 'Chemistry'),\n('math', 'Mathematics');\n`;
 
   // 2. Seed Chapters & Topics
-  sql += `\n-- Seeding Chapters and Topics\n`;
   JEE_SYLLABUS.forEach((subject) => {
     subject.chapters.forEach((chapter, cIndex) => {
       const safeChapName = chapter.name.replace(/'/g, "''");
@@ -245,8 +268,8 @@ CREATE TABLE IF NOT EXISTS flashcards (
   });
 
   // 3. Seed Quotes
-  sql += `\n-- Seeding Default Quotes\n`;
   if (DEFAULT_QUOTES.length > 0) {
+      sql += `\n-- Seeding Quotes\n`;
       sql += `INSERT IGNORE INTO quotes (id, text, author) VALUES \n`;
       const quoteValues = DEFAULT_QUOTES.map(q => {
           const safeText = q.text.replace(/'/g, "''");
@@ -257,8 +280,8 @@ CREATE TABLE IF NOT EXISTS flashcards (
   }
 
   // 4. Seed Flashcards
-  sql += `\n-- Seeding Initial Flashcards\n`;
   if (INITIAL_FLASHCARDS.length > 0) {
+      sql += `\n-- Seeding Flashcards\n`;
       sql += `INSERT IGNORE INTO flashcards (id, subject_id, front, back, difficulty) VALUES \n`;
       const flashcardValues = INITIAL_FLASHCARDS.map(f => {
           const safeFront = f.front.replace(/'/g, "''").replace(/\\/g, '\\\\');
@@ -313,11 +336,10 @@ CREATE TABLE IF NOT EXISTS flashcards (
   
   // 6. Seed ADMIN User
   sql += `\n-- Seeding Admin User (Pass: Ishika@123)\n`;
-  sql += `INSERT IGNORE INTO users (email, password_hash, full_name, role, is_verified) VALUES ('admin', '$2y$10$YourHashedPasswordHereForIshika123', 'System Administrator', 'ADMIN', 1);\n`;
+  sql += `INSERT IGNORE INTO users (email, password_hash, full_name, role, is_verified) VALUES ('admin', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'System Administrator', 'ADMIN', 1);\n`;
 
   // 7. Seed Demo Student & Parent
   sql += `\n-- Seeding Demo Student (innfriend1@gmail.com / 123456) and Parent (vikas.00@gmail.com / 123456)\n`;
-  // Using a known hash for '123456' -> $2y$10$fWv0o... (example placeholder, replace with real bcrypt hash for 123456)
   // Real hash for 123456: $2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm
   const hash123456 = "$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm";
   
@@ -349,22 +371,30 @@ export const generateHtaccess = (): string => {
 };
 
 // Export individual file objects
-export const getBackendFiles = () => {
+export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: string, name: string }) => {
+    
+    // Use provided credentials or fallback to defaults
+    const dbHost = dbConfig?.host || "82.25.121.80";
+    const dbUser = dbConfig?.user || "u131922718_iitjee_user";
+    const dbPass = dbConfig?.pass || "YourStrongPassword";
+    const dbName = dbConfig?.name || "u131922718_iitjee_tracker";
+
     return [
         {
             name: "config.php",
             folder: "api",
-            desc: "Database connection & settings. Edit password here.",
+            desc: "Database connection & settings. AUTO-GENERATED from your input.",
             content: `<?php
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 
-$host = "82.25.121.80"; 
-$db_name = "u131922718_iitjee_tracker";
-$username = "u131922718_iitjee_user";
-$password = "YourStrongPassword";    // CHANGE THIS: You must manually set your DB password here.
+// DB CONFIGURATION FROM ADMIN PANEL INPUTS
+$host = "${dbHost}"; 
+$db_name = "${dbName}";
+$username = "${dbUser}";
+$password = "${dbPass}";
 
 // GMAIL SMTP CONFIG
 define('SMTP_HOST', 'smtp.gmail.com');
@@ -774,7 +804,7 @@ export const getDeploymentPhases = () => {
                 "Go to Files > File Manager > public_html.",
                 "Create a folder named 'api'.",
                 "Create specific PHP files inside 'api' (Download scripts from above).",
-                "Edit 'api/config.php' and PUT YOUR DATABASE PASSWORD.",
+                "Edit 'api/config.php' and PUT YOUR DATABASE PASSWORD (or use the generator above).",
                 "Create folder 'api/PHPMailer/src' and upload PHPMailer files."
             ]
         },
@@ -808,9 +838,10 @@ export const getDeploymentPhases = () => {
             bg: "bg-indigo-50",
             steps: [
                 "Go back to Hostinger File Manager > public_html.",
-                "Upload ALL files/folders from inside your local 'dist' folder.",
-                "Create a file named `.htaccess` in public_html and paste the code from the block below.",
-                "Done! Visit your website."
+                "OPEN your local 'dist' folder.",
+                "Select ALL files inside it (Usually just index.html and assets/ folder).",
+                "Drag & Drop them DIRECTLY into 'public_html'.",
+                "Ensure .htaccess is present to fix routing."
             ]
         }
     ];
@@ -846,15 +877,17 @@ PHASE 2: BACKEND API SETUP (File Manager)
 3. **Create a Folder** named \`api\`. Open it.
 4. **Create PHP Files**:
    - Download the "PHP Backend API" text from the System Docs.
-   - It contains code for multiple files separated by headers.
+   - **IMPORTANT:** If you entered your DB password in the "Database Configuration" form above before downloading, your \`config.php\` is ready to use. 
+   - Otherwise, open \`api/config.php\` and manually replace "YourStrongPassword" with your real DB password.
    - You need to create each file manually in the \`api\` folder:
-     - \`api/config.php\` (Paste code. **IMPORTANT:** Replace "YourStrongPassword" with your real DB password).
+     - \`api/config.php\`
      - \`api/login.php\`
      - \`api/register.php\`
      - \`api/sync_progress.php\`
      - \`api/get_dashboard.php\`
      - \`api/get_common.php\`
      - \`api/verify.php\`
+     - \`api/test_db.php\`
 5. **Install PHPMailer** (For Emails):
    - Inside the \`api\` folder, create a folder named \`PHPMailer\`.
    - Inside \`PHPMailer\`, create a folder named \`src\`.
@@ -888,11 +921,22 @@ PHASE 4: FRONTEND CONFIGURATION
 PHASE 5: UPLOAD & GO LIVE
 -------------------------
 1. Go back to Hostinger **File Manager** > **public_html**.
-2. **Upload** all files/folders from inside your \`dist\` folder.
-   - You should see \`index.html\`, \`assets\`, \`vite.svg\` etc. sitting directly in \`public_html\`.
-   - Ensure you do NOT upload the \`dist\` folder itself, but its *contents*.
-3. **React Routing Fix**:
-   - React needs a special file to handle routing (so refreshing /dashboard doesn't give 404).
+2. **Open the \`dist\` folder on your computer.**
+3. **Select ALL files** inside it.
+   - You should typically see:
+     - \`index.html\`
+     - \`assets/\` (This folder contains your compiled .js file)
+     - \`vite.svg\` (optional)
+   - **Note:** You will likely NOT see a large .css file because this app uses Tailwind via CDN. This is normal!
+4. **Drag and Drop them DIRECTLY into the \`public_html\` folder** on Hostinger.
+   - ⚠️ **CRITICAL:** Do NOT upload the \`dist\` folder itself. Upload its CONTENTS.
+   - Your \`public_html\` should look like:
+     - \`api/\` (folder)
+     - \`assets/\` (folder)
+     - \`index.html\`
+     - \`.htaccess\`
+     - ...other files
+5. **React Routing Fix**:
    - Create a new file in \`public_html\` named \`.htaccess\`.
    - Paste the following:
      \`\`\`apache
@@ -911,5 +955,6 @@ PHASE 5: UPLOAD & GO LIVE
 Visit your domain. You should see the login screen.
 - Try logging in with: \`innfriend1@gmail.com\` / \`123456\`.
 - Try creating a new account (Email verification should work if you set up Gmail App Password in config.php).
+- Use the 'Live Connection Tester' in Admin Panel to verify everything is working.
 `;
 };

@@ -1,11 +1,18 @@
 
-
 import React, { useState } from 'react';
 import { generateSQLSchema, getBackendFiles, generateFrontendGuide, generateHtaccess, getDeploymentPhases } from '../services/generatorService';
-import { Download, Database, Code, Terminal, FileCode, BookOpen, CheckCircle, Activity, Play, AlertCircle, Server } from 'lucide-react';
+import { Download, Database, Code, Terminal, FileCode, BookOpen, CheckCircle, Activity, Play, AlertCircle, Server, Folder, File, Settings, Key, User as UserIcon } from 'lucide-react';
 
 const SystemDocs: React.FC = () => {
     
+    // Database Config State - Defaulting to Hostinger values provided
+    const [dbConfig, setDbConfig] = useState({
+        host: "82.25.121.80",
+        name: "u131922718_iitjee_tracker",
+        user: "u131922718_iitjee_user",
+        pass: ""
+    });
+
     // Test Diagnostic State
     const [testUrl, setTestUrl] = useState('https://iitjeetracker.com/api');
     const [testResult, setTestResult] = useState<any>(null);
@@ -37,7 +44,8 @@ const SystemDocs: React.FC = () => {
     };
 
     const phases = getDeploymentPhases();
-    const backendFiles = getBackendFiles();
+    // Pass dynamic config to generator so config.php is accurate
+    const backendFiles = getBackendFiles(dbConfig);
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
@@ -46,7 +54,7 @@ const SystemDocs: React.FC = () => {
                 <div className="relative z-10 flex items-center justify-between">
                     <div>
                         <h2 className="text-3xl font-bold mb-2">System Documentation</h2>
-                        <p className="text-slate-400 text-lg max-w-xl">Everything you need to deploy to Hostinger Shared Hosting.</p>
+                        <p className="text-slate-400 text-lg max-w-xl">Deployment tools for Hostinger Shared Hosting.</p>
                     </div>
                     <div className="hidden md:block bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
                         <Terminal className="w-10 h-10 text-green-400" />
@@ -57,106 +65,107 @@ const SystemDocs: React.FC = () => {
                 <div className="absolute top-0 right-1/3 w-32 h-32 bg-blue-500/10 rounded-full blur-2xl"></div>
             </div>
 
+            {/* DEPLOYMENT WALKTHROUGH */}
+            <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-xl font-bold text-slate-800 flex items-center"><BookOpen className="mr-2 w-6 h-6 text-blue-600"/> Deployment Walkthrough</h3>
+                    <button 
+                        onClick={() => downloadFile('HOSTINGER_GUIDE.md', generateFrontendGuide())}
+                        className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center shadow-md transition-colors text-sm font-bold"
+                    >
+                        <Download className="w-4 h-4 mr-2" /> Download Full Manual
+                    </button>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {phases.map((phase, idx) => (
+                        <div key={idx} className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition-all ${phase.bg} ${idx === 4 ? 'lg:col-span-1 md:col-span-2' : ''}`}>
+                            <div className="flex items-center justify-between mb-3">
+                                <h4 className={`font-bold text-lg ${phase.color}`}>{phase.title}</h4>
+                                <span className="text-[10px] uppercase font-bold bg-white/50 px-2 py-1 rounded text-slate-600">{phase.subtitle}</span>
+                            </div>
+                            <ul className="space-y-2">
+                                {phase.steps.map((step, sIdx) => (
+                                    <li key={sIdx} className="flex items-start text-sm text-slate-700">
+                                        <CheckCircle className={`w-4 h-4 mr-2 mt-0.5 shrink-0 ${phase.color}`} />
+                                        <span className="leading-tight">{step}</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                    ))}
+                </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-in fade-in">
                 
-                {/* DEPLOYMENT WALKTHROUGH */}
-                <div className="md:col-span-2">
-                    <div className="flex justify-between items-center mb-6">
-                        <h3 className="text-xl font-bold text-slate-800 flex items-center"><BookOpen className="mr-2 w-6 h-6 text-blue-600"/> Deployment Walkthrough</h3>
-                        <button 
-                            onClick={() => downloadFile('HOSTINGER_GUIDE.md', generateFrontendGuide())}
-                            className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg flex items-center shadow-md transition-colors text-sm font-bold"
-                        >
-                            <Download className="w-4 h-4 mr-2" /> Download Full Manual
-                        </button>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {phases.map((phase, idx) => (
-                            <div key={idx} className={`rounded-xl border p-5 shadow-sm hover:shadow-md transition-all ${phase.bg} ${idx === 4 ? 'lg:col-span-1 md:col-span-2' : ''}`}>
-                                <div className="flex items-center justify-between mb-3">
-                                    <h4 className={`font-bold text-lg ${phase.color}`}>{phase.title}</h4>
-                                    <span className="text-[10px] uppercase font-bold bg-white/50 px-2 py-1 rounded text-slate-600">{phase.subtitle}</span>
-                                </div>
-                                <ul className="space-y-2">
-                                    {phase.steps.map((step, sIdx) => (
-                                        <li key={sIdx} className="flex items-start text-sm text-slate-700">
-                                            <CheckCircle className={`w-4 h-4 mr-2 mt-0.5 shrink-0 ${phase.color}`} />
-                                            <span className="leading-tight">{step}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* 1. DATABASE DIAGNOSTICS (Live Tester) */}
-                <div className="md:col-span-2 bg-slate-900 rounded-2xl p-6 border border-slate-700 shadow-xl">
-                    <h3 className="text-white font-bold flex items-center mb-4 text-xl">
-                        <Activity className="mr-2 w-6 h-6 text-green-400"/> Live Connection Tester
+                {/* 1. DATABASE CONFIGURATION (Inputs) */}
+                <div className="md:col-span-1 bg-slate-50 rounded-2xl p-6 border border-slate-200 shadow-sm">
+                    <h3 className="text-slate-800 font-bold flex items-center mb-4 text-lg">
+                        <Settings className="mr-2 w-5 h-5 text-blue-600"/> 1. Database Configuration
                     </h3>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="md:col-span-1 space-y-4">
-                            <p className="text-slate-400 text-sm">
-                                Enter the URL where you uploaded the API files (e.g., https://your-site.com/api) to verify the database connection.
-                            </p>
-                            <div className="space-y-2">
-                                <label className="text-xs font-bold text-slate-500 uppercase">API Base URL</label>
+                    <p className="text-slate-500 text-xs mb-4">Enter your Hostinger MySQL details here. The generated PHP files will automatically use these credentials.</p>
+                    
+                    <div className="space-y-3">
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">MySQL Host</label>
+                            <div className="flex items-center bg-white border border-slate-300 rounded-lg px-3 py-2 mt-1 focus-within:ring-2 focus-within:ring-blue-100">
+                                <Server className="w-4 h-4 text-slate-400 mr-2" />
                                 <input 
                                     type="text" 
-                                    className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none"
-                                    value={testUrl}
-                                    onChange={(e) => setTestUrl(e.target.value)}
-                                    placeholder="https://your-domain.com/api"
+                                    value={dbConfig.host}
+                                    onChange={(e) => setDbConfig({...dbConfig, host: e.target.value})}
+                                    className="w-full text-sm outline-none text-slate-700 font-mono"
+                                    placeholder="82.25.121.80"
                                 />
                             </div>
-                            <button 
-                                onClick={runDiagnostics}
-                                disabled={isLoading}
-                                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg flex items-center justify-center transition-all disabled:opacity-50"
-                            >
-                                {isLoading ? <Activity className="w-4 h-4 animate-spin mr-2"/> : <Play className="w-4 h-4 mr-2" />}
-                                Run Diagnostics
-                            </button>
                         </div>
-
-                        <div className="md:col-span-2 bg-black/40 rounded-xl p-4 border border-slate-700 font-mono text-xs overflow-y-auto max-h-64">
-                            {!testResult && <div className="text-slate-500 h-full flex items-center justify-center italic">Ready to scan... Results will appear here.</div>}
-                            
-                            {testResult && (
-                                <div className="space-y-4">
-                                    <div className="flex items-center space-x-4 border-b border-slate-700 pb-3">
-                                        <div className={`flex items-center ${testResult.status === 'CONNECTED' ? 'text-green-400' : 'text-red-400'}`}>
-                                            {testResult.status === 'CONNECTED' ? <CheckCircle className="w-5 h-5 mr-2"/> : <AlertCircle className="w-5 h-5 mr-2"/>}
-                                            <span className="font-bold text-base">{testResult.status === 'CONNECTED' ? 'DATABASE CONNECTED' : 'CONNECTION FAILED'}</span>
-                                        </div>
-                                        {testResult.db_name && <span className="text-slate-400">DB: <span className="text-white">{testResult.db_name}</span></span>}
-                                        {testResult.server_info && <span className="text-slate-500">Ver: {testResult.server_info.substring(0, 20)}...</span>}
-                                    </div>
-
-                                    {testResult.message && <div className="text-red-300 p-2 bg-red-900/20 rounded border border-red-900/50">{testResult.message}</div>}
-
-                                    {testResult.tables && (
-                                        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-                                            {testResult.tables.map((t: any, idx: number) => (
-                                                <div key={idx} className="bg-slate-800 p-2 rounded border border-slate-700 flex justify-between items-center">
-                                                    <span className="text-blue-300">{t.name}</span>
-                                                    <span className="bg-slate-900 px-2 py-0.5 rounded text-white font-bold">{t.rows}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    )}
-                                </div>
-                            )}
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">Database Name</label>
+                            <div className="flex items-center bg-white border border-slate-300 rounded-lg px-3 py-2 mt-1 focus-within:ring-2 focus-within:ring-blue-100">
+                                <Database className="w-4 h-4 text-slate-400 mr-2" />
+                                <input 
+                                    type="text" 
+                                    value={dbConfig.name}
+                                    onChange={(e) => setDbConfig({...dbConfig, name: e.target.value})}
+                                    className="w-full text-sm outline-none text-slate-700 font-mono"
+                                    placeholder="u123_iitjee"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">MySQL Username</label>
+                            <div className="flex items-center bg-white border border-slate-300 rounded-lg px-3 py-2 mt-1 focus-within:ring-2 focus-within:ring-blue-100">
+                                <UserIcon className="w-4 h-4 text-slate-400 mr-2" />
+                                <input 
+                                    type="text" 
+                                    value={dbConfig.user}
+                                    onChange={(e) => setDbConfig({...dbConfig, user: e.target.value})}
+                                    className="w-full text-sm outline-none text-slate-700 font-mono"
+                                    placeholder="u123_user"
+                                />
+                            </div>
+                        </div>
+                        <div>
+                            <label className="text-xs font-bold text-slate-500 uppercase">MySQL Password</label>
+                            <div className="flex items-center bg-white border border-slate-300 rounded-lg px-3 py-2 mt-1 focus-within:ring-2 focus-within:ring-blue-100">
+                                <Key className="w-4 h-4 text-slate-400 mr-2" />
+                                <input 
+                                    type="text" 
+                                    value={dbConfig.pass}
+                                    onChange={(e) => setDbConfig({...dbConfig, pass: e.target.value})}
+                                    className="w-full text-sm outline-none text-slate-700 font-mono placeholder:text-slate-300"
+                                    placeholder="Enter DB Password"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
 
                 {/* 2. SQL Schema */}
-                <div className="bg-slate-900 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-lg font-mono text-xs border border-slate-800">
+                <div className="md:col-span-1 bg-slate-900 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-lg font-mono text-xs border border-slate-800">
                     <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-                        <h3 className="text-white font-bold flex items-center"><Database className="mr-2 w-4 h-4 text-green-400"/> 2. MySQL Schema</h3>
+                        <h3 className="text-white font-bold flex items-center text-sm"><Database className="mr-2 w-4 h-4 text-green-400"/> 2. MySQL Schema</h3>
                         <button 
                             onClick={() => downloadFile('database.sql', generateSQLSchema())}
                             className="bg-slate-700 hover:bg-slate-600 text-white px-3 py-1.5 rounded flex items-center transition-colors border border-slate-600"
@@ -165,19 +174,19 @@ const SystemDocs: React.FC = () => {
                         </button>
                     </div>
                     <div className="p-2 mb-2 text-slate-500 font-sans italic">Import this file into phpMyAdmin to create all tables and seed data.</div>
-                    <pre className="overflow-x-auto h-32 text-green-400 no-scrollbar p-2 bg-black/20 rounded-lg">
+                    <pre className="overflow-x-auto h-64 text-green-400 no-scrollbar p-2 bg-black/20 rounded-lg">
                         {generateSQLSchema().substring(0, 500)}...
                     </pre>
                 </div>
 
                 {/* 3. PHP Backend API */}
-                <div className="bg-slate-900 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-lg font-mono text-xs border border-slate-800">
+                <div className="md:col-span-1 bg-slate-900 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-lg font-mono text-xs border border-slate-800">
                     <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-                        <h3 className="text-white font-bold flex items-center"><Code className="mr-2 w-4 h-4 text-purple-400"/> 3. PHP Backend API</h3>
-                        <span className="text-slate-500 text-[10px]">Individual Files</span>
+                        <h3 className="text-white font-bold flex items-center text-sm"><Code className="mr-2 w-4 h-4 text-purple-400"/> 3. PHP Backend API</h3>
+                        <span className="text-slate-500 text-[10px]">Auto-Configured</span>
                     </div>
                     
-                    <div className="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto custom-scrollbar pr-2">
+                    <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto custom-scrollbar pr-2">
                         {backendFiles.map((file, idx) => (
                             <div key={idx} className="flex justify-between items-center bg-slate-800 p-3 rounded border border-slate-700 hover:border-purple-500 transition-colors">
                                 <div>
@@ -200,10 +209,50 @@ const SystemDocs: React.FC = () => {
                     </div>
                 </div>
 
+                {/* FILE STRUCTURE VISUALIZATION */}
+                <div className="md:col-span-1 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-full">
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center mb-4">
+                        <Folder className="mr-2 w-5 h-5 text-yellow-500 fill-yellow-500"/> Final Directory Structure
+                    </h3>
+                    <div className="bg-slate-900 rounded-xl p-4 font-mono text-xs text-slate-300 overflow-hidden h-96 overflow-y-auto custom-scrollbar">
+                        <div className="flex items-center text-yellow-400 font-bold mb-1"><Folder className="w-3 h-3 mr-2" /> public_html/</div>
+                        <div className="ml-4 space-y-1">
+                            <div className="flex items-center text-slate-400"><File className="w-3 h-3 mr-2" /> .htaccess</div>
+                            <div className="flex items-center text-slate-400"><File className="w-3 h-3 mr-2" /> index.html</div>
+                            <div className="flex items-center text-blue-400"><Folder className="w-3 h-3 mr-2" /> assets/</div>
+                            <div className="ml-8 text-slate-500">└── index-Xa3...js</div>
+                            
+                            <div className="flex items-center text-green-400 mt-2"><Folder className="w-3 h-3 mr-2" /> api/</div>
+                            <div className="ml-8 space-y-1 text-slate-300">
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> config.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> login.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> register.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> verify.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> get_dashboard.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> get_common.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> sync_progress.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> manage_goals.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> manage_backlogs.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> manage_mistakes.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> save_timetable.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> test_db.php</div>
+                                
+                                <div className="flex items-center text-orange-400 mt-1"><Folder className="w-3 h-3 mr-2" /> PHPMailer/</div>
+                                <div className="ml-4 flex items-center text-orange-400"><Folder className="w-3 h-3 mr-2" /> src/</div>
+                                <div className="ml-8 space-y-1 text-slate-500">
+                                    <div>Exception.php</div>
+                                    <div>PHPMailer.php</div>
+                                    <div>SMTP.php</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 {/* 4. Server Config (.htaccess) */}
-                <div className="bg-slate-800 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-xl font-mono text-xs border border-slate-700">
+                <div className="md:col-span-1 bg-slate-800 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-xl font-mono text-xs border border-slate-700">
                     <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-                        <h3 className="text-white font-bold flex items-center"><FileCode className="mr-2 w-4 h-4 text-orange-400"/> 4. Server Config (.htaccess)</h3>
+                        <h3 className="text-white font-bold flex items-center text-sm"><FileCode className="mr-2 w-4 h-4 text-orange-400"/> 4. Server Config (.htaccess)</h3>
                         <button 
                             onClick={() => downloadFile('.htaccess', generateHtaccess())}
                             className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-1.5 rounded flex items-center shadow-lg transition-colors"
@@ -219,6 +268,70 @@ const SystemDocs: React.FC = () => {
                     <pre className="overflow-x-auto h-24 text-slate-300 whitespace-pre-wrap no-scrollbar p-2 bg-black/40 rounded-lg border border-slate-700/50">
                         {generateHtaccess()}
                     </pre>
+                </div>
+
+                {/* 5. DATABASE DIAGNOSTICS (Live Tester) */}
+                <div className="md:col-span-1 bg-slate-900 rounded-2xl p-6 border border-slate-700 shadow-xl h-full flex flex-col">
+                    <h3 className="text-white font-bold flex items-center mb-4 text-xl">
+                        <Activity className="mr-2 w-6 h-6 text-green-400"/> 5. Live Connection Tester
+                    </h3>
+                    <div className="space-y-4 flex-1">
+                        <p className="text-slate-400 text-sm">
+                            After uploading your PHP files, enter your API URL here to verify the database connection.
+                        </p>
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-slate-500 uppercase">API Base URL</label>
+                            <input 
+                                type="text" 
+                                className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none"
+                                value={testUrl}
+                                onChange={(e) => setTestUrl(e.target.value)}
+                                placeholder="https://your-domain.com/api"
+                            />
+                        </div>
+                        <button 
+                            onClick={runDiagnostics}
+                            disabled={isLoading}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-2.5 rounded-lg flex items-center justify-center transition-all disabled:opacity-50"
+                        >
+                            {isLoading ? <Activity className="w-4 h-4 animate-spin mr-2"/> : <Play className="w-4 h-4 mr-2" />}
+                            Run Diagnostics
+                        </button>
+
+                        <div className="bg-black/40 rounded-xl p-4 border border-slate-700 font-mono text-xs overflow-y-auto max-h-48 custom-scrollbar">
+                            {!testResult && <div className="text-slate-500 h-full flex items-center justify-center italic">Ready to scan...</div>}
+                            
+                            {testResult && (
+                                <div className="space-y-4 animate-in fade-in">
+                                    <div className="flex items-center space-x-4 border-b border-slate-700 pb-3">
+                                        <div className={`flex items-center ${testResult.status === 'CONNECTED' ? 'text-green-400' : 'text-red-400'}`}>
+                                            {testResult.status === 'CONNECTED' ? <CheckCircle className="w-5 h-5 mr-2"/> : <AlertCircle className="w-5 h-5 mr-2"/>}
+                                            <span className="font-bold text-base">{testResult.status === 'CONNECTED' ? 'DATABASE CONNECTED' : 'CONNECTION FAILED'}</span>
+                                        </div>
+                                    </div>
+
+                                    {testResult.message && <div className="text-red-300 p-2 bg-red-900/20 rounded border border-red-900/50">{testResult.message}</div>}
+
+                                    {testResult.server_info && (
+                                        <div className="text-slate-400 border-b border-slate-700 pb-2">
+                                            Server: {testResult.server_info}
+                                        </div>
+                                    )}
+
+                                    {testResult.tables && (
+                                        <div className="grid grid-cols-2 gap-2">
+                                            {testResult.tables.map((t: any, idx: number) => (
+                                                <div key={idx} className="bg-slate-800 p-2 rounded border border-slate-700 flex justify-between items-center">
+                                                    <span className="text-blue-300">{t.name}</span>
+                                                    <span className="bg-slate-900 px-2 py-0.5 rounded text-white font-bold">{t.rows}</span>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
