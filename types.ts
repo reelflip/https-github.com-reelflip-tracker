@@ -141,6 +141,15 @@ export interface Flashcard {
     difficulty: 'HARD' | 'MEDIUM' | 'EASY';
 }
 
+export interface BacklogItem {
+    id: string;
+    subjectId: 'phys' | 'chem' | 'math';
+    title: string;
+    priority: 'HIGH' | 'MEDIUM' | 'LOW';
+    deadline: string;
+    status: 'PENDING' | 'CLEARED';
+}
+
 export interface MockDataState {
   users: User[];
   syllabus: Subject[];

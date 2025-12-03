@@ -184,7 +184,7 @@ CREATE TABLE IF NOT EXISTS mistake_notebook (
 );
 
 --
--- 7. TIMETABLE & GOALS
+-- 7. TIMETABLE, GOALS & BACKLOGS
 --
 CREATE TABLE IF NOT EXISTS daily_goals (
     id VARCHAR(50) PRIMARY KEY,
@@ -192,6 +192,18 @@ CREATE TABLE IF NOT EXISTS daily_goals (
     goal_text VARCHAR(255) NOT NULL,
     is_completed BOOLEAN DEFAULT FALSE,
     created_at DATE DEFAULT (CURRENT_DATE),
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS backlogs (
+    id VARCHAR(50) PRIMARY KEY,
+    user_id INT NOT NULL,
+    title VARCHAR(255) NOT NULL,
+    subject_id ENUM('phys', 'chem', 'math') NOT NULL,
+    priority ENUM('HIGH', 'MEDIUM', 'LOW') DEFAULT 'MEDIUM',
+    deadline DATE,
+    status ENUM('PENDING', 'CLEARED') DEFAULT 'PENDING',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

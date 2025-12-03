@@ -1,5 +1,4 @@
 
-
 import React, { useState } from 'react';
 import { User } from '../types';
 import { 
@@ -15,7 +14,8 @@ import {
   Database,
   BookX,
   Flower,
-  Layers
+  Layers,
+  ListTodo
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -41,6 +41,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
       return [
         ...common,
         { id: 'syllabus', label: 'Syllabus', icon: BookOpen },
+        { id: 'backlogs', label: 'Backlog Crusher', icon: ListTodo },
         { id: 'tests', label: 'Test Center', icon: Target },
         { id: 'flashcards', label: 'Flashcards', icon: Layers },
         { id: 'mistakes', label: 'Mistake Notebook', icon: BookX },

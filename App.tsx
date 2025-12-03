@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard } from './types';
+import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem } from './types';
 import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS } from './constants';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -15,6 +15,7 @@ import ProfileSettings from './components/ProfileSettings';
 import MistakeNotebook from './components/MistakeNotebook';
 import WellnessCorner from './components/WellnessCorner';
 import FlashcardDeck from './components/FlashcardDeck';
+import BacklogManager from './components/BacklogManager';
 
 // Initial global questions combined from constants and potential future additions
 const INITIAL_QUESTIONS: Question[] = MOCK_TESTS.flatMap(t => t.questions).reduce((acc, current) => {
@@ -40,6 +41,9 @@ function App() {
   const [goals, setGoals] = useState<DailyGoal[]>([
       { id: 'g1', text: 'Solve 30 Physics MCQs', completed: false },
       { id: 'g2', text: 'Revise Calculus Formulas', completed: true }
+  ]);
+  const [backlogs, setBacklogs] = useState<BacklogItem[]>([
+      { id: 'b1', title: 'Rotational Motion HC Verma', subjectId: 'phys', priority: 'HIGH', deadline: '2025-05-10', status: 'PENDING' }
   ]);
   
   // Dynamic Data (Admin can modify these)
@@ -132,6 +136,19 @@ function App() {
 
   const handleAddGoal = (text: string) => {
       setGoals(prev => [...prev, { id: `g_${Date.now()}`, text, completed: false }]);
+  };
+
+  // --- Backlog Actions ---
+  const handleAddBacklog = (item: BacklogItem) => {
+      setBacklogs(prev => [...prev, item]);
+  };
+  
+  const handleToggleBacklogStatus = (id: string) => {
+      setBacklogs(prev => prev.map(b => b.id === id ? { ...b, status: b.status === 'PENDING' ? 'CLEARED' : 'PENDING' } : b));
+  };
+
+  const handleDeleteBacklog = (id: string) => {
+      setBacklogs(prev => prev.filter(b => b.id !== id));
   };
 
 
@@ -269,6 +286,8 @@ function App() {
                 />;
             case 'syllabus':
                 return <SyllabusTracker user={currentUser} subjects={JEE_SYLLABUS} progress={progress} onUpdateProgress={handleUpdateProgress} />;
+            case 'backlogs':
+                return <BacklogManager backlogs={backlogs} onAddBacklog={handleAddBacklog} onToggleStatus={handleToggleBacklogStatus} onDeleteBacklog={handleDeleteBacklog} />;
             case 'tests':
                 return <TestCenter availableTests={allTests} attempts={testAttempts} onCompleteTest={handleCompleteTest} />;
             case 'flashcards':
