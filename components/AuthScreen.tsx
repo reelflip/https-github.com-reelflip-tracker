@@ -117,10 +117,24 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 throw new Error('Login successful but no user data received.');
             }
             
-            // Normalize User Data (Ensure role matches TypeScript ENUM)
+            const rawUser = data.user;
+
+            // Normalize User Data (Map snake_case DB fields to camelCase App fields)
             const normalizedUser: User = {
-                ...data.user,
-                role: (data.user.role || 'STUDENT').toUpperCase() as Role
+                id: rawUser.id,
+                name: rawUser.name || rawUser.full_name, // Handle full_name from DB
+                email: rawUser.email,
+                role: (rawUser.role || 'STUDENT').toUpperCase() as Role,
+                isVerified: rawUser.is_verified == 1 || rawUser.isVerified,
+                targetYear: rawUser.target_year ? parseInt(rawUser.target_year) : rawUser.targetYear,
+                institute: rawUser.institute,
+                school: rawUser.school,
+                course: rawUser.course_name || rawUser.course,
+                phone: rawUser.phone,
+                // Critical Mapping for Parent/Student linking
+                studentId: rawUser.student_id || rawUser.studentId,
+                parentId: rawUser.parent_id || rawUser.parentId,
+                avatarUrl: rawUser.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${rawUser.email}`
             };
             
             onLogin(normalizedUser);

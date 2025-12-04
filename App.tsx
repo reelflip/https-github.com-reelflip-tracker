@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem } from './types';
+import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem, TopicStatus, Role } from './types';
 import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS } from './constants';
 import Layout from './components/Layout';
 import Dashboard from './components/Dashboard';
@@ -17,8 +17,9 @@ import MistakeNotebook from './components/MistakeNotebook';
 import WellnessCorner from './components/WellnessCorner';
 import FlashcardDeck from './components/FlashcardDeck';
 import BacklogManager from './components/BacklogManager';
+import { API_BASE_URL } from './config'; // Ensure this exists or use relative path logic
 
-// Initial global questions combined from constants and potential future additions
+// Initial global questions combined from constants
 const INITIAL_QUESTIONS: Question[] = MOCK_TESTS.flatMap(t => t.questions).reduce((acc, current) => {
   const x = acc.find(item => item.id === current.id);
   if (!x) {
@@ -29,428 +30,356 @@ const INITIAL_QUESTIONS: Question[] = MOCK_TESTS.flatMap(t => t.questions).reduc
 }, [] as Question[]);
 
 function App() {
-  // State for Users (to simulate DB updates for connections)
-  const [allUsers, setAllUsers] = useState<User[]>(MOCK_USERS);
+  // --- User State ---
   const [currentUser, setCurrentUser] = useState<User | null>(null);
-  
   const [activeTab, setActiveTab] = useState('dashboard');
   
-  // --- Global App State ---
+  // --- Data State ---
   const [progress, setProgress] = useState<Record<string, TopicProgress>>({});
-  const [testAttempts, setTestAttempts] = useState<TestAttempt[]>([]);
-  const [mistakes, setMistakes] = useState<MistakeRecord[]>([]);
-  const [goals, setGoals] = useState<DailyGoal[]>([
-      { id: 'g1', text: 'Solve 30 Physics MCQs', completed: false },
-      { id: 'g2', text: 'Revise Calculus Formulas', completed: true }
-  ]);
-  const [backlogs, setBacklogs] = useState<BacklogItem[]>([
-      { id: 'b1', title: 'Rotational Motion HC Verma', subjectId: 'phys', priority: 'HIGH', deadline: '2025-05-10', status: 'PENDING' }
-  ]);
-  
-  // Dynamic Data (Admin can modify these)
-  const [allTests, setAllTests] = useState<Test[]>(MOCK_TESTS);
-  const [questionBank, setQuestionBank] = useState<Question[]>(INITIAL_QUESTIONS);
-  const [notifications, setNotifications] = useState<Notification[]>([
-    { id: 'n1', title: 'Welcome', message: 'Welcome to the new academic session!', date: new Date().toISOString().split('T')[0], type: 'INFO' }
-  ]);
+  const [tests, setTests] = useState<Test[]>(MOCK_TESTS);
+  const [attempts, setAttempts] = useState<TestAttempt[]>([]);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [quotes, setQuotes] = useState<Quote[]>(DEFAULT_QUOTES);
+  const [adminQuote, setAdminQuote] = useState<Quote | null>(null);
+  const [questions, setQuestions] = useState<Question[]>(INITIAL_QUESTIONS);
+  const [mistakes, setMistakes] = useState<MistakeRecord[]>([]);
+  const [goals, setGoals] = useState<DailyGoal[]>([]);
   const [flashcards, setFlashcards] = useState<Flashcard[]>(INITIAL_FLASHCARDS);
+  const [backlogs, setBacklogs] = useState<BacklogItem[]>([]);
 
-  // Initialize some mock progress on load (Fallback)
-  useEffect(() => {
-    const initialProgress: Record<string, TopicProgress> = {};
-    JEE_SYLLABUS.forEach(sub => {
-      sub.chapters.forEach(ch => {
-        ch.topics.forEach(t => {
-          initialProgress[t.id] = {
-            topicId: t.id,
-            status: 'NOT_STARTED',
-            ex1Solved: 0, ex1Total: 25, ex2Solved: 0, ex2Total: 15,
-            ex3Solved: 0, ex3Total: 10, ex4Solved: 0, ex4Total: 10
-          };
-        });
-      });
-    });
-    setProgress(initialProgress);
-  }, []);
-
-  // --- FETCH REAL DATA FROM API ---
+  // --- API: Fetch Data on Login ---
   useEffect(() => {
     if (currentUser) {
-        // 1. Fetch User Dashboard Data (Progress, Goals, etc.)
-        const fetchDashboardData = async () => {
-            try {
-                const response = await fetch(`/api/get_dashboard.php?user_id=${currentUser.id}`);
-                if (!response.ok) return;
-                
-                const data = await response.json();
-                
-                // Merge Progress
-                if (data.progress && Array.isArray(data.progress)) {
-                    const dbProgress: Record<string, TopicProgress> = {};
-                    data.progress.forEach((p: any) => {
-                        dbProgress[p.topic_id] = {
-                            topicId: p.topic_id,
-                            status: p.status,
-                            ex1Solved: parseInt(p.ex1_solved || 0), ex1Total: parseInt(p.ex1_total || 30),
-                            ex2Solved: parseInt(p.ex2_solved || 0), ex2Total: parseInt(p.ex2_total || 20),
-                            ex3Solved: parseInt(p.ex3_solved || 0), ex3Total: parseInt(p.ex3_total || 15),
-                            ex4Solved: parseInt(p.ex4_solved || 0), ex4Total: parseInt(p.ex4_total || 10)
-                        };
-                    });
-                    setProgress(prev => ({ ...prev, ...dbProgress }));
-                }
-
-                // Merge Goals
-                if (data.goals && Array.isArray(data.goals)) {
-                    const dbGoals = data.goals.map((g: any) => ({
-                        id: g.id,
-                        text: g.goal_text,
-                        completed: g.is_completed == 1
-                    }));
-                    setGoals(dbGoals);
-                }
-
-                // Merge Backlogs
-                if (data.backlogs && Array.isArray(data.backlogs)) {
-                    const dbBacklogs = data.backlogs.map((b: any) => ({
-                        id: b.id,
-                        title: b.title,
-                        subjectId: b.subject_id,
-                        priority: b.priority,
-                        deadline: b.deadline,
-                        status: b.status
-                    }));
-                    setBacklogs(dbBacklogs);
-                }
-
-                // Merge Mistakes
-                if (data.mistakes && Array.isArray(data.mistakes)) {
-                    const dbMistakes = data.mistakes.map((m: any) => ({
-                        id: m.id,
-                        questionText: m.question_text,
-                        subjectId: m.subject_id,
-                        topicId: m.topic_id,
-                        testName: m.test_name,
-                        date: m.created_at,
-                        userNotes: m.user_notes,
-                        tags: m.tags_json ? JSON.parse(m.tags_json) : []
-                    }));
-                    setMistakes(dbMistakes);
-                }
-
-            } catch (error) {
-                console.error("Failed to fetch dashboard data:", error);
-            }
-        };
-
-        // 2. Fetch Common Data (Quotes, Notifications, Flashcards)
-        const fetchCommonData = async () => {
-            try {
-                const response = await fetch(`/api/get_common.php`);
-                if (!response.ok) return;
-                const data = await response.json();
-
-                if (data.quotes && Array.isArray(data.quotes)) setQuotes(data.quotes);
-                if (data.notifications && Array.isArray(data.notifications)) setNotifications(data.notifications);
-                if (data.flashcards && Array.isArray(data.flashcards)) setFlashcards(data.flashcards);
-                
-                // Note: We are NOT overwriting 'tests' yet because get_common doesn't return full question structure
-                // We will rely on MOCK_TESTS + any separate fetching logic for full tests later.
-                
-            } catch (error) {
-                console.error("Failed to fetch common data:", error);
-            }
-        };
-
-        if (currentUser.role !== 'ADMIN') {
-            fetchDashboardData();
-        }
+        fetchDashboardData();
         fetchCommonData();
     }
   }, [currentUser]);
 
-  const handleUpdateProgress = (topicId: string, updates: Partial<TopicProgress>) => {
-    setProgress(prev => ({
-      ...prev,
-      [topicId]: { ...prev[topicId], ...updates }
-    }));
+  const fetchDashboardData = async () => {
+      if (!currentUser) return;
+      
+      // If Parent, fetch Student's data instead
+      const targetUserId = currentUser.role === 'PARENT' && currentUser.studentId 
+          ? currentUser.studentId 
+          : currentUser.id;
+
+      try {
+          const res = await fetch(`/api/get_dashboard.php?user_id=${targetUserId}`);
+          if (!res.ok) return; // Silent fail in demo
+          const data = await res.json();
+          
+          if (data.progress) {
+              // Convert array to record object
+              const progObj: Record<string, TopicProgress> = {};
+              data.progress.forEach((p: any) => {
+                  progObj[p.topic_id] = {
+                      topicId: p.topic_id,
+                      status: p.status,
+                      ex1Solved: parseInt(p.ex1_solved || 0),
+                      ex1Total: parseInt(p.ex1_total || 30),
+                      ex2Solved: parseInt(p.ex2_solved || 0),
+                      ex2Total: parseInt(p.ex2_total || 20),
+                      ex3Solved: parseInt(p.ex3_solved || 0),
+                      ex3Total: parseInt(p.ex3_total || 15),
+                      ex4Solved: parseInt(p.ex4_solved || 0),
+                      ex4Total: parseInt(p.ex4_total || 10),
+                  };
+              });
+              setProgress(progObj);
+          }
+          if (data.goals) {
+              setGoals(data.goals.map((g: any) => ({
+                  id: g.id,
+                  text: g.goal_text,
+                  completed: g.is_completed == 1
+              })));
+          }
+          if (data.mistakes) {
+              setMistakes(data.mistakes.map((m: any) => ({
+                  id: m.id,
+                  questionText: m.question_text,
+                  subjectId: m.subject_id,
+                  topicId: m.topic_id,
+                  testName: m.test_name,
+                  date: m.created_at,
+                  userNotes: m.user_notes,
+                  tags: m.tags_json ? JSON.parse(m.tags_json) : []
+              })));
+          }
+          if (data.backlogs) {
+              setBacklogs(data.backlogs.map((b: any) => ({
+                  id: b.id,
+                  title: b.title,
+                  subjectId: b.subject_id,
+                  priority: b.priority,
+                  deadline: b.deadline,
+                  status: b.status
+              })));
+          }
+      } catch (err) {
+          console.error("Failed to fetch dashboard", err);
+      }
+  };
+
+  const fetchCommonData = async () => {
+      try {
+          const res = await fetch(`/api/get_common.php`);
+          if (!res.ok) return;
+          const data = await res.json();
+
+          if (data.quotes && data.quotes.length > 0) setQuotes(data.quotes);
+          if (data.flashcards && data.flashcards.length > 0) {
+              setFlashcards(data.flashcards.map((f: any) => ({
+                  id: f.id,
+                  subjectId: f.subject_id,
+                  front: f.front,
+                  back: f.back,
+                  difficulty: f.difficulty
+              })));
+          }
+          if (data.notifications) setNotifications(data.notifications);
+          // Tests are complex to map back from flat DB structure, keeping mock/static for now or need sophisticated mapper
+      } catch (err) {
+          console.error("Failed to fetch common data", err);
+      }
+  };
+
+  // --- Handlers ---
+
+  const handleUpdateProgress = async (topicId: string, updates: Partial<TopicProgress>) => {
+    // 1. Optimistic Update
+    setProgress(prev => {
+      const current = prev[topicId] || {
+        topicId, status: 'NOT_STARTED',
+        ex1Solved: 0, ex1Total: 30, ex2Solved: 0, ex2Total: 20,
+        ex3Solved: 0, ex3Total: 15, ex4Solved: 0, ex4Total: 10
+      };
+      return { ...prev, [topicId]: { ...current, ...updates } };
+    });
+
+    // 2. API Sync
+    if (currentUser) {
+        try {
+            const current = progress[topicId] || {
+                topicId, status: 'NOT_STARTED',
+                ex1Solved: 0, ex1Total: 30, ex2Solved: 0, ex2Total: 20,
+                ex3Solved: 0, ex3Total: 15, ex4Solved: 0, ex4Total: 10
+            };
+            const payload = { 
+                user_id: currentUser.id, 
+                topic_id: topicId, 
+                ...current, 
+                ...updates 
+            };
+            await fetch('/api/sync_progress.php', {
+                method: 'POST',
+                body: JSON.stringify(payload)
+            });
+        } catch(e) { console.error("Sync failed", e); }
+    }
   };
 
   const handleCompleteTest = (attempt: TestAttempt) => {
-    setTestAttempts(prev => [attempt, ...prev]);
-
+    setAttempts([attempt, ...attempts]);
+    
     // Auto-capture mistakes
     if (attempt.detailedResults) {
         const newMistakes: MistakeRecord[] = attempt.detailedResults
             .filter(r => r.status === 'INCORRECT')
             .map(r => {
-                const test = allTests.find(t => t.id === attempt.testId);
-                const question = test?.questions.find(q => q.id === r.questionId);
+                // Find Question Text
+                const q = questions.find(q => q.id === r.questionId);
+                const t = tests.find(t => t.id === attempt.testId);
                 return {
-                    id: `m_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-                    questionText: question?.text || 'Question text not found',
+                    id: `m_${Date.now()}_${r.questionId}`,
+                    questionText: q?.text || "Question Text Unavailable",
                     subjectId: r.subjectId,
                     topicId: r.topicId,
-                    testName: test?.title || 'Unknown Test',
+                    testName: t?.title || "Unknown Test",
                     date: new Date().toISOString(),
-                    tags: []
+                    tags: ['Conceptual Error'] // Default tag
                 };
             });
         
-        if (newMistakes.length > 0) {
-            setMistakes(prev => [...newMistakes, ...prev]);
+        // Optimistic update
+        setMistakes(prev => [...newMistakes, ...prev]);
+
+        // Sync mistakes to DB
+        if(currentUser) {
+            newMistakes.forEach(m => {
+                fetch('/api/manage_mistakes.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ ...m, user_id: currentUser.id })
+                });
+            });
         }
     }
   };
 
   const handleUpdateUser = (updates: Partial<User>) => {
-    // Update current user
-    const updatedUser = currentUser ? { ...currentUser, ...updates } : null;
-    setCurrentUser(updatedUser);
-    
-    // Also update in allUsers array to persist locally
-    if (updatedUser) {
-        setAllUsers(prev => prev.map(u => u.id === updatedUser.id ? updatedUser : u));
-    }
+      if (currentUser) {
+          setCurrentUser({ ...currentUser, ...updates });
+          // In a real app, send to update_profile.php
+      }
   };
 
-  // --- Mistake Notebook Actions ---
-  const handleUpdateMistake = (id: string, updates: Partial<MistakeRecord>) => {
-      setMistakes(prev => prev.map(m => m.id === id ? { ...m, ...updates } : m));
+  // --- Admin Handlers ---
+  const handleAddQuestion = (q: Question) => setQuestions([...questions, q]);
+  const handleCreateTest = (t: Test) => setTests([...tests, t]);
+  const handleSendNotification = (n: Notification) => setNotifications([n, ...notifications]);
+  const handleAddQuote = (text: string, author: string) => {
+      const newQ = { id: `q_${Date.now()}`, text, author };
+      setQuotes([...quotes, newQ]);
+      setAdminQuote(newQ);
   };
-  
-  const handleDeleteMistake = (id: string) => {
-      setMistakes(prev => prev.filter(m => m.id !== id));
-  };
+  const handleDeleteQuote = (id: string) => setQuotes(quotes.filter(q => q.id !== id));
 
-  // --- Daily Goal Actions ---
+  // --- Goals & Backlogs ---
   const handleToggleGoal = (id: string) => {
-      setGoals(prev => prev.map(g => g.id === id ? { ...g, completed: !g.completed } : g));
+      setGoals(goals.map(g => g.id === id ? { ...g, completed: !g.completed } : g));
+      if(currentUser) {
+          fetch('/api/manage_goals.php', { method: 'PUT', body: JSON.stringify({ id }) });
+      }
   };
-
   const handleAddGoal = (text: string) => {
-      setGoals(prev => [...prev, { id: `g_${Date.now()}`, text, completed: false }]);
+      const newGoal = { id: `g_${Date.now()}`, text, completed: false };
+      setGoals([...goals, newGoal]);
+      if(currentUser) {
+          fetch('/api/manage_goals.php', { method: 'POST', body: JSON.stringify({ ...newGoal, user_id: currentUser.id }) });
+      }
   };
 
-  // --- Backlog Actions ---
   const handleAddBacklog = (item: BacklogItem) => {
-      setBacklogs(prev => [...prev, item]);
+      setBacklogs([...backlogs, item]);
+      if(currentUser) {
+          fetch('/api/manage_backlogs.php', { method: 'POST', body: JSON.stringify({ ...item, user_id: currentUser.id }) });
+      }
   };
-  
-  const handleToggleBacklogStatus = (id: string) => {
-      setBacklogs(prev => prev.map(b => b.id === id ? { ...b, status: b.status === 'PENDING' ? 'CLEARED' : 'PENDING' } : b));
+  const handleToggleBacklog = (id: string) => {
+      setBacklogs(backlogs.map(b => b.id === id ? { ...b, status: b.status === 'PENDING' ? 'CLEARED' : 'PENDING' } : b));
+      if(currentUser) {
+          fetch('/api/manage_backlogs.php', { method: 'PUT', body: JSON.stringify({ id }) });
+      }
   };
-
   const handleDeleteBacklog = (id: string) => {
-      setBacklogs(prev => prev.filter(b => b.id !== id));
+      setBacklogs(backlogs.filter(b => b.id !== id));
+      if(currentUser) {
+          fetch(`/api/manage_backlogs.php?id=${id}`, { method: 'DELETE' });
+      }
   };
 
-
-  // --- Connection Logic (Parent <-> Student) ---
-
-  const handleSendConnectionRequest = (targetStudentId: string) => {
-    if (!currentUser || currentUser.role !== 'PARENT') return;
-
-    // 1. Find the student
-    const student = allUsers.find(u => u.id === targetStudentId && u.role === 'STUDENT');
-    
-    if (!student) {
-        alert('Student ID not found. Please check and try again.');
-        return;
-    }
-
-    if (student.parentId) {
-        alert('This student is already connected to a parent.');
-        return;
-    }
-
-    // 2. Update the student with a pending request
-    const updatedStudent: User = {
-        ...student,
-        pendingRequest: {
-            fromId: currentUser.id,
-            fromName: currentUser.name,
-            type: 'PARENT_LINK'
-        }
-    };
-
-    setAllUsers(prev => prev.map(u => u.id === student.id ? updatedStudent : u));
-    alert(`Request sent to ${student.name}. They must accept it from their profile.`);
+  const handleMistakeUpdate = (id: string, updates: Partial<MistakeRecord>) => {
+      setMistakes(mistakes.map(m => m.id === id ? { ...m, ...updates } : m));
+      // Sync update (specifically for notes/tags)
+      if(currentUser) {
+          const mistake = mistakes.find(m => m.id === id);
+          if(mistake) {
+             fetch('/api/manage_mistakes.php', { 
+                 method: 'PUT', 
+                 body: JSON.stringify({ id, ...mistake, ...updates }) 
+             });
+          }
+      }
+  };
+  const handleMistakeDelete = (id: string) => {
+      setMistakes(mistakes.filter(m => m.id !== id));
+      if(currentUser) {
+          fetch(`/api/manage_mistakes.php?id=${id}`, { method: 'DELETE' });
+      }
   };
 
-  const handleRespondToRequest = (accept: boolean) => {
-    if (!currentUser || !currentUser.pendingRequest) return;
+  // --- Render Logic ---
 
-    const parentId = currentUser.pendingRequest.fromId;
-
-    if (accept) {
-        // Link both users
-        const updatedStudent = { ...currentUser, parentId: parentId, pendingRequest: undefined };
-        
-        // Find parent and update their studentId
-        setAllUsers(prev => prev.map(u => {
-            if (u.id === currentUser.id) return updatedStudent;
-            if (u.id === parentId) return { ...u, studentId: currentUser.id };
-            return u;
-        }));
-        
-        setCurrentUser(updatedStudent);
-        alert('Connection successful! Your parent can now view your progress.');
-    } else {
-        // Just clear the request
-        const updatedStudent = { ...currentUser, pendingRequest: undefined };
-        setAllUsers(prev => prev.map(u => u.id === currentUser.id ? updatedStudent : u));
-        setCurrentUser(updatedStudent);
-    }
-  };
-
-
-  // --- Admin Actions ---
-  const handleAddQuestion = (q: Question) => {
-    setQuestionBank(prev => [...prev, q]);
-  };
-
-  const handleCreateTest = (t: Test) => {
-    setAllTests(prev => [t, ...prev]);
-  };
-
-  const handleSendNotification = (n: Notification) => {
-    setNotifications(prev => [n, ...prev]);
-  };
-
-  const handleAddQuote = (text: string, author?: string) => {
-    const newQuote: Quote = { id: `q_${Date.now()}`, text, author };
-    setQuotes(prev => [...prev, newQuote]);
-  };
-
-  const handleDeleteQuote = (id: string) => {
-    setQuotes(prev => prev.filter(q => q.id !== id));
-  };
-
-  // Login Screen
   if (!currentUser) {
-    return <AuthScreen onLogin={(user) => {
-        // Just set the user directly, no need to check local allUsers anymore
-        // as we trust the API response
-        setCurrentUser(user);
-    }} />;
+    return <AuthScreen onLogin={setCurrentUser} />;
   }
 
   const renderContent = () => {
-    if (activeTab === 'profile') {
-        return <ProfileSettings 
-            user={currentUser} 
-            onUpdateUser={handleUpdateUser}
-            onSendRequest={handleSendConnectionRequest}
-            onRespondRequest={handleRespondToRequest}
-        />;
-    }
-
-    const role = currentUser.role.toUpperCase(); // Normalize role
-
-    if (role === 'ADMIN') {
-        if (activeTab === 'system') {
-            return <SystemDocs />;
-        }
-        return <AdminPanel 
-          users={allUsers} 
-          questionBank={questionBank}
-          quotes={quotes}
-          activeTab={activeTab}
-          onTabChange={setActiveTab}
-          onAddQuestion={handleAddQuestion}
-          onCreateTest={handleCreateTest}
-          onSendNotification={handleSendNotification}
-          onAddQuote={handleAddQuote}
-          onDeleteQuote={handleDeleteQuote}
-        />;
-    }
-
-    if (role === 'STUDENT') {
-        switch (activeTab) {
-            case 'dashboard':
-                return <Dashboard 
-                  user={currentUser} 
-                  progress={progress} 
-                  onChangeTab={setActiveTab} 
-                  notifications={notifications}
-                  quotes={quotes}
-                  goals={goals}
-                  onToggleGoal={handleToggleGoal}
-                  onAddGoal={handleAddGoal}
-                />;
-            case 'syllabus':
-                return <SyllabusTracker user={currentUser} subjects={JEE_SYLLABUS} progress={progress} onUpdateProgress={handleUpdateProgress} />;
-            case 'backlogs':
-                return <BacklogManager backlogs={backlogs} onAddBacklog={handleAddBacklog} onToggleStatus={handleToggleBacklogStatus} onDeleteBacklog={handleDeleteBacklog} />;
-            case 'tests':
-                return <TestCenter availableTests={allTests} attempts={testAttempts} onCompleteTest={handleCompleteTest} />;
-            case 'flashcards':
-                return <FlashcardDeck cards={flashcards} />;
-            case 'mistakes':
-                return <MistakeNotebook mistakes={mistakes} onUpdateMistake={handleUpdateMistake} onDeleteMistake={handleDeleteMistake} />;
-            case 'focus':
-                return <FocusZone />;
-            case 'wellness':
-                return <WellnessCorner />;
-            case 'timetable':
-                return <TimetableGenerator />;
-            case 'analytics':
-                return <Analytics attempts={testAttempts} tests={allTests} syllabus={JEE_SYLLABUS} />;
-            default:
-                return <div className="flex items-center justify-center h-64 text-slate-400">Work in Progress</div>;
-        }
-    }
-
-    if (role === 'PARENT') {
-        // Find connected student
-        const connectedStudent = allUsers.find(u => u.id === currentUser.studentId);
-        
-        if (!connectedStudent) {
-            return (
-                <div className="flex flex-col items-center justify-center h-96 space-y-4">
-                    <h2 className="text-2xl font-bold text-slate-800">No Child Connected</h2>
-                    <p className="text-slate-500 max-w-md text-center">
-                        Please go to the <strong className="cursor-pointer text-blue-600" onClick={() => setActiveTab('profile')}>Settings</strong> tab 
-                        and enter your child's Student ID to view their progress.
-                    </p>
-                </div>
-            );
-        }
-
+    switch (activeTab) {
+      case 'dashboard':
         return (
-          <div className="space-y-6">
-            <h2 className="text-xl font-bold text-slate-800">Child Progress View</h2>
-            <div className="p-4 bg-blue-50 text-blue-800 rounded-lg text-sm border border-blue-100 flex items-center justify-between">
-               <span>Viewing data for linked student: <strong>{connectedStudent.name}</strong></span>
-               <span className="text-xs bg-white px-2 py-1 rounded border border-blue-200">ID: {connectedStudent.id}</span>
-            </div>
-            {/* Reuse dashboard components for Read-Only view */}
-            <Dashboard 
-              user={connectedStudent} 
-              progress={progress} 
-              onChangeTab={() => {}} 
-              notifications={notifications}
-              quotes={quotes}
-              goals={goals} // Parent views goals
-              onToggleGoal={() => {}} // Parent cannot toggle
-              onAddGoal={() => {}} // Parent cannot add
+          <Dashboard 
+            user={currentUser} 
+            progress={progress} 
+            onChangeTab={setActiveTab}
+            notifications={notifications}
+            quotes={quotes}
+            goals={goals}
+            onToggleGoal={handleToggleGoal}
+            onAddGoal={handleAddGoal}
+          />
+        );
+      case 'syllabus':
+        return (
+          <SyllabusTracker 
+            user={currentUser}
+            subjects={JEE_SYLLABUS} 
+            progress={progress} 
+            onUpdateProgress={handleUpdateProgress} 
+          />
+        );
+      case 'tests':
+        return (
+          <TestCenter 
+            availableTests={tests} 
+            attempts={attempts} 
+            onCompleteTest={handleCompleteTest} 
+          />
+        );
+      case 'focus':
+        return <FocusZone />;
+      case 'analytics':
+        return <Analytics attempts={attempts} tests={tests} syllabus={JEE_SYLLABUS} />;
+      case 'timetable':
+        return <TimetableGenerator />;
+      case 'users':
+        return (
+            <AdminPanel 
+                users={MOCK_USERS} 
+                questionBank={questions} 
+                quotes={quotes}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                onAddQuestion={handleAddQuestion}
+                onCreateTest={handleCreateTest}
+                onSendNotification={handleSendNotification}
+                onAddQuote={handleAddQuote}
+                onDeleteQuote={handleDeleteQuote}
             />
-          </div>
+        );
+      case 'system':
+        return <SystemDocs />;
+      case 'profile':
+        return <ProfileSettings user={currentUser} onUpdateUser={handleUpdateUser} />;
+      case 'mistakes':
+        return <MistakeNotebook mistakes={mistakes} onUpdateMistake={handleMistakeUpdate} onDeleteMistake={handleMistakeDelete} />;
+      case 'wellness':
+        return <WellnessCorner />;
+      case 'flashcards':
+        return <FlashcardDeck cards={flashcards} />;
+      case 'backlogs':
+        return <BacklogManager backlogs={backlogs} onAddBacklog={handleAddBacklog} onToggleStatus={handleToggleBacklog} onDeleteBacklog={handleDeleteBacklog} />;
+      case 'parent_view':
+        // Reuse Dashboard for Parent but read-only conceptually (handled by fetching logic)
+        return (
+            <Dashboard 
+                user={currentUser} 
+                progress={progress} 
+                onChangeTab={() => {}} // Parent cannot nav
+                notifications={notifications}
+                quotes={quotes}
+                goals={goals} // Viewing student's goals
+                onToggleGoal={() => {}} // Read only
+                onAddGoal={() => {}}
+            />
+        );
+      default:
+        return (
+            <div className="flex items-center justify-center h-full text-slate-400">
+                <p>Welcome to JEE Tracker. Select a tab to begin.</p>
+            </div>
         );
     }
-
-    // Fallback if role is unrecognized
-    return (
-        <div className="flex flex-col items-center justify-center min-h-screen text-slate-500">
-            <h2 className="text-xl font-bold text-red-500 mb-2">Access Error</h2>
-            <p>Unknown User Role: {currentUser.role}</p>
-            <button onClick={() => setCurrentUser(null)} className="mt-4 text-blue-600 hover:underline">
-                Return to Login
-            </button>
-        </div>
-    );
   };
 
   return (
@@ -458,7 +387,12 @@ function App() {
       currentUser={currentUser} 
       activeTab={activeTab} 
       onTabChange={setActiveTab}
-      onLogout={() => setCurrentUser(null)}
+      onLogout={() => {
+          setCurrentUser(null);
+          setProgress({});
+          setGoals([]);
+          setMistakes([]);
+      }}
     >
       {renderContent()}
     </Layout>
