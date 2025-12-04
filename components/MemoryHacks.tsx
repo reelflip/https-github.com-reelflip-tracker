@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { MemoryHack } from '../types';
 import { Lightbulb, Search, Copy, CheckCircle2, Zap, Brain, Hash, Layers } from 'lucide-react';

@@ -144,42 +144,23 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
     }
   };
 
-  // --- Quick Login Handlers (Offline Mode) ---
-  
-  const handleStudentShortcut = () => {
-      onLogin({
-          id: 'local_student',
-          name: 'Demo Student',
-          email: 'student@demo.com',
-          role: 'STUDENT',
+  const handleQuickLogin = (role: Role) => {
+      const mockUser: User = {
+          id: role === 'ADMIN' ? 'admin_local' : role === 'STUDENT' ? 'student_local' : 'parent_local',
+          name: role === 'ADMIN' ? 'Dev Admin' : role === 'STUDENT' ? 'Dev Student' : 'Dev Parent',
+          email: `${role.toLowerCase()}@dev.local`,
+          role: role,
           isVerified: true,
-          institute: 'Allen',
           targetYear: 2025,
-          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=student'
-      });
-  };
-
-  const handleParentShortcut = () => {
-      onLogin({
-          id: 'local_parent',
-          name: 'Demo Parent',
-          email: 'parent@demo.com',
-          role: 'PARENT',
-          isVerified: true,
-          studentId: 'local_student',
-          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=parent'
-      });
-  };
-
-  const handleAdminShortcut = () => {
-      onLogin({
-          id: 'local_admin',
-          name: 'System Admin (Local)',
-          email: 'admin@local',
-          role: 'ADMIN',
-          isVerified: true,
-          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
-      });
+          institute: 'Dev Institute'
+      };
+      
+      // If parent, link to student for UI testing
+      if (role === 'PARENT') {
+          mockUser.studentId = 'student_local';
+      }
+      
+      onLogin(mockUser);
   };
 
   return (
@@ -436,47 +417,40 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                         </>
                     )}
                 </button>
-
-                {/* Quick Login Shortcuts (Offline/Test) */}
-                {!isRegistering && (
-                    <div className="mt-6 pt-6 border-t border-slate-100">
-                        <p className="text-[10px] font-bold text-slate-400 uppercase text-center mb-3">Developer Shortcuts (Offline)</p>
-                        <div className="grid grid-cols-3 gap-2">
-                            <button
-                                type="button"
-                                onClick={handleStudentShortcut}
-                                className="flex flex-col items-center justify-center p-3 bg-blue-50 hover:bg-blue-100 rounded-xl text-blue-700 transition-colors border border-blue-100"
-                            >
-                                <div className="bg-white p-1.5 rounded-full mb-1 shadow-sm">
-                                    <UserIcon className="w-4 h-4" />
-                                </div>
-                                <span className="text-[10px] font-bold">Student</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleParentShortcut}
-                                className="flex flex-col items-center justify-center p-3 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 transition-colors border border-green-100"
-                            >
-                                <div className="bg-white p-1.5 rounded-full mb-1 shadow-sm">
-                                    <Users className="w-4 h-4" />
-                                </div>
-                                <span className="text-[10px] font-bold">Parent</span>
-                            </button>
-                            <button
-                                type="button"
-                                onClick={handleAdminShortcut}
-                                className="flex flex-col items-center justify-center p-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition-colors border border-slate-200"
-                            >
-                                <div className="bg-white p-1.5 rounded-full mb-1 shadow-sm">
-                                    <Shield className="w-4 h-4" />
-                                </div>
-                                <span className="text-[10px] font-bold">Admin</span>
-                            </button>
-                        </div>
-                    </div>
-                )}
             </form>
             
+            {/* Developer Shortcuts (Conditionally Rendered) */}
+            {window.IITJEE_CONFIG?.enableDevTools && !isRegistering && (
+                <div className="mt-6 pt-6 border-t border-slate-100">
+                    <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-wider mb-3 flex items-center justify-center">
+                        <Zap className="w-3 h-3 mr-1" /> Developer Shortcuts (Offline)
+                    </p>
+                    <div className="grid grid-cols-3 gap-2">
+                        <button 
+                            onClick={() => handleQuickLogin('ADMIN')}
+                            className="bg-slate-100 text-slate-600 hover:bg-slate-200 text-[10px] py-2 rounded-lg font-bold flex flex-col items-center border border-slate-200 transition-colors"
+                        >
+                            <Shield className="w-4 h-4 mb-1 text-red-500" />
+                            Admin
+                        </button>
+                        <button 
+                            onClick={() => handleQuickLogin('STUDENT')}
+                            className="bg-slate-100 text-slate-600 hover:bg-slate-200 text-[10px] py-2 rounded-lg font-bold flex flex-col items-center border border-slate-200 transition-colors"
+                        >
+                            <UserIcon className="w-4 h-4 mb-1 text-blue-500" />
+                            Student
+                        </button>
+                        <button 
+                            onClick={() => handleQuickLogin('PARENT')}
+                            className="bg-slate-100 text-slate-600 hover:bg-slate-200 text-[10px] py-2 rounded-lg font-bold flex flex-col items-center border border-slate-200 transition-colors"
+                        >
+                            <Users className="w-4 h-4 mb-1 text-green-500" />
+                            Parent
+                        </button>
+                    </div>
+                </div>
+            )}
+
             {/* Footer Links */}
             <div className="mt-8 text-center space-x-4 text-xs text-slate-400 font-medium flex flex-wrap justify-center gap-y-2">
                 <button onClick={() => onNavigate('about')} className="hover:text-blue-600 transition-colors">About Us</button>

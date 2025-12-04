@@ -180,3 +180,11 @@ export interface MockDataState {
   attempts: TestAttempt[];
   sessions: FocusSession[];
 }
+
+declare global {
+  interface Window {
+    IITJEE_CONFIG?: {
+      enableDevTools: boolean;
+    }
+  }
+}
