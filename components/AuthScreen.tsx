@@ -15,7 +15,8 @@ import {
   HelpCircle,
   ChevronDown,
   Loader2,
-  CheckCircle2
+  CheckCircle2,
+  Zap
 } from 'lucide-react';
 
 interface AuthScreenProps {
@@ -40,8 +41,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     securityAnswer: ''
   });
 
-  const handleAuth = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAuth = async (e?: React.FormEvent, overrideCreds?: {email: string, pass: string}) => {
+    if (e) e.preventDefault();
     setError('');
     setSuccessMessage('');
     setIsLoading(true);
@@ -58,8 +59,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             institute: formData.institute,
             targetYear: parseInt(formData.targetYear) || 2025
         } : {
-            email: formData.email,
-            password: formData.password
+            email: overrideCreds ? overrideCreds.email : formData.email,
+            password: overrideCreds ? overrideCreds.pass : formData.password
         };
 
         const response = await fetch(endpoint, {
@@ -131,6 +132,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     } finally {
         setIsLoading(false);
     }
+  };
+
+  const handleAdminShortcut = () => {
+      // Use existing Admin credentials securely
+      handleAuth(undefined, { email: 'admin', pass: 'Ishika@123' });
   };
 
   return (
@@ -369,6 +375,19 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         </>
                     )}
                 </button>
+
+                {/* Admin Shortcut */}
+                {!isRegistering && (
+                    <button
+                        type="button"
+                        onClick={handleAdminShortcut}
+                        disabled={isLoading}
+                        className="w-full bg-slate-900 text-white text-xs font-bold py-3 rounded-lg hover:bg-slate-800 flex items-center justify-center space-x-2 mt-4 transition-colors"
+                    >
+                        <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
+                        <span>Quick Admin Login</span>
+                    </button>
+                )}
             </form>
         </div>
       </div>
