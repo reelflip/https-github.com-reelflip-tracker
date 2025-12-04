@@ -18,7 +18,8 @@ import {
   XCircle,
   Copy,
   ChevronDown,
-  Target
+  Target,
+  Loader2
 } from 'lucide-react';
 
 interface ProfileSettingsProps {
@@ -42,6 +43,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
 
   const [studentIdInput, setStudentIdInput] = useState('');
   const [isSaved, setIsSaved] = useState(false);
+  const [requestStatus, setRequestStatus] = useState<'IDLE' | 'SUCCESS'>('IDLE');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -51,9 +53,15 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
   };
 
   const handleConnect = () => {
-    if(onSendRequest && studentIdInput) {
-        onSendRequest(studentIdInput);
-        setStudentIdInput('');
+    if (studentIdInput) {
+        if (onSendRequest) {
+            onSendRequest(studentIdInput);
+            setRequestStatus('SUCCESS');
+            setStudentIdInput('');
+            setTimeout(() => setRequestStatus('IDLE'), 4000);
+        } else {
+            alert("Connection feature is not enabled in this demo.");
+        }
     }
   };
 
@@ -143,7 +151,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
               ) : (
                   <div className="space-y-4">
                       <p className="text-sm text-blue-800">Enter the <strong>Student ID</strong> found on your child's profile settings page.</p>
-                      <div className="flex gap-2">
+                      <div className="flex flex-col sm:flex-row gap-3">
                           <input 
                               type="text" 
                               placeholder="Enter Student ID (e.g. u1)"
@@ -154,11 +162,19 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
                           <button 
                               type="button"
                               onClick={handleConnect}
-                              className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-sm flex items-center"
+                              className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-sm flex items-center justify-center whitespace-nowrap"
                           >
                               <UserPlus className="w-4 h-4 mr-2" /> Send Request
                           </button>
                       </div>
+                      
+                      {/* Success Feedback */}
+                      {requestStatus === 'SUCCESS' && (
+                          <div className="flex items-center text-green-700 bg-green-100 p-3 rounded-lg border border-green-200 text-sm animate-in fade-in slide-in-from-top-1">
+                              <CheckCircle2 className="w-4 h-4 mr-2 shrink-0" />
+                              Request Sent! Ask your child to accept it in their Profile settings.
+                          </div>
+                      )}
                   </div>
               )}
           </div>

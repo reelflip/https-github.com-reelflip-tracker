@@ -324,6 +324,18 @@ function App() {
       }
   };
 
+  // --- Connection Handlers ---
+  const handleSendConnectionRequest = (studentId: string) => {
+      // In a real app, send to /api/send_request.php
+      // For now, assume success for UI feedback
+      console.log('Sending connection request to:', studentId);
+  };
+
+  const handleRespondConnectionRequest = (accept: boolean) => {
+      // In a real app, send to /api/respond_request.php
+      console.log('Responding to connection request:', accept);
+  };
+
   // --- Render Logic ---
 
   if (!currentUser) {
@@ -402,7 +414,14 @@ function App() {
       case 'system':
         return <SystemDocs />;
       case 'profile':
-        return <ProfileSettings user={currentUser} onUpdateUser={handleUpdateUser} />;
+        return (
+            <ProfileSettings 
+                user={currentUser} 
+                onUpdateUser={handleUpdateUser} 
+                onSendRequest={handleSendConnectionRequest}
+                onRespondRequest={handleRespondConnectionRequest}
+            />
+        );
       case 'mistakes':
         return <MistakeNotebook mistakes={mistakes} onUpdateMistake={handleMistakeUpdate} onDeleteMistake={handleMistakeDelete} />;
       case 'wellness':

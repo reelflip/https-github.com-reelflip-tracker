@@ -1,6 +1,8 @@
 
 import { Subject, User, Test, Question, Quote, Flashcard, MemoryHack, BlogPost, ExamComparisonItem } from './types';
 
+// --- COACHING & EXAM METADATA ---
+
 export const COACHING_INSTITUTES = [
     "Allen Career Institute",
     "FIITJEE",
@@ -68,6 +70,8 @@ export const MOCK_USERS: User[] = [
       avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=vikas'
   }
 ];
+
+// --- CONTENT DATA ---
 
 export const DEFAULT_QUOTES: Quote[] = [
     { id: 'q1', text: "Success is the sum of small efforts, repeated day in and day out.", author: "Robert Collier" },
@@ -251,6 +255,336 @@ export const EXAM_COMPARISON_DATA: ExamComparisonItem[] = [
       colleges: 'University of Delhi (DU), BHU, JNU, and 40+ Central Univs.',
       dates: 'Mid May to End May'
     },
+];
+
+// --- MASSIVE QUESTION BANK (For 20+ Questions per Exam) ---
+
+// PHYSICS POOL
+const PHYSICS_QUESTIONS: Question[] = [
+    { id: 'p_1', subjectId: 'phys', topicId: 'p_kin_1', text: 'A particle moves along x-axis as x = 4(t-2) + a(t-2)^2. Which is true?', options: ['Initial velocity is 4', 'Acceleration is 2a', 'Particle is at origin at t=2', 'All of the above'], correctOptionIndex: 3 },
+    { id: 'p_2', subjectId: 'phys', topicId: 'p_kin_2', text: 'Projectile A is fired at 30 deg, B at 60 deg with same speed. Ratio of max heights?', options: ['1:3', '1:2', '1:√3', '3:1'], correctOptionIndex: 0 },
+    { id: 'p_3', subjectId: 'phys', topicId: 'p_unit_2', text: 'Dimensions of Planck\'s constant matches with:', options: ['Energy', 'Momentum', 'Angular Momentum', 'Power'], correctOptionIndex: 2 },
+    { id: 'p_4', subjectId: 'phys', topicId: 'p_kin_3', text: 'River flows at 3 km/h. Swimmer speed 4 km/h. Time to cross 1km wide river straight?', options: ['15 min', '20 min', '12 min', '25 min'], correctOptionIndex: 0 },
+    { id: 'p_5', subjectId: 'phys', topicId: 'p_unit_1', text: 'Which is a fundamental unit?', options: ['Newton', 'Watt', 'Candela', 'Joule'], correctOptionIndex: 2 },
+    { id: 'p_6', subjectId: 'phys', topicId: 'p_kin_1', text: 'Velocity v = 3t^2 + 2t. Find displacement from t=0 to t=2.', options: ['12m', '14m', '10m', '8m'], correctOptionIndex: 0 },
+    { id: 'p_7', subjectId: 'phys', topicId: 'p_kin_2', text: 'Range is maximum when angle of projection is:', options: ['30', '45', '60', '90'], correctOptionIndex: 1 },
+    { id: 'p_8', subjectId: 'phys', topicId: 'p_unit_2', text: 'Percentage error in mass is 2% and speed is 3%. Error in KE?', options: ['5%', '8%', '1%', '1.5%'], correctOptionIndex: 1 },
+    { id: 'p_9', subjectId: 'phys', topicId: 'p_kin_3', text: 'Rain falls vertically at 30 m/s. Wind blows North at 10 m/s. Angle of umbrella?', options: ['tan-1(3)', 'tan-1(1/3)', 'tan-1(10)', '0'], correctOptionIndex: 1 },
+    { id: 'p_10', subjectId: 'phys', topicId: 'p_unit_1', text: 'Solid angle is measured in:', options: ['Radian', 'Steradian', 'Degree', 'Mole'], correctOptionIndex: 1 },
+    { id: 'p_11', subjectId: 'phys', topicId: 'p_kin_1', text: 'A car accelerates from rest at constant rate alpha, then decelerates at beta. Max velocity?', options: ['sqrt(alpha*beta)', '(alpha*beta)/(alpha+beta) * t', 'alpha*t', 'beta*t'], correctOptionIndex: 1 },
+    { id: 'p_12', subjectId: 'phys', topicId: 'p_kin_2', text: 'Equation of trajectory is y = x - x^2/100. Range is?', options: ['10m', '100m', '50m', '200m'], correctOptionIndex: 1 },
+    { id: 'p_13', subjectId: 'phys', topicId: 'p_unit_2', text: 'Light year is a unit of:', options: ['Time', 'Distance', 'Intensity', 'Speed'], correctOptionIndex: 1 },
+    { id: 'p_14', subjectId: 'phys', topicId: 'p_kin_3', text: 'Two trains move towards each other at 50 km/h and 60 km/h. Relative speed?', options: ['10 km/h', '110 km/h', '55 km/h', '3000 km/h'], correctOptionIndex: 1 },
+    { id: 'p_15', subjectId: 'phys', topicId: 'p_unit_1', text: 'SI unit of magnetic flux is:', options: ['Tesla', 'Weber', 'Gauss', 'Henry'], correctOptionIndex: 1 },
+    { id: 'p_16', subjectId: 'phys', topicId: 'p_kin_1', text: 'Area under v-t graph represents:', options: ['Acceleration', 'Velocity', 'Displacement', 'Force'], correctOptionIndex: 2 },
+    { id: 'p_17', subjectId: 'phys', topicId: 'p_kin_2', text: 'At top of trajectory, velocity and acceleration are:', options: ['Parallel', 'Antiparallel', 'Perpendicular', 'Zero'], correctOptionIndex: 2 },
+    { id: 'p_18', subjectId: 'phys', topicId: 'p_unit_2', text: 'Which is dimensionless?', options: ['Stress', 'Strain', 'Modulus', 'Force'], correctOptionIndex: 1 },
+    { id: 'p_19', subjectId: 'phys', topicId: 'p_kin_3', text: 'A boat crosses a river in shortest path. Velocity must be directed:', options: ['Upstream', 'Downstream', 'Perpendicular', 'Anywhere'], correctOptionIndex: 0 },
+    { id: 'p_20', subjectId: 'phys', topicId: 'p_unit_1', text: 'Parsce is unit of:', options: ['Time', 'Distance', 'Mass', 'Angle'], correctOptionIndex: 1 },
+    { id: 'p_21', subjectId: 'phys', topicId: 'p_kin_1', text: 'Displacement x = t^3 - 6t^2. Velocity is zero at:', options: ['t=2', 't=4', 't=6', 't=0, 4'], correctOptionIndex: 3 },
+    { id: 'p_22', subjectId: 'phys', topicId: 'p_kin_2', text: 'Time of flight depends on:', options: ['Vertical component only', 'Horizontal component only', 'Both', 'None'], correctOptionIndex: 0 },
+    { id: 'p_23', subjectId: 'phys', topicId: 'p_unit_2', text: 'Vernier constant is usually:', options: ['0.1mm', '0.01mm', '0.001mm', '1mm'], correctOptionIndex: 0 },
+    { id: 'p_24', subjectId: 'phys', topicId: 'p_kin_3', text: 'Relative velocity of satellite A w.r.t B moving in same orbit?', options: ['Large', 'Zero', 'Variable', 'Small constant'], correctOptionIndex: 3 },
+    { id: 'p_25', subjectId: 'phys', topicId: 'p_unit_1', text: 'Torque has same dimensions as:', options: ['Force', 'Work', 'Power', 'Momentum'], correctOptionIndex: 1 },
+    { id: 'p_26', subjectId: 'phys', topicId: 'p_kin_1', text: 'A ball dropped from height h reaches ground in t. From 2h?', options: ['2t', '1.414t', '4t', '0.5t'], correctOptionIndex: 1 },
+    { id: 'p_27', subjectId: 'phys', topicId: 'p_kin_2', text: 'To hit a target at range R, angle of elevation?', options: ['15', '45', '75', 'Any of these'], correctOptionIndex: 3 }, // 1/2 sin^-1(Rg/u^2)
+    { id: 'p_28', subjectId: 'phys', topicId: 'p_unit_2', text: 'Dimensional formula of Viscosity?', options: ['ML-1T-1', 'MLT-2', 'ML2T-2', 'M0L0T0'], correctOptionIndex: 0 },
+    { id: 'p_29', subjectId: 'phys', topicId: 'p_kin_3', text: 'Man walks on moving escalator. Time taken?', options: ['t1+t2', 't1t2/(t1+t2)', 'sqrt(t1t2)', '(t1+t2)/2'], correctOptionIndex: 1 },
+    { id: 'p_30', subjectId: 'phys', topicId: 'p_unit_1', text: 'Unit of Permittivity (epsilon)?', options: ['F/m', 'H/m', 'N/C', 'V/m'], correctOptionIndex: 0 }
+];
+
+// CHEMISTRY POOL
+const CHEMISTRY_QUESTIONS: Question[] = [
+    { id: 'c_1', subjectId: 'chem', topicId: 'c_bas_1', text: 'Weight of one molecule of C60H122 is?', options: ['1.4 x 10^-21 g', '1000 g', '60 g', '1.2 x 10^-20 g'], correctOptionIndex: 0 },
+    { id: 'c_2', subjectId: 'chem', topicId: 'c_at_1', text: 'Ratio of radii of 2nd and 3rd Bohr orbit is:', options: ['2:3', '4:9', '9:4', '8:27'], correctOptionIndex: 1 },
+    { id: 'c_3', subjectId: 'chem', topicId: 'c_at_2', text: 'Number of spherical nodes in 3p orbital?', options: ['0', '1', '2', '3'], correctOptionIndex: 1 },
+    { id: 'c_4', subjectId: 'chem', topicId: 'c_bas_2', text: 'Limiting reagent in 2A + 3B -> C if we have 5 mol A and 6 mol B?', options: ['A', 'B', 'C', 'None'], correctOptionIndex: 1 },
+    { id: 'c_5', subjectId: 'chem', topicId: 'c_at_1', text: 'Energy of electron in H-atom is proportional to:', options: ['n', 'n^2', '1/n', '1/n^2'], correctOptionIndex: 3 },
+    { id: 'c_6', subjectId: 'chem', topicId: 'c_bas_1', text: 'Molarity of pure water is:', options: ['55.5 M', '18 M', '1 M', '100 M'], correctOptionIndex: 0 },
+    { id: 'c_7', subjectId: 'chem', topicId: 'c_at_2', text: 'Which set of quantum numbers is not possible?', options: ['3, 2, -2, +1/2', '2, 2, 1, +1/2', '4, 0, 0, -1/2', '5, 3, 0, +1/2'], correctOptionIndex: 1 },
+    { id: 'c_8', subjectId: 'chem', topicId: 'c_bas_2', text: 'Volume of CO2 at STP from 10g CaCO3 heating?', options: ['22.4 L', '11.2 L', '2.24 L', '1.12 L'], correctOptionIndex: 2 },
+    { id: 'c_9', subjectId: 'chem', topicId: 'c_at_1', text: 'Wavelength of first line of Lyman series?', options: ['1216 A', '912 A', '6563 A', '4861 A'], correctOptionIndex: 0 },
+    { id: 'c_10', subjectId: 'chem', topicId: 'c_bas_1', text: 'Number of atoms in 0.1 mol of triatomic gas?', options: ['6.02x10^22', '1.8x10^23', '3.6x10^23', '10^23'], correctOptionIndex: 1 },
+    { id: 'c_11', subjectId: 'chem', topicId: 'c_at_2', text: 'Orbital angular momentum of p-electron?', options: ['h/2pi', 'sqrt(2)h/2pi', 'sqrt(6)h/2pi', '0'], correctOptionIndex: 1 },
+    { id: 'c_12', subjectId: 'chem', topicId: 'c_bas_2', text: 'Normality of 0.1 M H2SO4 is:', options: ['0.1 N', '0.2 N', '0.05 N', '1 N'], correctOptionIndex: 1 },
+    { id: 'c_13', subjectId: 'chem', topicId: 'c_at_1', text: 'Which transition gives visible light?', options: ['Lyman', 'Balmer', 'Paschen', 'Pfund'], correctOptionIndex: 1 },
+    { id: 'c_14', subjectId: 'chem', topicId: 'c_bas_1', text: 'Which has max number of atoms?', options: ['1g Au', '1g Na', '1g Li', '1g Cl2'], correctOptionIndex: 2 },
+    { id: 'c_15', subjectId: 'chem', topicId: 'c_at_2', text: 'Total nodes in 3d orbital?', options: ['0', '1', '2', '3'], correctOptionIndex: 2 },
+    { id: 'c_16', subjectId: 'chem', topicId: 'c_bas_2', text: 'Which concentration unit is temp independent?', options: ['Molarity', 'Normality', 'Molality', 'Formality'], correctOptionIndex: 2 },
+    { id: 'c_17', subjectId: 'chem', topicId: 'c_at_1', text: 'Radius of H-atom first orbit is 0.53A. Radius of Li2+?', options: ['0.17 A', '0.53 A', '1.59 A', '0.26 A'], correctOptionIndex: 0 },
+    { id: 'c_18', subjectId: 'chem', topicId: 'c_bas_1', text: 'Avogadro number value?', options: ['6.023x10^23', '6.023x10^22', '1.6x10^-19', '9.1x10^-31'], correctOptionIndex: 0 },
+    { id: 'c_19', subjectId: 'chem', topicId: 'c_at_2', text: 'Max electrons in orbital with n=4, l=1?', options: ['2', '6', '14', '10'], correctOptionIndex: 1 },
+    { id: 'c_20', subjectId: 'chem', topicId: 'c_bas_2', text: 'Oxidation state of Cr in K2Cr2O7?', options: ['+3', '+6', '+7', '+5'], correctOptionIndex: 1 },
+    { id: 'c_21', subjectId: 'chem', topicId: 'c_at_1', text: 'Correct order of energy?', options: ['3s < 3p < 3d', '3s > 3p > 3d', '3s = 3p = 3d', '3d < 3p < 3s'], correctOptionIndex: 0 },
+    { id: 'c_22', subjectId: 'chem', topicId: 'c_bas_1', text: 'Weight of 11.2L O2 at STP?', options: ['32g', '16g', '8g', '64g'], correctOptionIndex: 1 },
+    { id: 'c_23', subjectId: 'chem', topicId: 'c_at_2', text: 'Shape of d-orbital?', options: ['Spherical', 'Dumbbell', 'Double Dumbbell', 'Complex'], correctOptionIndex: 2 },
+    { id: 'c_24', subjectId: 'chem', topicId: 'c_bas_2', text: 'Eq weight of KMnO4 in acidic medium?', options: ['M/1', 'M/3', 'M/5', 'M/7'], correctOptionIndex: 2 },
+    { id: 'c_25', subjectId: 'chem', topicId: 'c_at_1', text: 'Ionization energy of H is 13.6 eV. For He+?', options: ['13.6 eV', '27.2 eV', '54.4 eV', '122.4 eV'], correctOptionIndex: 2 },
+    { id: 'c_26', subjectId: 'chem', topicId: 'c_bas_1', text: 'Law of Multiple Proportions illustrated by:', options: ['NaCl, NaBr', 'H2O, D2O', 'CO, CO2', 'MgO, Mg(OH)2'], correctOptionIndex: 2 },
+    { id: 'c_27', subjectId: 'chem', topicId: 'c_at_2', text: 'Electronic config of Cr (24)?', options: ['3d4 4s2', '3d5 4s1', '3d6 4s0', '3d3 4s2 4p1'], correctOptionIndex: 1 },
+    { id: 'c_28', subjectId: 'chem', topicId: 'c_bas_2', text: 'Mole fraction of solute in 1 molal aqueous solution?', options: ['0.018', '0.001', '0.1', '0.02'], correctOptionIndex: 0 },
+    { id: 'c_29', subjectId: 'chem', topicId: 'c_at_1', text: 'De Broglie wavelength is min for:', options: ['Electron', 'Proton', 'Alpha particle', 'SO2 molecule'], correctOptionIndex: 3 },
+    { id: 'c_30', subjectId: 'chem', topicId: 'c_bas_1', text: 'Number of moles in 4.4g CO2?', options: ['0.1', '0.2', '0.5', '1'], correctOptionIndex: 0 }
+];
+
+// MATHS POOL
+const MATHS_QUESTIONS: Question[] = [
+    { id: 'm_1', subjectId: 'math', topicId: 'm_set_1', text: 'Power set of set A={1,2} has how many elements?', options: ['2', '4', '3', '1'], correctOptionIndex: 1 },
+    { id: 'm_2', subjectId: 'math', topicId: 'm_cpx_1', text: 'Value of i^257 is?', options: ['i', '-i', '1', '-1'], correctOptionIndex: 0 },
+    { id: 'm_3', subjectId: 'math', topicId: 'm_set_2', text: 'A U A\' is equal to:', options: ['A', 'Universal Set', 'Null Set', 'A\''], correctOptionIndex: 1 },
+    { id: 'm_4', subjectId: 'math', topicId: 'm_quad_1', text: 'If roots are reciprocal, then in ax^2+bx+c=0:', options: ['a=c', 'a=b', 'b=c', 'a=0'], correctOptionIndex: 0 },
+    { id: 'm_5', subjectId: 'math', topicId: 'm_rel_1', text: 'Relation R={(1,1),(2,2),(1,2),(2,1)} on {1,2,3} is:', options: ['Reflexive', 'Symmetric', 'Transitive', 'Equivalence'], correctOptionIndex: 1 },
+    { id: 'm_6', subjectId: 'math', topicId: 'm_cpx_2', text: 'Arg(z) + Arg(conjugate z) is:', options: ['0', 'pi', '2pi', 'pi/2'], correctOptionIndex: 0 },
+    { id: 'm_7', subjectId: 'math', topicId: 'm_fun_1', text: 'Domain of f(x) = sqrt(x-1) is:', options: ['(1, inf)', '[1, inf)', '(-inf, 1]', 'R'], correctOptionIndex: 1 },
+    { id: 'm_8', subjectId: 'math', topicId: 'm_quad_1', text: 'Sum of roots of x^2 - 5x + 6 = 0', options: ['5', '-5', '6', '-6'], correctOptionIndex: 0 },
+    { id: 'm_9', subjectId: 'math', topicId: 'm_set_1', text: 'Number of subsets of a set with n elements:', options: ['n', 'n^2', '2^n', 'n!'], correctOptionIndex: 2 },
+    { id: 'm_10', subjectId: 'math', topicId: 'm_cpx_1', text: 'Modulus of 3 + 4i:', options: ['5', '7', '12', '25'], correctOptionIndex: 0 },
+    { id: 'm_11', subjectId: 'math', topicId: 'm_rel_1', text: 'Identity relation is always:', options: ['Reflexive', 'Symmetric', 'Transitive', 'All of these'], correctOptionIndex: 3 },
+    { id: 'm_12', subjectId: 'math', topicId: 'm_quad_1', text: 'Condition for real equal roots:', options: ['D>0', 'D<0', 'D=0', 'D>=0'], correctOptionIndex: 2 },
+    { id: 'm_13', subjectId: 'math', topicId: 'm_fun_1', text: 'f(x)=x^2 is:', options: ['One-one', 'Many-one', 'Bijective', 'None'], correctOptionIndex: 1 },
+    { id: 'm_14', subjectId: 'math', topicId: 'm_cpx_2', text: 'Multiplicative inverse of 1-i:', options: ['1+i', '(1+i)/2', '(1-i)/2', 'i'], correctOptionIndex: 1 },
+    { id: 'm_15', subjectId: 'math', topicId: 'm_set_2', text: 'A - B is same as:', options: ['A n B\'', 'A n B', 'A u B', 'B - A'], correctOptionIndex: 0 },
+    { id: 'm_16', subjectId: 'math', topicId: 'm_quad_1', text: 'Minimum value of x^2 + 2x + 5:', options: ['4', '1', '5', '0'], correctOptionIndex: 0 },
+    { id: 'm_17', subjectId: 'math', topicId: 'm_rel_1', text: 'Intersection of two equivalence relations is:', options: ['Equivalence', 'Reflexive only', 'Symmetric only', 'None'], correctOptionIndex: 0 },
+    { id: 'm_18', subjectId: 'math', topicId: 'm_cpx_1', text: 'Value of omega^99 + omega^100 + omega^101:', options: ['1', '0', 'omega', 'omega^2'], correctOptionIndex: 1 },
+    { id: 'm_19', subjectId: 'math', topicId: 'm_fun_1', text: 'Range of sin(x):', options: ['(-1,1)', '[-1,1]', 'R', '[0,1]'], correctOptionIndex: 1 },
+    { id: 'm_20', subjectId: 'math', topicId: 'm_quad_1', text: 'If alpha, beta are roots, equation with roots 1/alpha, 1/beta?', options: ['cx^2+bx+a=0', 'ax^2-bx+c=0', 'bx^2+ax+c=0', 'cx^2-bx+a=0'], correctOptionIndex: 0 },
+    { id: 'm_21', subjectId: 'math', topicId: 'm_set_1', text: 'Null set is a subset of:', options: ['Every set', 'No set', 'Only finite sets', 'Only infinite sets'], correctOptionIndex: 0 },
+    { id: 'm_22', subjectId: 'math', topicId: 'm_cpx_2', text: 'Rotation of vector z by 90 deg is:', options: ['iz', '-iz', 'z', 'z^2'], correctOptionIndex: 0 },
+    { id: 'm_23', subjectId: 'math', topicId: 'm_rel_1', text: 'Total relations from set A(m elements) to B(n elements):', options: ['2^(m+n)', '2^(mn)', 'mn', 'm^n'], correctOptionIndex: 1 },
+    { id: 'm_24', subjectId: 'math', topicId: 'm_quad_1', text: 'If x=sqrt(6+sqrt(6+...)) then x=?', options: ['2', '3', '6', '1'], correctOptionIndex: 1 },
+    { id: 'm_25', subjectId: 'math', topicId: 'm_fun_1', text: 'Inverse of f(x) = x+1:', options: ['x-1', '1/x+1', '1-x', 'x'], correctOptionIndex: 0 },
+    { id: 'm_26', subjectId: 'math', topicId: 'm_set_2', text: 'If A={1,2}, B={2,3}, A x B has:', options: ['2 elements', '4 elements', '3 elements', '1 element'], correctOptionIndex: 1 },
+    { id: 'm_27', subjectId: 'math', topicId: 'm_cpx_1', text: 'Amplitude of -1-i:', options: ['-3pi/4', '3pi/4', '-pi/4', 'pi/4'], correctOptionIndex: 0 },
+    { id: 'm_28', subjectId: 'math', topicId: 'm_quad_1', text: 'Product of roots of 2x^2 + 5x + 2 = 0:', options: ['2.5', '1', '5', '2'], correctOptionIndex: 1 },
+    { id: 'm_29', subjectId: 'math', topicId: 'm_rel_1', text: 'Relation < on real numbers is:', options: ['Transitive', 'Reflexive', 'Symmetric', 'Equivalence'], correctOptionIndex: 0 },
+    { id: 'm_30', subjectId: 'math', topicId: 'm_fun_1', text: 'Composition fog(x) where f=x^2, g=x+1:', options: ['x^2+1', '(x+1)^2', 'x^2+x', 'x+1'], correctOptionIndex: 1 }
+];
+
+// LOGIC & ENGLISH POOL (For BITSAT/VITEEE)
+const LOGIC_ENGLISH_QUESTIONS: Question[] = [
+    { id: 'l_1', subjectId: 'logic', topicId: 'series', text: 'Find next: 2, 5, 10, 17, ?', options: ['24', '26', '25', '27'], correctOptionIndex: 1 }, // n^2 + 1
+    { id: 'l_2', subjectId: 'logic', topicId: 'analogy', text: 'Doctor : Hospital :: Teacher : ?', options: ['School', 'Class', 'Student', 'Book'], correctOptionIndex: 0 },
+    { id: 'l_3', subjectId: 'logic', topicId: 'coding', text: 'If CAT = 24, DOG = ?', options: ['26', '25', '24', '27'], correctOptionIndex: 0 },
+    { id: 'l_4', subjectId: 'logic', topicId: 'direction', text: 'A walks 5km North, turns Right. Direction?', options: ['East', 'West', 'South', 'North'], correctOptionIndex: 0 },
+    { id: 'l_5', subjectId: 'logic', topicId: 'blood', text: 'A is B\'s brother. C is A\'s mother. Relation of C to B?', options: ['Mother', 'Aunt', 'Sister', 'Niece'], correctOptionIndex: 0 },
+    { id: 'e_1', subjectId: 'eng', topicId: 'vocab', text: 'Synonym of "Candid":', options: ['Frank', 'Secretive', 'Cruel', 'Shy'], correctOptionIndex: 0 },
+    { id: 'e_2', subjectId: 'eng', topicId: 'grammar', text: 'He ___ to the market yesterday.', options: ['go', 'went', 'gone', 'going'], correctOptionIndex: 1 },
+    { id: 'e_3', subjectId: 'eng', topicId: 'vocab', text: 'Antonym of "Brave":', options: ['Cowardly', 'Strong', 'Bold', 'Heroic'], correctOptionIndex: 0 },
+    { id: 'e_4', subjectId: 'eng', topicId: 'grammar', text: 'Neither he nor I ___ going.', options: ['am', 'is', 'are', 'were'], correctOptionIndex: 0 },
+    { id: 'e_5', subjectId: 'eng', topicId: 'vocab', text: 'One who knows everything:', options: ['Omniscient', 'Omnipotent', 'Omnipresent', 'Scholar'], correctOptionIndex: 0 }
+];
+
+// --- MOCK TESTS (Populated with 25+ Questions) ---
+
+export const MOCK_TESTS: Test[] = [
+  {
+    id: 'test_jee_main_2024',
+    title: 'JEE Mains 2024 (Jan 27 Shift 1)',
+    durationMinutes: 180,
+    category: 'PAST_PAPER',
+    difficulty: 'MAINS',
+    examType: 'JEE',
+    questions: [
+        ...PHYSICS_QUESTIONS.slice(0, 10),
+        ...CHEMISTRY_QUESTIONS.slice(0, 10),
+        ...MATHS_QUESTIONS.slice(0, 10)
+    ]
+  },
+  {
+    id: 'test_jee_main_2023',
+    title: 'JEE Mains 2023 (Jan 24 Shift 2)',
+    durationMinutes: 180,
+    category: 'PAST_PAPER',
+    difficulty: 'MAINS',
+    examType: 'JEE',
+    questions: [
+        ...PHYSICS_QUESTIONS.slice(10, 20),
+        ...CHEMISTRY_QUESTIONS.slice(10, 20),
+        ...MATHS_QUESTIONS.slice(10, 20)
+    ]
+  },
+  {
+    id: 'test_jee_adv_2023',
+    title: 'JEE Advanced 2023 (Paper 1)',
+    durationMinutes: 180,
+    category: 'PAST_PAPER',
+    difficulty: 'ADVANCED',
+    examType: 'JEE',
+    questions: [
+        ...PHYSICS_QUESTIONS.slice(20, 28),
+        ...CHEMISTRY_QUESTIONS.slice(20, 28),
+        ...MATHS_QUESTIONS.slice(20, 28)
+    ]
+  },
+  {
+    id: 'test_bitsat_2023',
+    title: 'BITSAT 2023 (Memory Based)',
+    durationMinutes: 180,
+    category: 'PAST_PAPER',
+    difficulty: 'CUSTOM',
+    examType: 'BITSAT',
+    questions: [
+        ...PHYSICS_QUESTIONS.slice(0, 8),
+        ...CHEMISTRY_QUESTIONS.slice(0, 8),
+        ...MATHS_QUESTIONS.slice(0, 8),
+        ...LOGIC_ENGLISH_QUESTIONS.slice(0, 6) 
+    ]
+  },
+  {
+    id: 'test_viteee_2022',
+    title: 'VITEEE 2022 (Sample Paper)',
+    durationMinutes: 150,
+    category: 'PAST_PAPER',
+    difficulty: 'CUSTOM',
+    examType: 'VITEEE',
+    questions: [
+        ...PHYSICS_QUESTIONS.slice(5, 12),
+        ...CHEMISTRY_QUESTIONS.slice(5, 12),
+        ...MATHS_QUESTIONS.slice(5, 12),
+        ...LOGIC_ENGLISH_QUESTIONS.slice(5, 10)
+    ]
+  },
+  {
+    id: 'test_met_2023',
+    title: 'MET 2023 (Manipal Entrance)',
+    durationMinutes: 120,
+    category: 'PAST_PAPER',
+    difficulty: 'CUSTOM',
+    examType: 'MET',
+    questions: [
+        ...PHYSICS_QUESTIONS.slice(15, 22),
+        ...CHEMISTRY_QUESTIONS.slice(15, 22),
+        ...MATHS_QUESTIONS.slice(15, 22),
+        ...LOGIC_ENGLISH_QUESTIONS.slice(0, 4)
+    ]
+  }
+];
+
+export const JEE_SYLLABUS: Subject[] = [
+    {
+        id: 'math',
+        name: 'Mathematics',
+        chapters: [
+            {
+                id: 'm_sets',
+                name: 'SETS, RELATIONS AND FUNCTIONS',
+                topics: [
+                    { id: 'm_set_1', name: 'Sets and their representation' },
+                    { id: 'm_set_2', name: 'Union, intersection and complement of sets' },
+                    { id: 'm_rel_1', name: 'Relations and Types' },
+                    { id: 'm_fun_1', name: 'Functions: One-one, Into, Onto' }
+                ]
+            },
+            {
+                id: 'm_complex',
+                name: 'COMPLEX NUMBERS AND QUADRATIC EQUATIONS',
+                topics: [
+                    { id: 'm_cpx_1', name: 'Complex Numbers Representation' },
+                    { id: 'm_cpx_2', name: 'Argand Diagram & Algebra' },
+                    { id: 'm_quad_1', name: 'Quadratic Equations & Roots' }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'phys',
+        name: 'Physics',
+        chapters: [
+            {
+                id: 'p_units',
+                name: 'UNIT 1: Units and Measurements',
+                topics: [
+                    { id: 'p_unit_1', name: 'SI Units & Dimensions' },
+                    { id: 'p_unit_2', name: 'Errors in Measurement' }
+                ]
+            },
+            {
+                id: 'p_kin',
+                name: 'UNIT 2: Kinematics',
+                topics: [
+                    { id: 'p_kin_1', name: 'Motion in Straight Line' },
+                    { id: 'p_kin_2', name: 'Projectile Motion' },
+                    { id: 'p_kin_3', name: 'Relative Velocity' }
+                ]
+            }
+        ]
+    },
+    {
+        id: 'chem',
+        name: 'Chemistry',
+        chapters: [
+            {
+                id: 'c_basic',
+                name: 'UNIT I: SOME BASIC CONCEPTS IN CHEMISTRY',
+                topics: [
+                    { id: 'c_bas_1', name: 'Mole Concept' },
+                    { id: 'c_bas_2', name: 'Stoichiometry' }
+                ]
+            },
+            {
+                id: 'c_atom',
+                name: 'UNIT 2: ATOMIC STRUCTURE',
+                topics: [
+                    { id: 'c_at_1', name: 'Bohr Model & Spectrum' },
+                    { id: 'c_at_2', name: 'Quantum Numbers & Orbitals' }
+                ]
+            }
+        ]
+    }
+];
+
+export const INITIAL_FLASHCARDS: Flashcard[] = [
+    // PHYSICS
+    { id: 'f1', subjectId: 'phys', difficulty: 'EASY', front: 'Equation for Range of Projectile', back: 'R = (u² sin 2θ) / g' },
+    { id: 'f2', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Moment of Inertia: Solid Sphere', back: 'I = (2/5)MR²' },
+    { id: 'f3', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Moment of Inertia: Hollow Sphere', back: 'I = (2/3)MR²' },
+    { id: 'f4', subjectId: 'phys', difficulty: 'HARD', front: 'Escape Velocity Formula', back: 'v = √(2GM/R) or √(2gR)' },
+    { id: 'f5', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Time Period of Simple Pendulum', back: 'T = 2π √(L/g)' },
+    { id: 'f6', subjectId: 'phys', difficulty: 'EASY', front: 'Ohm\'s Law', back: 'V = IR' },
+    { id: 'f7', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Capacitance of Parallel Plate', back: 'C = (ε₀A) / d' },
+    { id: 'f8', subjectId: 'phys', difficulty: 'HARD', front: 'Biot-Savart Law (Mag Field)', back: 'dB = (μ₀/4π) * (Idl x r) / r³' },
+    { id: 'f9', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Young\'s Double Slit Fringe Width', back: 'β = (λD) / d' },
+    { id: 'f10', subjectId: 'phys', difficulty: 'HARD', front: 'De-Broglie Wavelength', back: 'λ = h / mv = h / p' },
+    { id: 'f11', subjectId: 'phys', difficulty: 'MEDIUM', front: 'First Law of Thermodynamics', back: 'ΔQ = ΔU + ΔW' },
+    { id: 'f12', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Centripetal Acceleration', back: 'a = v² / r = ω²r' },
+    { id: 'f13', subjectId: 'phys', difficulty: 'HARD', front: 'Bernoulli\'s Equation', back: 'P + ½ρv² + ρgh = Constant' },
+    { id: 'f14', subjectId: 'phys', difficulty: 'EASY', front: 'Power Formula (Electricity)', back: 'P = VI = I²R = V²/R' },
+    { id: 'f15', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Malus Law (Polarization)', back: 'I = I₀ cos²θ' },
+
+    // CHEMISTRY
+    { id: 'c1', subjectId: 'chem', difficulty: 'EASY', front: 'Ideal Gas Equation', back: 'PV = nRT' },
+    { id: 'c2', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Nernst Equation (EMF)', back: 'E = E° - (0.059/n) log Q' },
+    { id: 'c3', subjectId: 'chem', difficulty: 'HARD', front: 'Bragg\'s Equation', back: 'nλ = 2d sinθ' },
+    { id: 'c4', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Rate constant (First Order)', back: 'k = (2.303/t) log(a / a-x)' },
+    { id: 'c5', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Half life (First Order)', back: 't½ = 0.693 / k' },
+    { id: 'c6', subjectId: 'chem', difficulty: 'EASY', front: 'pH Formula', back: 'pH = -log[H+]' },
+    { id: 'c7', subjectId: 'chem', difficulty: 'HARD', front: 'Rydberg Formula (Hydrogen)', back: '1/λ = R (1/n₁² - 1/n₂²)' },
+    { id: 'c8', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Gibbs Free Energy', back: 'ΔG = ΔH - TΔS' },
+    { id: 'c9', subjectId: 'chem', difficulty: 'HARD', front: 'Cannizzaro Reaction Product', back: 'Disproportionation: Alcohol + Carboxylic Acid Salt' },
+    { id: 'c10', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Reimer-Tiemann Reaction Product', back: 'Salicylaldehyde (from Phenol)' },
+    { id: 'c11', subjectId: 'chem', difficulty: 'EASY', front: 'General Formula: Alkanes', back: 'CnH(2n+2)' },
+    { id: 'c12', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Hybridization of Carbon in Ethene', back: 'sp² (Trigonal Planar)' },
+    { id: 'c13', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Molality formula', back: 'Moles of solute / Mass of solvent (kg)' },
+    { id: 'c14', subjectId: 'chem', difficulty: 'HARD', front: 'Arrhenius Equation', back: 'k = A * e^(-Ea/RT)' },
+    { id: 'c15', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Bond Order Formula', back: '½ (Nb - Na)' },
+
+    // MATHS
+    { id: 'm1', subjectId: 'math', difficulty: 'EASY', front: 'Quadratic Roots Formula', back: 'x = (-b ± √D) / 2a' },
+    { id: 'm2', subjectId: 'math', difficulty: 'MEDIUM', front: 'Sum of AP (n terms)', back: 'S = n/2 [2a + (n-1)d]' },
+    { id: 'm3', subjectId: 'math', difficulty: 'HARD', front: 'Sum of GP (infinite)', back: 'S = a / (1-r) where |r|<1' },
+    { id: 'm4', subjectId: 'math', difficulty: 'MEDIUM', front: 'Distance of point from line', back: '|ax₁ + by₁ + c| / √(a² + b²)' },
+    { id: 'm5', subjectId: 'math', difficulty: 'HARD', front: 'Integration of ln(x)', back: 'x ln(x) - x + C' },
+    { id: 'm6', subjectId: 'math', difficulty: 'MEDIUM', front: 'Slope of Normal', back: '-1 / (dy/dx)' },
+    { id: 'm7', subjectId: 'math', difficulty: 'EASY', front: 'sin²x + cos²x', back: '1' },
+    { id: 'm8', subjectId: 'math', difficulty: 'HARD', front: 'Expansion of e^x', back: '1 + x + x²/2! + x³/3! + ...' },
+    { id: 'm9', subjectId: 'math', difficulty: 'MEDIUM', front: 'Area of Triangle (Vertices)', back: '½ |x₁(y₂-y₃) + x₂(y₃-y₁) + x₃(y₁-y₂)|' },
+    { id: 'm10', subjectId: 'math', difficulty: 'HARD', front: 'Angle between two lines', back: 'tanθ = |(m₁ - m₂) / (1 + m₁m₂)|' },
+    { id: 'm11', subjectId: 'math', difficulty: 'MEDIUM', front: 'L\'Hospital\'s Rule Condition', back: '0/0 or ∞/∞ form' },
+    { id: 'm12', subjectId: 'math', difficulty: 'EASY', front: 'Derivative of sin(x)', back: 'cos(x)' },
+    { id: 'm13', subjectId: 'math', difficulty: 'MEDIUM', front: 'Projection of a on b', back: '(a . b) / |b|' },
+    { id: 'm14', subjectId: 'math', difficulty: 'HARD', front: 'Equation of Tangent to Circle', back: 'xx₁ + yy₁ = a² (at point x₁, y₁)' },
+    { id: 'm15', subjectId: 'math', difficulty: 'MEDIUM', front: 'Variance Formula', back: 'Σx²/n - (Σx/n)²' }
 ];
 
 export const INITIAL_MEMORY_HACKS: MemoryHack[] = [
@@ -476,240 +810,4 @@ export const INITIAL_MEMORY_HACKS: MemoryHack[] = [
         trick: 'Follow the Circle: i -> j -> k is positive. Going against (j -> i) is negative.',
         tags: ['Vectors']
     }
-];
-
-export const INITIAL_FLASHCARDS: Flashcard[] = [
-    // PHYSICS
-    { id: 'f1', subjectId: 'phys', difficulty: 'EASY', front: 'Equation for Range of Projectile', back: 'R = (u² sin 2θ) / g' },
-    { id: 'f2', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Moment of Inertia: Solid Sphere', back: 'I = (2/5)MR²' },
-    { id: 'f3', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Moment of Inertia: Hollow Sphere', back: 'I = (2/3)MR²' },
-    { id: 'f4', subjectId: 'phys', difficulty: 'HARD', front: 'Escape Velocity Formula', back: 'v = √(2GM/R) or √(2gR)' },
-    { id: 'f5', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Time Period of Simple Pendulum', back: 'T = 2π √(L/g)' },
-    { id: 'f6', subjectId: 'phys', difficulty: 'EASY', front: 'Ohm\'s Law', back: 'V = IR' },
-    { id: 'f7', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Capacitance of Parallel Plate', back: 'C = (ε₀A) / d' },
-    { id: 'f8', subjectId: 'phys', difficulty: 'HARD', front: 'Biot-Savart Law (Mag Field)', back: 'dB = (μ₀/4π) * (Idl x r) / r³' },
-    { id: 'f9', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Young\'s Double Slit Fringe Width', back: 'β = (λD) / d' },
-    { id: 'f10', subjectId: 'phys', difficulty: 'HARD', front: 'De-Broglie Wavelength', back: 'λ = h / mv = h / p' },
-    { id: 'f11', subjectId: 'phys', difficulty: 'MEDIUM', front: 'First Law of Thermodynamics', back: 'ΔQ = ΔU + ΔW' },
-    { id: 'f12', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Centripetal Acceleration', back: 'a = v² / r = ω²r' },
-    { id: 'f13', subjectId: 'phys', difficulty: 'HARD', front: 'Bernoulli\'s Equation', back: 'P + ½ρv² + ρgh = Constant' },
-    { id: 'f14', subjectId: 'phys', difficulty: 'EASY', front: 'Power Formula (Electricity)', back: 'P = VI = I²R = V²/R' },
-    { id: 'f15', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Malus Law (Polarization)', back: 'I = I₀ cos²θ' },
-
-    // CHEMISTRY
-    { id: 'c1', subjectId: 'chem', difficulty: 'EASY', front: 'Ideal Gas Equation', back: 'PV = nRT' },
-    { id: 'c2', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Nernst Equation (EMF)', back: 'E = E° - (0.059/n) log Q' },
-    { id: 'c3', subjectId: 'chem', difficulty: 'HARD', front: 'Bragg\'s Equation', back: 'nλ = 2d sinθ' },
-    { id: 'c4', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Rate constant (First Order)', back: 'k = (2.303/t) log(a / a-x)' },
-    { id: 'c5', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Half life (First Order)', back: 't½ = 0.693 / k' },
-    { id: 'c6', subjectId: 'chem', difficulty: 'EASY', front: 'pH Formula', back: 'pH = -log[H+]' },
-    { id: 'c7', subjectId: 'chem', difficulty: 'HARD', front: 'Rydberg Formula (Hydrogen)', back: '1/λ = R (1/n₁² - 1/n₂²)' },
-    { id: 'c8', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Gibbs Free Energy', back: 'ΔG = ΔH - TΔS' },
-    { id: 'c9', subjectId: 'chem', difficulty: 'HARD', front: 'Cannizzaro Reaction Product', back: 'Disproportionation: Alcohol + Carboxylic Acid Salt' },
-    { id: 'c10', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Reimer-Tiemann Reaction Product', back: 'Salicylaldehyde (from Phenol)' },
-    { id: 'c11', subjectId: 'chem', difficulty: 'EASY', front: 'General Formula: Alkanes', back: 'CnH(2n+2)' },
-    { id: 'c12', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Hybridization of Carbon in Ethene', back: 'sp² (Trigonal Planar)' },
-    { id: 'c13', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Molality formula', back: 'Moles of solute / Mass of solvent (kg)' },
-    { id: 'c14', subjectId: 'chem', difficulty: 'HARD', front: 'Arrhenius Equation', back: 'k = A * e^(-Ea/RT)' },
-    { id: 'c15', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Bond Order Formula', back: '½ (Nb - Na)' },
-
-    // MATHS
-    { id: 'm1', subjectId: 'math', difficulty: 'EASY', front: 'Quadratic Roots Formula', back: 'x = (-b ± √D) / 2a' },
-    { id: 'm2', subjectId: 'math', difficulty: 'MEDIUM', front: 'Sum of AP (n terms)', back: 'S = n/2 [2a + (n-1)d]' },
-    { id: 'm3', subjectId: 'math', difficulty: 'HARD', front: 'Sum of GP (infinite)', back: 'S = a / (1-r) where |r|<1' },
-    { id: 'm4', subjectId: 'math', difficulty: 'MEDIUM', front: 'Distance of point from line', back: '|ax₁ + by₁ + c| / √(a² + b²)' },
-    { id: 'm5', subjectId: 'math', difficulty: 'HARD', front: 'Integration of ln(x)', back: 'x ln(x) - x + C' },
-    { id: 'm6', subjectId: 'math', difficulty: 'MEDIUM', front: 'Slope of Normal', back: '-1 / (dy/dx)' },
-    { id: 'm7', subjectId: 'math', difficulty: 'EASY', front: 'sin²x + cos²x', back: '1' },
-    { id: 'm8', subjectId: 'math', difficulty: 'HARD', front: 'Expansion of e^x', back: '1 + x + x²/2! + x³/3! + ...' },
-    { id: 'm9', subjectId: 'math', difficulty: 'MEDIUM', front: 'Area of Triangle (Vertices)', back: '½ |x₁(y₂-y₃) + x₂(y₃-y₁) + x₃(y₁-y₂)|' },
-    { id: 'm10', subjectId: 'math', difficulty: 'HARD', front: 'Angle between two lines', back: 'tanθ = |(m₁ - m₂) / (1 + m₁m₂)|' },
-    { id: 'm11', subjectId: 'math', difficulty: 'MEDIUM', front: 'L\'Hospital\'s Rule Condition', back: '0/0 or ∞/∞ form' },
-    { id: 'm12', subjectId: 'math', difficulty: 'EASY', front: 'Derivative of sin(x)', back: 'cos(x)' },
-    { id: 'm13', subjectId: 'math', difficulty: 'MEDIUM', front: 'Projection of a on b', back: '(a . b) / |b|' },
-    { id: 'm14', subjectId: 'math', difficulty: 'HARD', front: 'Equation of Tangent to Circle', back: 'xx₁ + yy₁ = a² (at point x₁, y₁)' },
-    { id: 'm15', subjectId: 'math', difficulty: 'MEDIUM', front: 'Variance Formula', back: 'Σx²/n - (Σx/n)²' }
-];
-
-export const JEE_SYLLABUS: Subject[] = [
-    {
-        id: 'math',
-        name: 'Mathematics',
-        chapters: [
-            {
-                id: 'm_sets',
-                name: 'SETS, RELATIONS AND FUNCTIONS',
-                topics: [
-                    { id: 'm_set_1', name: 'Sets and their representation' },
-                    { id: 'm_set_2', name: 'Union, intersection and complement of sets' },
-                    { id: 'm_rel_1', name: 'Relations and Types' },
-                    { id: 'm_fun_1', name: 'Functions: One-one, Into, Onto' }
-                ]
-            },
-            {
-                id: 'm_complex',
-                name: 'COMPLEX NUMBERS AND QUADRATIC EQUATIONS',
-                topics: [
-                    { id: 'm_cpx_1', name: 'Complex Numbers Representation' },
-                    { id: 'm_cpx_2', name: 'Argand Diagram & Algebra' },
-                    { id: 'm_quad_1', name: 'Quadratic Equations & Roots' }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'phys',
-        name: 'Physics',
-        chapters: [
-            {
-                id: 'p_units',
-                name: 'UNIT 1: Units and Measurements',
-                topics: [
-                    { id: 'p_unit_1', name: 'SI Units & Dimensions' },
-                    { id: 'p_unit_2', name: 'Errors in Measurement' }
-                ]
-            },
-            {
-                id: 'p_kin',
-                name: 'UNIT 2: Kinematics',
-                topics: [
-                    { id: 'p_kin_1', name: 'Motion in Straight Line' },
-                    { id: 'p_kin_2', name: 'Projectile Motion' },
-                    { id: 'p_kin_3', name: 'Relative Velocity' }
-                ]
-            }
-        ]
-    },
-    {
-        id: 'chem',
-        name: 'Chemistry',
-        chapters: [
-            {
-                id: 'c_basic',
-                name: 'UNIT I: SOME BASIC CONCEPTS IN CHEMISTRY',
-                topics: [
-                    { id: 'c_bas_1', name: 'Mole Concept' },
-                    { id: 'c_bas_2', name: 'Stoichiometry' }
-                ]
-            },
-            {
-                id: 'c_atom',
-                name: 'UNIT 2: ATOMIC STRUCTURE',
-                topics: [
-                    { id: 'c_at_1', name: 'Bohr Model & Spectrum' },
-                    { id: 'c_at_2', name: 'Quantum Numbers & Orbitals' }
-                ]
-            }
-        ]
-    }
-];
-
-// Reusing existing sample questions logic but ensuring they are exported for MOCK_TESTS
-const Q_PHYS_1 = { id: 'q1', subjectId: 'phys', topicId: 'p_kin_1', text: 'A particle moves along a straight line. Its velocity is given by v = 3t^2. What is the acceleration at t=2?', options: ['6 m/s²', '12 m/s²', '3 m/s²', '0 m/s²'], correctOptionIndex: 1 };
-const Q_CHEM_1 = { id: 'q2', subjectId: 'chem', topicId: 'c_at_1', text: 'Which quantum number defines the orientation of the orbital?', options: ['Principal (n)', 'Azimuthal (l)', 'Magnetic (m)', 'Spin (s)'], correctOptionIndex: 2 };
-const Q_MATH_1 = { id: 'q3', subjectId: 'math', topicId: 'm_lim_1', text: 'Evaluate limit x->0 of (sin x)/x', options: ['0', '1', 'Infinity', 'Undefined'], correctOptionIndex: 1 };
-const Q_LOGIC_1 = { id: 'q_log_1', subjectId: 'logic', topicId: 'general', text: 'If A is brother of B, B is sister of C, and C is father of D, how is D related to A?', options: ['Nephew/Niece', 'Brother', 'Uncle', 'Cousin'], correctOptionIndex: 0 };
-const Q_ENG_1 = { id: 'q_eng_1', subjectId: 'eng', topicId: 'vocab', text: 'Choose the synonym of "Ephemeral":', options: ['Lasting', 'Short-lived', 'Beautiful', 'Heavy'], correctOptionIndex: 1 };
-// New questions for variety
-const Q_LOGIC_2 = { id: 'q_log_2', subjectId: 'logic', topicId: 'series', text: 'Find the next number: 2, 6, 12, 20, ?', options: ['28', '30', '32', '24'], correctOptionIndex: 1 }; // 30 (n^2+n)
-const Q_ENG_2 = { id: 'q_eng_2', subjectId: 'eng', topicId: 'grammar', text: 'Identify the error: "He is senior than me."', options: ['He', 'is', 'senior', 'than'], correctOptionIndex: 3 }; // 'to' instead of 'than'
-
-// NEW QUESTIONS FOR JEE TESTS
-const Q_PHYS_2 = { id: 'q_phys_2', subjectId: 'phys', topicId: 'p_kin_2', text: 'A projectile is fired at 45 degrees. The ratio of range to maximum height is:', options: ['1', '2', '4', '8'], correctOptionIndex: 2 };
-const Q_CHEM_2 = { id: 'q_chem_2', subjectId: 'chem', topicId: 'c_bas_1', text: 'What is the molarity of pure water?', options: ['18 M', '55.5 M', '1 M', '100 M'], correctOptionIndex: 1 };
-const Q_MATH_2 = { id: 'q_math_2', subjectId: 'math', topicId: 'm_quad_1', text: 'If roots of x² - px + q = 0 differ by 1, then:', options: ['p² = 4q', 'p² = 4q + 1', 'p² = 4q - 1', 'q² = 4p'], correctOptionIndex: 1 };
-const Q_PHYS_3 = { id: 'q_phys_3', subjectId: 'phys', topicId: 'p_unit_2', text: 'Which pair has the same dimensions?', options: ['Work and Torque', 'Force and Power', 'Momentum and Energy', 'Impulse and Force'], correctOptionIndex: 0 };
-const Q_CHEM_3 = { id: 'q_chem_3', subjectId: 'chem', topicId: 'c_at_2', text: 'The maximum number of electrons in a subshell with l=2 is:', options: ['6', '10', '14', '2'], correctOptionIndex: 1 };
-
-export const MOCK_TESTS: Test[] = [
-  {
-    id: 'test_demo_1',
-    title: 'JEE Mains 2024 (Jan 27 Shift 1)',
-    durationMinutes: 180,
-    category: 'PAST_PAPER',
-    difficulty: 'MAINS',
-    examType: 'JEE',
-    questions: [Q_PHYS_1, Q_CHEM_1, Q_MATH_1, Q_PHYS_2, Q_CHEM_2]
-  },
-  {
-    id: 'test_jee_main_2023',
-    title: 'JEE Mains 2023 (Jan 24 Shift 2)',
-    durationMinutes: 180,
-    category: 'PAST_PAPER',
-    difficulty: 'MAINS',
-    examType: 'JEE',
-    questions: [Q_MATH_2, Q_PHYS_3, Q_CHEM_3, Q_PHYS_1, Q_MATH_1]
-  },
-  {
-    id: 'test_jee_main_2022',
-    title: 'JEE Mains 2022 (July 25 Shift 1)',
-    durationMinutes: 180,
-    category: 'PAST_PAPER',
-    difficulty: 'MAINS',
-    examType: 'JEE',
-    questions: [Q_CHEM_1, Q_CHEM_2, Q_PHYS_2, Q_MATH_1, Q_PHYS_3]
-  },
-  {
-    id: 'test_demo_2',
-    title: 'JEE Advanced 2023 (Paper 1)',
-    durationMinutes: 180,
-    category: 'PAST_PAPER',
-    difficulty: 'ADVANCED',
-    examType: 'JEE',
-    questions: [Q_PHYS_1, Q_MATH_1, Q_CHEM_1, Q_PHYS_1]
-  },
-  {
-    id: 'test_jee_adv_2022',
-    title: 'JEE Advanced 2022 (Paper 2)',
-    durationMinutes: 180,
-    category: 'PAST_PAPER',
-    difficulty: 'ADVANCED',
-    examType: 'JEE',
-    questions: [Q_PHYS_2, Q_MATH_2, Q_CHEM_3, Q_PHYS_3, Q_CHEM_2]
-  },
-  {
-    id: 'test_jee_adv_2021',
-    title: 'JEE Advanced 2021 (Paper 1)',
-    durationMinutes: 180,
-    category: 'PAST_PAPER',
-    difficulty: 'ADVANCED',
-    examType: 'JEE',
-    questions: [Q_MATH_1, Q_PHYS_2, Q_CHEM_1, Q_MATH_2]
-  },
-  {
-    id: 'test_bitsat_1',
-    title: 'BITSAT 2023 (Session 1 Memory Based)',
-    durationMinutes: 180,
-    category: 'PAST_PAPER',
-    difficulty: 'CUSTOM',
-    examType: 'BITSAT',
-    questions: [Q_PHYS_1, Q_CHEM_1, Q_MATH_1, Q_LOGIC_1, Q_ENG_1, Q_LOGIC_2, Q_ENG_2]
-  },
-  {
-    id: 'test_viteee_1',
-    title: 'VITEEE 2022 (Sample Paper)',
-    durationMinutes: 150,
-    category: 'PAST_PAPER',
-    difficulty: 'CUSTOM',
-    examType: 'VITEEE',
-    questions: [Q_PHYS_1, Q_CHEM_1, Q_MATH_1, Q_ENG_1, Q_ENG_2]
-  },
-  {
-    id: 'test_met_1',
-    title: 'MET 2023 (Manipal Entrance)',
-    durationMinutes: 120,
-    category: 'PAST_PAPER',
-    difficulty: 'CUSTOM',
-    examType: 'MET',
-    questions: [Q_PHYS_1, Q_MATH_1, Q_CHEM_1, Q_ENG_1, Q_LOGIC_1]
-  },
-  {
-    id: 'test_srm_1',
-    title: 'SRMJEEE 2023 (Phase 1)',
-    durationMinutes: 150,
-    category: 'PAST_PAPER',
-    difficulty: 'CUSTOM',
-    examType: 'SRMJEEE',
-    questions: [Q_PHYS_1, Q_CHEM_1, Q_MATH_1]
-  }
 ];

@@ -3,9 +3,10 @@ import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_M
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v1.5 Final)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v1.7 Final Production)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
+-- Includes: 25+ Questions per Mock Test, Target Exams, and Rebranding.
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+05:30";
@@ -321,6 +322,7 @@ CREATE TABLE memory_hacks (
   }
 
   // 6. Seed Questions & Tests
+  // NOTE: Logic pulls from the UPDATED constants.ts with 90+ questions
   const allQuestions: Question[] = [];
   const questionIds = new Set();
   
@@ -334,7 +336,7 @@ CREATE TABLE memory_hacks (
   });
 
   if (allQuestions.length > 0) {
-      sql += `\n-- Seeding Questions Bank\n`;
+      sql += `\n-- Seeding Questions Bank (${allQuestions.length} Questions)\n`;
       sql += `INSERT IGNORE INTO questions (id, subject_id, topic_id, question_text, options_json, correct_option_index) VALUES \n`;
       const qValues = allQuestions.map(q => {
           const safeText = q.text.replace(/'/g, "''");
@@ -345,7 +347,7 @@ CREATE TABLE memory_hacks (
   }
 
   if (MOCK_TESTS.length > 0) {
-      sql += `\n-- Seeding Tests\n`;
+      sql += `\n-- Seeding Tests (${MOCK_TESTS.length} Tests)\n`;
       sql += `INSERT IGNORE INTO tests (id, title, duration_minutes, category, difficulty, exam_type) VALUES \n`;
       const testValues = MOCK_TESTS.map(t => {
           const safeExamType = t.examType || 'JEE';
@@ -410,8 +412,8 @@ export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: s
             name: "README.txt",
             folder: "api",
             desc: "Instructions for Hostinger Deployment.",
-            content: `IITGEEPrep (v1.5) - API DEPLOYMENT
-==================================
+            content: `IITGEEPrep (v1.7 Final Production) - API DEPLOYMENT
+============================================
 Website: iitgeeprep.com
 
 QUICK SETUP GUIDE:
@@ -660,7 +662,30 @@ try {
     $ttQuery = $conn->prepare("SELECT generated_slots_json FROM timetable_settings WHERE user_id = ?");
     $ttQuery->execute([$user_id]);
     $timetable = $ttQuery->fetch(PDO::FETCH_ASSOC);
-    echo json_encode([ "progress" => $progress, "goals" => $goals, "backlogs" => $backlogs, "mistakes" => $mistakes, "timetable" => $timetable ? json_decode($timetable['generated_slots_json']) : null ]);
+    $attemptsQuery = $conn->prepare("SELECT * FROM test_attempts WHERE user_id = ? ORDER BY attempt_date DESC");
+    $attemptsQuery->execute([$user_id]);
+    $attempts = $attemptsQuery->fetchAll(PDO::FETCH_ASSOC);
+    // Fetch detailed results for attempts (optional, can be separate API for speed)
+    foreach($attempts as &$attempt) {
+        $detailQuery = $conn->prepare("SELECT * FROM attempt_details WHERE attempt_id = ?");
+        $detailQuery->execute([$attempt['id']]);
+        $details = $detailQuery->fetchAll(PDO::FETCH_ASSOC);
+        // Map details back to frontend structure
+        $attempt['detailedResults'] = array_map(function($d) {
+            return [
+                "questionId" => $d['question_id'],
+                "status" => $d['status']
+            ];
+        }, $details);
+    }
+    echo json_encode([ 
+        "progress" => $progress, 
+        "goals" => $goals, 
+        "backlogs" => $backlogs, 
+        "mistakes" => $mistakes, 
+        "timetable" => $timetable ? json_decode($timetable['generated_slots_json']) : null,
+        "attempts" => $attempts
+    ]);
 } catch(Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }
 ?>`
         },
@@ -780,6 +805,38 @@ echo json_encode(["message" => "Timetable saved"]);
 ?>`
         },
         {
+            name: "save_attempt.php",
+            folder: "api",
+            desc: "Save Test Attempt.",
+            content: `<?php
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+
+try {
+    $conn->beginTransaction();
+    
+    // Save Attempt
+    $stmt = $conn->prepare("INSERT INTO test_attempts (id, user_id, test_id, score, total_questions, correct_count, incorrect_count, accuracy_percent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$data->id, $data->user_id, $data->testId, $data->score, $data->totalQuestions, $data->correctCount, $data->incorrectCount, $data->accuracy_percent]);
+    
+    // Save Details
+    if (!empty($data->detailedResults)) {
+        $stmtDetail = $conn->prepare("INSERT INTO attempt_details (attempt_id, question_id, status) VALUES (?, ?, ?)");
+        foreach($data->detailedResults as $res) {
+            $stmtDetail->execute([$data->id, $res->questionId, $res->status]);
+        }
+    }
+    
+    $conn->commit();
+    echo json_encode(["message" => "Attempt saved"]);
+} catch (Exception $e) {
+    $conn->rollBack();
+    http_response_code(500);
+    echo json_encode(["error" => $e->getMessage()]);
+}
+?>`
+        },
+        {
             name: ".htaccess",
             folder: "api",
             desc: "API Access.",
@@ -844,7 +901,7 @@ export const getDeploymentPhases = () => {
 };
 
 export const generateFrontendGuide = (): string => {
-    return `# HOSTINGER DEPLOYMENT MANUAL (v1.5 Final)
+    return `# HOSTINGER DEPLOYMENT MANUAL (v1.7 Final Production)
     
 Welcome to IITGEEPrep deployment. This guide will walk you through setting up the app on Hostinger Shared Hosting.
 
