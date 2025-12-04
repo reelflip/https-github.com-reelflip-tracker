@@ -45,20 +45,6 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     setError('');
     setSuccessMessage('');
     setIsLoading(true);
-
-    // --- ADMIN FAILSAFE SHORTCUT (Optional, for recovery) ---
-    if (!isRegistering && formData.email === 'admin' && formData.password === 'Ishika@123') {
-         onLogin({
-             id: 'admin_001',
-             name: 'System Administrator',
-             email: 'admin',
-             role: 'ADMIN',
-             isVerified: true,
-             avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
-         });
-         setIsLoading(false);
-         return;
-    }
     
     try {
         const endpoint = isRegistering ? '/api/register.php' : '/api/login.php';
@@ -119,21 +105,21 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             
             const rawUser = data.user;
 
-            // Normalize User Data (Map snake_case DB fields to camelCase App fields)
+            // The backend now returns normalized camelCase data (name, studentId, etc.)
+            // But we keep the fallbacks just in case an old PHP file is used.
             const normalizedUser: User = {
                 id: rawUser.id,
-                name: rawUser.name || rawUser.full_name, // Handle full_name from DB
+                name: rawUser.name || rawUser.full_name, 
                 email: rawUser.email,
                 role: (rawUser.role || 'STUDENT').toUpperCase() as Role,
-                isVerified: rawUser.is_verified == 1 || rawUser.isVerified,
-                targetYear: rawUser.target_year ? parseInt(rawUser.target_year) : rawUser.targetYear,
+                isVerified: rawUser.isVerified ?? (rawUser.is_verified == 1),
+                targetYear: rawUser.targetYear || (rawUser.target_year ? parseInt(rawUser.target_year) : undefined),
                 institute: rawUser.institute,
                 school: rawUser.school,
-                course: rawUser.course_name || rawUser.course,
+                course: rawUser.course || rawUser.course_name,
                 phone: rawUser.phone,
-                // Critical Mapping for Parent/Student linking
-                studentId: rawUser.student_id || rawUser.studentId,
-                parentId: rawUser.parent_id || rawUser.parentId,
+                studentId: rawUser.studentId || rawUser.student_id,
+                parentId: rawUser.parentId || rawUser.parent_id,
                 avatarUrl: rawUser.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${rawUser.email}`
             };
             
@@ -263,7 +249,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Target Year</label>
+                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Target Year</label>
                             <div className="relative">
                                 <Calendar className="absolute left-4 top-3.5 text-slate-400 w-4 h-4 z-10" />
                                 <select 
