@@ -135,8 +135,16 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
   };
 
   const handleAdminShortcut = () => {
-      // Use existing Admin credentials securely
-      handleAuth(undefined, { email: 'admin', pass: 'Ishika@123' });
+      // Local Bypass for Admin (No DB Check)
+      // Useful for checking deployment status or accessing System Docs when DB is down
+      const localAdmin: User = {
+          id: 'local_admin',
+          name: 'System Admin (Local)',
+          email: 'admin@local',
+          role: 'ADMIN',
+          isVerified: true
+      };
+      onLogin(localAdmin);
   };
 
   return (
@@ -385,7 +393,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         className="w-full bg-slate-900 text-white text-xs font-bold py-3 rounded-lg hover:bg-slate-800 flex items-center justify-center space-x-2 mt-4 transition-colors"
                     >
                         <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                        <span>Quick Admin Login</span>
+                        <span>Quick Admin Login (Local/Offline)</span>
                     </button>
                 )}
             </form>
