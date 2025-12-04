@@ -42,6 +42,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
     institute: '',
     targetYear: '2025',
     targetExam: 'JEE Main & Advanced',
+    dob: '',
+    gender: '',
     securityQuestion: 'What is the name of your first pet?',
     securityAnswer: ''
   });
@@ -70,7 +72,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
             role: role,
             institute: formData.institute,
             targetYear: parseInt(formData.targetYear) || 2025,
-            targetExam: formData.targetExam
+            targetExam: formData.targetExam,
+            dob: formData.dob,
+            gender: formData.gender
         } : {
             email: overrideCreds ? overrideCreds.email : formData.email,
             password: overrideCreds ? overrideCreds.pass : formData.password
@@ -133,6 +137,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                 school: rawUser.school,
                 course: rawUser.course || rawUser.course_name,
                 phone: rawUser.phone,
+                dob: rawUser.dob,
+                gender: rawUser.gender,
                 studentId: rawUser.studentId || rawUser.student_id,
                 parentId: rawUser.parentId || rawUser.parent_id,
                 avatarUrl: rawUser.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${rawUser.email}`
@@ -169,7 +175,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
         
         {/* Header Section (Logo) */}
         <div className="pt-10 pb-4 text-center">
-            <h1 className="flex flex-col items-center">
+            <h1 className="flex flex-col items-center" aria-label="IIT GEE PREP">
                 <span className="text-4xl font-sans font-bold tracking-tight mb-4 block">
                     <span className="text-slate-900">IIT</span> <span className="text-orange-500">GEE</span>
                 </span>
@@ -319,6 +325,43 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                             </div>
                         </div>
                     </>
+                )}
+
+                {/* DOB & Gender (Optional) - Register Only */}
+                {isRegistering && (
+                    <div className="grid grid-cols-2 gap-3">
+                        <div className="space-y-1">
+                            <label htmlFor="dob" className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">
+                                DOB <span className="text-[8px] font-normal lowercase">(Optional)</span>
+                            </label>
+                            <input 
+                                id="dob"
+                                type="date"
+                                className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none bg-white"
+                                value={formData.dob}
+                                onChange={(e) => setFormData({...formData, dob: e.target.value})}
+                            />
+                        </div>
+                        <div className="space-y-1">
+                            <label htmlFor="gender" className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">
+                                Gender <span className="text-[8px] font-normal lowercase">(Optional)</span>
+                            </label>
+                            <div className="relative">
+                                <select 
+                                    id="gender"
+                                    className="w-full px-3 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white"
+                                    value={formData.gender}
+                                    onChange={(e) => setFormData({...formData, gender: e.target.value})}
+                                >
+                                    <option value="">Select</option>
+                                    <option value="MALE">Male</option>
+                                    <option value="FEMALE">Female</option>
+                                    <option value="OTHER">Other</option>
+                                </select>
+                                <ChevronDown className="absolute right-2 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
+                            </div>
+                        </div>
+                    </div>
                 )}
 
                 {/* Email Address */}

@@ -5,7 +5,11 @@ import { BLOG_POSTS } from '../constants';
 import { ArrowLeft, Calendar, User, Tag, Clock } from 'lucide-react';
 import SEO from './SEO';
 
-const Blog: React.FC = () => {
+interface BlogProps {
+    posts?: BlogPost[];
+}
+
+const Blog: React.FC<BlogProps> = ({ posts = BLOG_POSTS }) => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
 
   if (selectedPost) {
@@ -71,7 +75,7 @@ const Blog: React.FC = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-         {BLOG_POSTS.map(post => (
+         {posts.map(post => (
             <div 
               key={post.id} 
               onClick={() => setSelectedPost(post)}

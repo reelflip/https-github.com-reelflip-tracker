@@ -1,8 +1,15 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Moon, BookOpen, Briefcase, RefreshCw, Brain, PenTool, Layers, Coffee, Zap, Sun as SunIcon, RotateCw } from 'lucide-react';
+import { User } from '../types';
 
-const TimetableGenerator = () => {
+interface TimetableGeneratorProps {
+    user?: User | null;
+    savedData?: { config: any, slots: any[] } | null;
+    onUpdate?: (config: any, slots: any[]) => void;
+}
+
+const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData, onUpdate }) => {
   // State
   const [coachingDays, setCoachingDays] = useState<string[]>(['Mon', 'Wed', 'Fri']);
   const [coachingStart, setCoachingStart] = useState('06:00');
@@ -16,6 +23,25 @@ const TimetableGenerator = () => {
   const [bedTime, setBedTime] = useState('22:30'); 
 
   const [generatedSchedule, setGeneratedSchedule] = useState<any[] | null>(null);
+
+  // --- Initialize from Saved Data ---
+  useEffect(() => {
+      if (savedData) {
+          if (savedData.config) {
+              setCoachingDays(savedData.config.coachingDays || ['Mon']);
+              setCoachingStart(savedData.config.coachingStart || '06:00');
+              setCoachingEnd(savedData.config.coachingEnd || '09:00');
+              setSchoolEnabled(savedData.config.schoolEnabled ?? true);
+              setSchoolStart(savedData.config.schoolStart || '10:00');
+              setSchoolEnd(savedData.config.schoolEnd || '16:00');
+              setWakeTime(savedData.config.wakeTime || '05:30');
+              setBedTime(savedData.config.bedTime || '22:30');
+          }
+          if (savedData.slots) {
+              setGeneratedSchedule(savedData.slots);
+          }
+      }
+  }, [savedData]);
 
   const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
 
@@ -222,6 +248,29 @@ const TimetableGenerator = () => {
     });
 
     setGeneratedSchedule(slots);
+
+    const configToSave = {
+        coachingDays, coachingStart, coachingEnd,
+        schoolEnabled, schoolStart, schoolEnd,
+        wakeTime, bedTime
+    };
+
+    if (onUpdate) {
+        onUpdate(configToSave, slots);
+    }
+
+    // --- SAVE TO DB ---
+    if (user) {
+        fetch('/api/save_timetable.php', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                user_id: user.id,
+                config: configToSave,
+                slots: slots
+            })
+        }).catch(err => console.error("Failed to save timetable", err));
+    }
   };
 
   return (
@@ -258,16 +307,16 @@ const TimetableGenerator = () => {
                         </div>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400 font-medium ml-1">Start Time</label>
+                                <label htmlFor="coachingStart" className="text-xs text-slate-400 font-medium ml-1">Start Time</label>
                                 <div className="relative">
-                                    <input type="time" value={coachingStart} onChange={(e) => setCoachingStart(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
+                                    <input id="coachingStart" type="time" value={coachingStart} onChange={(e) => setCoachingStart(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400 font-medium ml-1">End Time</label>
+                                <label htmlFor="coachingEnd" className="text-xs text-slate-400 font-medium ml-1">End Time</label>
                                 <div className="relative">
-                                    <input type="time" value={coachingEnd} onChange={(e) => setCoachingEnd(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
+                                    <input id="coachingEnd" type="time" value={coachingEnd} onChange={(e) => setCoachingEnd(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
@@ -281,22 +330,22 @@ const TimetableGenerator = () => {
                             <h3 className="text-xs font-bold text-slate-500 uppercase tracking-wide flex items-center">
                                 <Briefcase className="w-4 h-4 mr-2" /> School / College
                             </h3>
-                            <button onClick={() => setSchoolEnabled(!schoolEnabled)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${schoolEnabled ? 'bg-green-500' : 'bg-slate-200'}`}>
+                            <button onClick={() => setSchoolEnabled(!schoolEnabled)} className={`w-12 h-6 rounded-full p-1 transition-colors duration-200 ease-in-out ${schoolEnabled ? 'bg-green-500' : 'bg-slate-200'}`} aria-label="Toggle School">
                                 <div className={`bg-white w-4 h-4 rounded-full shadow-md transform transition-transform duration-200 ${schoolEnabled ? 'translate-x-6' : 'translate-x-0'}`}></div>
                             </button>
                         </div>
                         <div className={`grid grid-cols-2 gap-4 transition-opacity duration-200 ${schoolEnabled ? 'opacity-100' : 'opacity-50 pointer-events-none'}`}>
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400 font-medium ml-1">Starts</label>
+                                <label htmlFor="schoolStart" className="text-xs text-slate-400 font-medium ml-1">Starts</label>
                                 <div className="relative">
-                                    <input type="time" value={schoolStart} onChange={(e) => setSchoolStart(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
+                                    <input id="schoolStart" type="time" value={schoolStart} onChange={(e) => setSchoolStart(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400 font-medium ml-1">Ends</label>
+                                <label htmlFor="schoolEnd" className="text-xs text-slate-400 font-medium ml-1">Ends</label>
                                 <div className="relative">
-                                    <input type="time" value={schoolEnd} onChange={(e) => setSchoolEnd(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
+                                    <input id="schoolEnd" type="time" value={schoolEnd} onChange={(e) => setSchoolEnd(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
@@ -311,16 +360,16 @@ const TimetableGenerator = () => {
                         </h3>
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400 font-medium ml-1">Wake Up</label>
+                                <label htmlFor="wakeTime" className="text-xs text-slate-400 font-medium ml-1">Wake Up</label>
                                 <div className="relative">
-                                    <input type="time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
+                                    <input id="wakeTime" type="time" value={wakeTime} onChange={(e) => setWakeTime(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>
                             <div className="space-y-1">
-                                <label className="text-xs text-slate-400 font-medium ml-1">Bed Time</label>
+                                <label htmlFor="bedTime" className="text-xs text-slate-400 font-medium ml-1">Bed Time</label>
                                 <div className="relative">
-                                    <input type="time" value={bedTime} onChange={(e) => setBedTime(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
+                                    <input id="bedTime" type="time" value={bedTime} onChange={(e) => setBedTime(e.target.value)} className="w-full p-3 border border-slate-200 rounded-lg text-sm text-slate-700 font-medium focus:ring-2 focus:ring-blue-100 outline-none" />
                                     <Clock className="absolute right-3 top-3 text-slate-300 w-4 h-4 pointer-events-none" />
                                 </div>
                             </div>

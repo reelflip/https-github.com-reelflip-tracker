@@ -39,7 +39,9 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
     course: user.course || '',
     targetYear: user.targetYear,
     targetExam: user.targetExam || 'JEE Main & Advanced',
-    phone: user.phone || ''
+    phone: user.phone || '',
+    dob: user.dob || '',
+    gender: user.gender || ''
   });
 
   const [studentIdInput, setStudentIdInput] = useState('');
@@ -244,6 +246,37 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
                         onChange={(e) => setFormData({...formData, phone: e.target.value})}
                         className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
                     />
+                </div>
+            </div>
+
+            {/* DOB & Gender */}
+            <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Date of Birth</label>
+                <div className="relative">
+                    <Calendar className="absolute left-3 top-3 text-slate-400 w-4 h-4" />
+                    <input 
+                        type="date"
+                        value={formData.dob}
+                        onChange={(e) => setFormData({...formData, dob: e.target.value})}
+                        className="w-full pl-10 pr-4 py-2.5 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all"
+                    />
+                </div>
+            </div>
+
+            <div className="space-y-1.5">
+                <label className="text-xs font-bold text-slate-500 uppercase ml-1">Gender</label>
+                <div className="relative">
+                    <select 
+                        value={formData.gender}
+                        onChange={(e) => setFormData({...formData, gender: e.target.value as any})}
+                        className="w-full px-4 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
+                    >
+                        <option value="">Select Gender</option>
+                        <option value="MALE">Male</option>
+                        <option value="FEMALE">Female</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                    <ChevronDown className="absolute right-4 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
                 </div>
             </div>
 

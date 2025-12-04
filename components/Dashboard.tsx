@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { User, TopicProgress, Notification, DailyGoal, Quote } from '../types';
-import { Calendar, CheckCircle2, Trophy, ArrowRight, Bell, Flame, Plus, Square, CheckSquare, Target, UserPlus, Link as LinkIcon } from 'lucide-react';
+import { User, TopicProgress, Notification, DailyGoal, Quote, ContactMessage } from '../types';
+import { Calendar, CheckCircle2, Trophy, ArrowRight, Bell, Flame, Plus, Square, CheckSquare, Target, UserPlus, Link as LinkIcon, Users, Inbox, Database, PenTool, Activity } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 interface DashboardProps {
@@ -13,9 +13,23 @@ interface DashboardProps {
   goals: DailyGoal[];
   onToggleGoal: (id: string) => void;
   onAddGoal: (text: string) => void;
+  // Admin specific props
+  totalUsers?: number;
+  contactMessages?: ContactMessage[];
 }
 
-const Dashboard: React.FC<DashboardProps> = ({ user, progress, onChangeTab, notifications = [], quotes, goals, onToggleGoal, onAddGoal }) => {
+const Dashboard: React.FC<DashboardProps> = ({ 
+    user, 
+    progress, 
+    onChangeTab, 
+    notifications = [], 
+    quotes, 
+    goals, 
+    onToggleGoal, 
+    onAddGoal,
+    totalUsers = 0,
+    contactMessages = []
+}) => {
   const [currentQuoteIndex, setCurrentQuoteIndex] = useState(0);
   const [daysLeft, setDaysLeft] = useState(0);
   const [newGoalText, setNewGoalText] = useState('');
@@ -57,6 +71,95 @@ const Dashboard: React.FC<DashboardProps> = ({ user, progress, onChangeTab, noti
 
   const completedGoals = goals.filter(g => g.completed).length;
 
+  // --- ADMIN OVERVIEW ---
+  if (user.role === 'ADMIN') {
+      return (
+          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
+                  <div className="relative z-10">
+                      <h2 className="text-3xl font-bold mb-2">Admin Command Center</h2>
+                      <p className="text-slate-400">Welcome back, Administrator. System is operational.</p>
+                  </div>
+                  <div className="absolute right-8 top-1/2 -translate-y-1/2 opacity-10">
+                      <Activity className="w-32 h-32" />
+                  </div>
+              </div>
+
+              {/* Stats Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  {/* User Stats */}
+                  <div 
+                    onClick={() => onChangeTab('users')}
+                    className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                  >
+                      <div className="flex items-center justify-between mb-4">
+                          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg group-hover:bg-blue-600 group-hover:text-white transition-colors">
+                              <Users className="w-6 h-6" />
+                          </div>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Total Users</span>
+                      </div>
+                      <div className="text-3xl font-bold text-slate-800 mb-1">{totalUsers}</div>
+                      <p className="text-xs text-slate-500">Registered Students & Parents</p>
+                  </div>
+
+                  {/* Inbox Stats */}
+                  <div 
+                    onClick={() => onChangeTab('content')} 
+                    className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                  >
+                      <div className="flex items-center justify-between mb-4">
+                          <div className="p-3 bg-purple-50 text-purple-600 rounded-lg group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                              <Inbox className="w-6 h-6" />
+                          </div>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Messages</span>
+                      </div>
+                      <div className="text-3xl font-bold text-slate-800 mb-1">{contactMessages.length}</div>
+                      <p className="text-xs text-slate-500">Contact Form Inquiries</p>
+                      {contactMessages.length > 0 && (
+                          <div className="mt-3 text-xs font-bold text-purple-600 flex items-center">
+                              View Inbox <ArrowRight className="w-3 h-3 ml-1" />
+                          </div>
+                      )}
+                  </div>
+
+                  {/* Content Stats */}
+                  <div 
+                    onClick={() => onChangeTab('content')}
+                    className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
+                  >
+                      <div className="flex items-center justify-between mb-4">
+                          <div className="p-3 bg-green-50 text-green-600 rounded-lg group-hover:bg-green-600 group-hover:text-white transition-colors">
+                              <PenTool className="w-6 h-6" />
+                          </div>
+                          <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">Content</span>
+                      </div>
+                      <div className="text-3xl font-bold text-slate-800 mb-1">Manage</div>
+                      <p className="text-xs text-slate-500">Tests, Quotes & Broadcasts</p>
+                  </div>
+              </div>
+
+              {/* Quick Actions */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
+                      <h3 className="font-bold text-slate-800 mb-4 flex items-center">
+                          <Database className="w-5 h-5 mr-2 text-slate-500" /> System Docs
+                      </h3>
+                      <p className="text-sm text-slate-600 mb-4">
+                          Access SQL schemas, PHP API files, and deployment guides for Hostinger.
+                      </p>
+                      <button 
+                        onClick={() => onChangeTab('system')}
+                        className="text-sm font-bold text-blue-600 hover:text-blue-800 flex items-center"
+                      >
+                          Open Documentation <ArrowRight className="w-4 h-4 ml-1" />
+                      </button>
+                  </div>
+              </div>
+          </div>
+      );
+  }
+
   // --- PARENT ONBOARDING VIEW (If not connected) ---
   if (user.role === 'PARENT' && !user.studentId) {
       return (
@@ -81,6 +184,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, progress, onChangeTab, noti
       );
   }
 
+  // --- STUDENT DASHBOARD (Default) ---
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Welcome & Motivation */}
@@ -118,7 +222,7 @@ const Dashboard: React.FC<DashboardProps> = ({ user, progress, onChangeTab, noti
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
           <div className="flex items-center space-x-3 text-slate-500 mb-4">
             <Calendar className="w-5 h-5" />
-            <span className="font-medium text-sm uppercase tracking-wide">Target: JEE 2025</span>
+            <span className="font-medium text-sm uppercase tracking-wide">Target: {user.targetExam?.split(' ')[0] || 'JEE'} {user.targetYear || 2025}</span>
           </div>
           <div>
             <span className="text-5xl font-bold text-slate-800">{daysLeft}</span>
@@ -195,14 +299,16 @@ const Dashboard: React.FC<DashboardProps> = ({ user, progress, onChangeTab, noti
            </div>
 
            <form onSubmit={handleAddGoalSubmit} className="relative">
+                <label htmlFor="newGoal" className="sr-only">Add new goal</label>
                 <input 
+                    id="newGoal"
                     type="text" 
                     placeholder="Add new goal..."
                     className="w-full pl-3 pr-8 py-2 text-xs border border-slate-200 rounded-lg focus:ring-1 focus:ring-blue-200 outline-none"
                     value={newGoalText}
                     onChange={(e) => setNewGoalText(e.target.value)}
                 />
-                <button type="submit" className="absolute right-2 top-2 text-blue-500 hover:text-blue-700">
+                <button type="submit" className="absolute right-2 top-2 text-blue-500 hover:text-blue-700" aria-label="Add Goal">
                     <Plus className="w-4 h-4" />
                 </button>
            </form>

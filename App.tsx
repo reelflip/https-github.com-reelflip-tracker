@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem, TopicStatus, Role, MemoryHack } from './types';
-import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS } from './constants';
+import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem, TopicStatus, Role, MemoryHack, ContactMessage, BlogPost } from './types';
+import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS, BLOG_POSTS } from './constants';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import Dashboard from './components/Dashboard';
@@ -55,6 +55,9 @@ function App() {
   const [backlogs, setBacklogs] = useState<BacklogItem[]>([]);
   const [hacks, setHacks] = useState<MemoryHack[]>(INITIAL_MEMORY_HACKS);
   const [allUsers, setAllUsers] = useState<User[]>(MOCK_USERS); // Initialized with Mock Users for local dev
+  const [timetableData, setTimetableData] = useState<{config: any, slots: any[]} | null>(null);
+  const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
+  const [blogPosts, setBlogPosts] = useState<BlogPost[]>(BLOG_POSTS);
 
   // --- API: Fetch Data on Login ---
   useEffect(() => {
@@ -147,6 +150,9 @@ function App() {
                   status: b.status
               })));
           }
+          if (data.timetable) {
+              setTimetableData(data.timetable);
+          }
           if (data.attempts) {
               // Map DB attempts to Frontend structure
               setAttempts(data.attempts.map((a: any) => ({
@@ -196,7 +202,41 @@ function App() {
               })));
           }
           if (data.notifications) setNotifications(data.notifications);
-          // Tests are complex to map back from flat DB structure, keeping mock/static for now or need sophisticated mapper
+          
+          if (data.blogPosts && data.blogPosts.length > 0) {
+              setBlogPosts(data.blogPosts.map((b: any) => ({
+                  id: b.id,
+                  title: b.title,
+                  excerpt: b.excerpt,
+                  content: b.content,
+                  author: b.author,
+                  category: b.category,
+                  imageUrl: b.imageUrl,
+                  date: b.date
+              })));
+          }
+
+          // Load tests from DB (combining with mock if needed, but DB priority)
+          if (data.tests && data.tests.length > 0) {
+              const dbTests: Test[] = data.tests.map((t: any) => ({
+                  id: t.id,
+                  title: t.title,
+                  durationMinutes: parseInt(t.duration_minutes),
+                  category: t.category,
+                  difficulty: t.difficulty,
+                  examType: t.exam_type,
+                  questions: t.questions ? t.questions.map((q: any) => ({
+                      id: q.id,
+                      subjectId: q.subject_id,
+                      topicId: q.topic_id,
+                      text: q.question_text,
+                      options: q.options || [], 
+                      correctOptionIndex: parseInt(q.correct_option_index)
+                  })) : []
+              }));
+              // Use DB tests as source of truth (includes seeded mock + new admin tests)
+              setTests(dbTests);
+          }
       } catch (err) {
           console.error("Failed to fetch common data", err);
       }
@@ -213,6 +253,14 @@ function App() {
       } catch (err) {
           console.error("Failed to fetch users", err);
       }
+      try {
+          const res = await fetch(`/api/manage_contact.php`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (Array.isArray(data)) {
+              setContactMessages(data);
+          }
+      } catch (err) { console.error("Failed to fetch contacts", err); }
   }
 
   // --- Handlers ---
@@ -229,6 +277,10 @@ function App() {
       } else {
           setCurrentUser(user);
       }
+  };
+
+  const handleTimetableUpdate = (config: any, slots: any[]) => {
+      setTimetableData({ config, slots });
   };
 
   const handleUpdateProgress = async (topicId: string, updates: Partial<TopicProgress>) => {
@@ -316,16 +368,55 @@ function App() {
       }
   };
 
-  // --- Admin Handlers ---
-  const handleAddQuestion = (q: Question) => setQuestions([...questions, q]);
-  const handleCreateTest = (t: Test) => setTests([...tests, t]);
-  const handleSendNotification = (n: Notification) => setNotifications([n, ...notifications]);
-  const handleAddQuote = (text: string, author: string) => {
+  // --- Admin Handlers (With DB Persistence) ---
+  const handleAddQuestion = async (q: Question) => {
+      setQuestions([...questions, q]);
+      try {
+          await fetch('/api/manage_tests.php', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'add_question', ...q })
+          });
+      } catch (e) { console.error(e); }
+  };
+
+  const handleCreateTest = async (t: Test) => {
+      setTests([...tests, t]);
+      try {
+          await fetch('/api/manage_tests.php', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'create_test', ...t })
+          });
+      } catch (e) { console.error(e); }
+  };
+
+  const handleSendNotification = async (n: Notification) => {
+      setNotifications([n, ...notifications]);
+      try {
+          await fetch('/api/manage_broadcasts.php', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'send_notification', ...n })
+          });
+      } catch (e) { console.error(e); }
+  };
+
+  const handleAddQuote = async (text: string, author: string) => {
       const newQ = { id: `q_${Date.now()}`, text, author };
       setQuotes([...quotes, newQ]);
       setAdminQuote(newQ);
+      try {
+          await fetch('/api/manage_broadcasts.php', {
+              method: 'POST',
+              body: JSON.stringify({ action: 'add_quote', ...newQ })
+          });
+      } catch (e) { console.error(e); }
   };
-  const handleDeleteQuote = (id: string) => setQuotes(quotes.filter(q => q.id !== id));
+
+  const handleDeleteQuote = async (id: string) => {
+      setQuotes(quotes.filter(q => q.id !== id));
+      try {
+          await fetch(`/api/manage_broadcasts.php?action=delete_quote&id=${id}`, { method: 'GET' }); // Or POST/DELETE
+      } catch (e) { console.error(e); }
+  };
 
   const handleAdminUpdateUser = async (user: Partial<User>) => {
       try {
@@ -350,6 +441,34 @@ function App() {
       } catch (err) {
           console.error("Failed to delete user", err);
       }
+  };
+
+  const handleDeleteContact = async (id: number) => {
+      try {
+          await fetch(`/api/manage_contact.php?id=${id}`, {
+              method: 'DELETE'
+          });
+          fetchAdminData();
+      } catch (err) { console.error("Failed to delete message", err); }
+  };
+
+  const handleAddBlogPost = async (post: BlogPost) => {
+      setBlogPosts([post, ...blogPosts]);
+      try {
+          await fetch('/api/manage_blog.php', {
+              method: 'POST',
+              body: JSON.stringify(post)
+          });
+      } catch (e) { console.error("Failed to add blog post", e); }
+  };
+
+  const handleDeleteBlogPost = async (id: string) => {
+      setBlogPosts(blogPosts.filter(b => b.id !== id));
+      try {
+          await fetch(`/api/manage_blog.php?id=${id}`, {
+              method: 'DELETE'
+          });
+      } catch (e) { console.error("Failed to delete blog post", e); }
   };
 
   // --- Goals & Backlogs ---
@@ -467,7 +586,7 @@ function App() {
       case 'contact':
         return <PublicLayout onNavigate={setActiveTab}><ContactUs /></PublicLayout>;
       case 'blog':
-        return <PublicLayout onNavigate={setActiveTab}><Blog /></PublicLayout>;
+        return <PublicLayout onNavigate={setActiveTab}><Blog posts={blogPosts} /></PublicLayout>;
       case 'exams':
         return <PublicLayout onNavigate={setActiveTab}><ExamGuide /></PublicLayout>;
       default:
@@ -489,6 +608,8 @@ function App() {
             goals={goals}
             onToggleGoal={handleToggleGoal}
             onAddGoal={handleAddGoal}
+            totalUsers={allUsers.length}
+            contactMessages={contactMessages}
           />
         );
       case 'syllabus':
@@ -514,10 +635,11 @@ function App() {
       case 'analytics':
         return <Analytics attempts={attempts} tests={tests} syllabus={JEE_SYLLABUS} />;
       case 'timetable':
-        return <TimetableGenerator />;
+        return <TimetableGenerator user={currentUser} savedData={timetableData} onUpdate={handleTimetableUpdate} />;
       case 'users':
         return (
             <AdminPanel 
+                section="users"
                 users={allUsers.length > 0 ? allUsers : MOCK_USERS} 
                 questionBank={questions} 
                 quotes={quotes}
@@ -530,6 +652,34 @@ function App() {
                 onDeleteQuote={handleDeleteQuote}
                 onUpdateUser={handleAdminUpdateUser}
                 onDeleteUser={handleAdminDeleteUser}
+                contactMessages={contactMessages}
+                onDeleteContact={handleDeleteContact}
+                blogPosts={blogPosts}
+                onAddBlogPost={handleAddBlogPost}
+                onDeleteBlogPost={handleDeleteBlogPost}
+            />
+        );
+      case 'content':
+        return (
+            <AdminPanel 
+                section="content"
+                users={allUsers.length > 0 ? allUsers : MOCK_USERS} 
+                questionBank={questions} 
+                quotes={quotes}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                onAddQuestion={handleAddQuestion}
+                onCreateTest={handleCreateTest}
+                onSendNotification={handleSendNotification}
+                onAddQuote={handleAddQuote}
+                onDeleteQuote={handleDeleteQuote}
+                onUpdateUser={handleAdminUpdateUser}
+                onDeleteUser={handleAdminDeleteUser}
+                contactMessages={contactMessages}
+                onDeleteContact={handleDeleteContact}
+                blogPosts={blogPosts}
+                onAddBlogPost={handleAddBlogPost}
+                onDeleteBlogPost={handleDeleteBlogPost}
             />
         );
       case 'system':
@@ -561,7 +711,7 @@ function App() {
       case 'contact':
         return <ContactUs />;
       case 'blog':
-        return <Blog />;
+        return <Blog posts={blogPosts} />;
       case 'exams':
         return <ExamGuide />;
       case 'parent_view':
@@ -601,6 +751,7 @@ function App() {
           setProgress({});
           setGoals([]);
           setMistakes([]);
+          setTimetableData(null);
           // DO NOT reset allUsers, to preserve local dev state
       }}
     >

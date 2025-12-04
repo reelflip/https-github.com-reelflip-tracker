@@ -16,8 +16,10 @@
     <!-- Canonical URL -->
     <link rel="canonical" href="https://iitgeeprep.com/" />
 
-    <!-- Favicon -->
+    <!-- Favicon & Icons -->
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='23 6 13.5 15.5 8.5 10.5 1 18'%3E%3C/polyline%3E%3Cpolyline points='17 6 23 6 23 12'%3E%3C/polyline%3E%3C/svg%3E">
+    <link rel="apple-touch-icon" href="https://api.dicebear.com/7.x/shapes/png?seed=IITGEEPrep&backgroundColor=2563eb">
+    <link rel="manifest" href="/manifest.json">
 
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
@@ -90,12 +92,30 @@
 </head>
   <body>
     <div id="root"></div>
-    <!-- Runtime Config: Edit this file on server to toggle features -->
+    
+    <!-- Runtime Configuration & Analytics Loader -->
+    <!-- INSTRUCTION: Edit this block in Hostinger File Manager to configure settings without rebuilding. -->
     <script>
       window.IITJEE_CONFIG = {
-        enableDevTools: true // Change to false to hide Quick Login buttons
+        enableDevTools: true, // Set to false to hide Quick Login buttons
+        gaMeasurementId: ''   // PASTE YOUR GOOGLE ANALYTICS ID HERE (e.g., 'G-XXXXXXXXXX')
       };
+
+      // Dynamic Google Analytics Loader
+      if (window.IITJEE_CONFIG.gaMeasurementId) {
+          const script = document.createElement('script');
+          script.async = true;
+          script.src = `https://www.googletagmanager.com/gtag/js?id=${window.IITJEE_CONFIG.gaMeasurementId}`;
+          document.head.appendChild(script);
+
+          window.dataLayer = window.dataLayer || [];
+          function gtag(){dataLayer.push(arguments);}
+          gtag('js', new Date());
+          gtag('config', window.IITJEE_CONFIG.gaMeasurementId);
+          console.log("Analytics Loaded:", window.IITJEE_CONFIG.gaMeasurementId);
+      }
     </script>
+    
     <!-- Entry point for Vite/Vercel builds -->
     <script type="module" src="/index.tsx"></script>
   </body>

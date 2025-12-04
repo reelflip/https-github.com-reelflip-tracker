@@ -1,14 +1,15 @@
 
 import React, { useState, useEffect } from 'react';
-import { Database, Users, Radio, FileText, Plus, Check, Shield, Trash2, X, AlertOctagon, Save } from 'lucide-react';
-import { User, Question, Test, Notification, Quote } from '../types';
+import { Database, Users, Radio, FileText, Plus, Check, Shield, Trash2, X, AlertOctagon, Save, Inbox, CheckCircle2, PenTool } from 'lucide-react';
+import { User, Question, Test, Notification, Quote, ContactMessage, BlogPost } from '../types';
 import { JEE_SYLLABUS } from '../constants';
 
 interface AdminPanelProps {
+    section: 'users' | 'content';
     users: User[];
     questionBank: Question[];
     quotes: Quote[];
-    activeTab: string;
+    activeTab: string; // From parent (sidebar state)
     onTabChange: (tab: string) => void;
     onAddQuestion: (q: Question) => void;
     onCreateTest: (t: Test) => void;
@@ -17,11 +18,17 @@ interface AdminPanelProps {
     onDeleteQuote: (id: string) => void;
     onUpdateUser?: (user: Partial<User>) => void;
     onDeleteUser?: (id: string) => void;
+    contactMessages?: ContactMessage[];
+    onDeleteContact?: (id: number) => void;
+    blogPosts?: BlogPost[];
+    onAddBlogPost?: (post: BlogPost) => void;
+    onDeleteBlogPost?: (id: string) => void;
 }
 
-type TabView = 'BROADCAST' | 'QUESTION_BANK' | 'TEST_BUILDER' | 'USERS';
+type TabView = 'BROADCAST' | 'QUESTION_BANK' | 'TEST_BUILDER' | 'USERS' | 'INBOX' | 'BLOG_EDITOR';
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ 
+    section,
     users, 
     questionBank, 
     quotes,
@@ -33,20 +40,20 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     onAddQuote,
     onDeleteQuote,
     onUpdateUser,
-    onDeleteUser
+    onDeleteUser,
+    contactMessages = [],
+    onDeleteContact,
+    blogPosts = [],
+    onAddBlogPost,
+    onDeleteBlogPost
 }) => {
-    const [view, setView] = useState<TabView>('BROADCAST');
+    const [view, setView] = useState<TabView>(section === 'users' ? 'USERS' : 'BROADCAST');
     
-    // Sync sidebar activeTab with internal view
+    // Reset view when section changes
     useEffect(() => {
-        if (activeTab === 'users') {
-            setView('USERS');
-        } else if (activeTab === 'dashboard') {
-            if (view === 'USERS') {
-                setView('BROADCAST');
-            }
-        }
-    }, [activeTab]);
+        if (section === 'users') setView('USERS');
+        if (section === 'content') setView('BROADCAST');
+    }, [section]);
 
     // User Management State
     const [editingUser, setEditingUser] = useState<User | null>(null);
@@ -70,17 +77,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const [testDuration, setTestDuration] = useState(180);
     const [selectedQIds, setSelectedQIds] = useState<string[]>([]);
     const [testDifficulty, setTestDifficulty] = useState<'MAINS' | 'ADVANCED' | 'CUSTOM'>('CUSTOM');
+    const [testExamType, setTestExamType] = useState<'JEE' | 'BITSAT' | 'VITEEE' | 'MET' | 'SRMJEEE' | 'OTHER'>('JEE');
+    const [testSuccessMsg, setTestSuccessMsg] = useState('');
+
+    // Blog Editor State
+    const [blogTitle, setBlogTitle] = useState('');
+    const [blogExcerpt, setBlogExcerpt] = useState('');
+    const [blogContent, setBlogContent] = useState('');
+    const [blogAuthor, setBlogAuthor] = useState('');
+    const [blogCategory, setBlogCategory] = useState<'Strategy' | 'Motivation' | 'Subject-wise' | 'Updates'>('Strategy');
+    const [blogImage, setBlogImage] = useState('');
 
     // --- Actions ---
-
-    const handleTabClick = (tabId: TabView) => {
-        setView(tabId);
-        if (tabId === 'USERS') {
-            onTabChange('users');
-        } else {
-            onTabChange('dashboard');
-        }
-    };
 
     const submitNotification = () => {
         if (!notifTitle || !notifMsg) return;
@@ -121,7 +129,16 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     };
 
     const submitTest = () => {
-        if (!testTitle || selectedQIds.length === 0) return;
+        // Validation
+        if (!testTitle.trim()) {
+            alert("Please enter a Title for the mock test.");
+            return;
+        }
+        if (selectedQIds.length === 0) {
+            alert("Please select at least one question from the bank below.");
+            return;
+        }
+
         const selectedQuestions = questionBank.filter(q => selectedQIds.includes(q.id));
         const newTest: Test = {
             id: `test_${Date.now()}`,
@@ -129,12 +146,46 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             durationMinutes: testDuration,
             questions: selectedQuestions,
             category: 'ADMIN',
-            difficulty: testDifficulty
+            difficulty: testDifficulty,
+            examType: testExamType
         };
+        
         onCreateTest(newTest);
+        
+        // Reset Form
         setTestTitle('');
         setSelectedQIds([]);
-        alert('Mock Test Published!');
+        
+        // Success Message
+        const msg = 'Mock Test Created Successfully! It is now visible to students in the Test Center.';
+        setTestSuccessMsg(msg);
+        alert(msg); // Pop-up message as requested
+        
+        setTimeout(() => setTestSuccessMsg(''), 5000);
+    };
+
+    const submitBlogPost = () => {
+        if (!blogTitle || !blogContent || !blogAuthor) {
+            alert("Please fill in all required fields.");
+            return;
+        }
+        const newPost: BlogPost = {
+            id: `blog_${Date.now()}`,
+            title: blogTitle,
+            excerpt: blogExcerpt,
+            content: blogContent,
+            author: blogAuthor,
+            category: blogCategory,
+            imageUrl: blogImage || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1000',
+            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+        };
+        if (onAddBlogPost) onAddBlogPost(newPost);
+        
+        setBlogTitle('');
+        setBlogExcerpt('');
+        setBlogContent('');
+        setBlogImage('');
+        alert("Blog Post Published!");
     };
 
     const handleOptionChange = (idx: number, val: string) => {
@@ -188,50 +239,57 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
     const availableTopics = JEE_SYLLABUS.find(s => s.id === qSubject)?.chapters.flatMap(c => c.topics) || [];
 
+    // --- Tab Definitions ---
+    const contentTabs = [
+        { id: 'BROADCAST', label: 'Broadcasts', icon: Radio },
+        { id: 'QUESTION_BANK', label: 'Question Bank', icon: Database },
+        { id: 'TEST_BUILDER', label: 'Test Builder', icon: FileText },
+        { id: 'INBOX', label: 'Inbox', icon: Inbox },
+        { id: 'BLOG_EDITOR', label: 'Blog Editor', icon: PenTool },
+    ];
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
             {/* Header Banner */}
-            <div className="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
+            <div className={`rounded-2xl p-8 text-white shadow-xl relative overflow-hidden bg-gradient-to-r ${section === 'users' ? 'from-cyan-700 to-blue-800' : 'from-fuchsia-700 to-purple-800'}`}>
                 <div className="relative z-10 flex items-center justify-between">
                     <div>
-                        <h2 className="text-3xl font-bold mb-2">Admin Command Center</h2>
-                        <p className="text-blue-100 text-lg max-w-xl">Manage content, users, and announcements.</p>
+                        <h2 className="text-3xl font-bold mb-2">{section === 'users' ? 'User Management' : 'Content & Exam Tools'}</h2>
+                        <p className="text-white/80 text-lg max-w-xl">
+                            {section === 'users' ? 'Manage students, parents, and access controls.' : 'Create tests, questions, and send announcements.'}
+                        </p>
                     </div>
                     <div className="hidden md:block bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
-                        <Shield className="w-10 h-10 text-white" />
+                        {section === 'users' ? <Users className="w-10 h-10 text-white" /> : <Database className="w-10 h-10 text-white" />}
                     </div>
                 </div>
-                <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
-                <div className="absolute top-0 right-1/3 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
+                <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
             </div>
             
-            {/* Nav Tabs */}
-            <div className="flex p-1.5 space-x-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto no-scrollbar">
-                {[
-                    { id: 'BROADCAST', label: 'Broadcasts', icon: Radio },
-                    { id: 'QUESTION_BANK', label: 'Question Bank', icon: Database },
-                    { id: 'TEST_BUILDER', label: 'Test Builder', icon: FileText },
-                    { id: 'USERS', label: 'Users', icon: Users },
-                ].map(tab => (
-                    <button 
-                        key={tab.id}
-                        onClick={() => handleTabClick(tab.id as TabView)}
-                        className={`flex items-center px-4 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
-                            view === tab.id 
-                            ? 'bg-blue-600 text-white shadow-md' 
-                            : 'text-slate-500 hover:bg-blue-50 hover:text-blue-700'
-                        }`}
-                    >
-                        <tab.icon className="w-4 h-4 mr-2" /> {tab.label}
-                    </button>
-                ))}
-            </div>
+            {/* Nav Tabs (Only for Content Section) */}
+            {section === 'content' && (
+                <div className="flex p-1.5 space-x-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto no-scrollbar">
+                    {contentTabs.map(tab => (
+                        <button 
+                            key={tab.id}
+                            onClick={() => setView(tab.id as TabView)}
+                            className={`flex items-center px-4 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+                                view === tab.id 
+                                ? 'bg-fuchsia-600 text-white shadow-md' 
+                                : 'text-slate-500 hover:bg-fuchsia-50 hover:text-fuchsia-700'
+                            }`}
+                        >
+                            <tab.icon className="w-4 h-4 mr-2" /> {tab.label}
+                        </button>
+                    ))}
+                </div>
+            )}
 
             {/* --- View Content --- */}
             <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 min-h-[600px]">
                 
                 {/* 1. BROADCASTS */}
-                {view === 'BROADCAST' && (
+                {view === 'BROADCAST' && section === 'content' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in">
                         <div className="space-y-4">
                             <div className="flex items-center space-x-2 mb-2">
@@ -303,7 +361,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 )}
 
                 {/* 2. QUESTION BANK */}
-                {view === 'QUESTION_BANK' && (
+                {view === 'QUESTION_BANK' && section === 'content' && (
                     <div className="space-y-6 animate-in fade-in">
                         <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
                             <h3 className="font-bold text-slate-800 mb-4 flex items-center"><Database className="w-4 h-4 mr-2"/> Add New Question</h3>
@@ -398,12 +456,12 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 )}
 
                 {/* 3. TEST BUILDER */}
-                {view === 'TEST_BUILDER' && (
+                {view === 'TEST_BUILDER' && section === 'content' && (
                     <div className="space-y-6 animate-in fade-in">
                         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                              <h3 className="font-bold text-slate-800 mb-4 flex items-center"><FileText className="w-4 h-4 mr-2"/> Create New Mock Test</h3>
-                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div className="md:col-span-2">
+                             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
                                     <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Test Title</label>
                                     <input 
                                         type="text" 
@@ -413,14 +471,31 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                                         onChange={e => setTestTitle(e.target.value)}
                                     />
                                 </div>
-                                <div>
-                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Duration (Mins)</label>
-                                    <input 
-                                        type="number" 
-                                        className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none"
-                                        value={testDuration}
-                                        onChange={e => setTestDuration(parseInt(e.target.value))}
-                                    />
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Duration (Mins)</label>
+                                        <input 
+                                            type="number" 
+                                            className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none"
+                                            value={testDuration}
+                                            onChange={e => setTestDuration(parseInt(e.target.value))}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Exam Type</label>
+                                        <select 
+                                            className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none"
+                                            value={testExamType}
+                                            onChange={e => setTestExamType(e.target.value as any)}
+                                        >
+                                            <option value="JEE">JEE Main/Adv</option>
+                                            <option value="BITSAT">BITSAT</option>
+                                            <option value="VITEEE">VITEEE</option>
+                                            <option value="MET">MET (Manipal)</option>
+                                            <option value="SRMJEEE">SRMJEEE</option>
+                                            <option value="OTHER">Other</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                             
@@ -470,14 +545,162 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                             </div>
                         </div>
 
+                        {testSuccessMsg && (
+                            <div className="bg-green-50 border border-green-200 text-green-700 p-4 rounded-xl flex items-center animate-in fade-in slide-in-from-top-2">
+                                <CheckCircle2 className="w-5 h-5 mr-3 shrink-0" />
+                                <span className="font-bold text-sm">{testSuccessMsg}</span>
+                            </div>
+                        )}
+
                         <button onClick={submitTest} className="w-full bg-blue-600 text-white py-4 rounded-xl font-bold hover:bg-blue-700 shadow-lg shadow-blue-200 transition-transform active:scale-[0.99] flex items-center justify-center">
                             <Shield className="w-5 h-5 mr-2" /> Publish Test to Students
                         </button>
                     </div>
                 )}
 
+                {/* 4. INBOX */}
+                {view === 'INBOX' && section === 'content' && (
+                    <div className="space-y-6 animate-in fade-in">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-slate-800 text-lg flex items-center"><Inbox className="w-5 h-5 mr-2 text-blue-500"/> Contact Messages</h3>
+                            <span className="bg-slate-100 px-3 py-1 rounded-full text-xs font-bold text-slate-500">{contactMessages.length} Messages</span>
+                        </div>
+                        {contactMessages.length === 0 ? (
+                            <div className="text-center py-20 bg-slate-50 rounded-xl border border-slate-200 border-dashed">
+                                <p className="text-slate-400">No messages yet.</p>
+                            </div>
+                        ) : (
+                            <div className="space-y-4">
+                                {contactMessages.map(msg => (
+                                    <div key={msg.id} className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
+                                        <div className="flex justify-between items-start mb-3">
+                                            <div>
+                                                <h4 className="font-bold text-slate-800">{msg.subject}</h4>
+                                                <p className="text-xs text-slate-500">From: {msg.name} ({msg.email})</p>
+                                            </div>
+                                            <button onClick={() => onDeleteContact && onDeleteContact(msg.id)} className="text-slate-300 hover:text-red-500">
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
+                                        </div>
+                                        <p className="text-sm text-slate-700 bg-slate-50 p-3 rounded-lg border border-slate-100">{msg.message}</p>
+                                        <p className="text-[10px] text-slate-400 mt-2 text-right">{new Date(msg.created_at || '').toLocaleDateString()}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 5. BLOG EDITOR */}
+                {view === 'BLOG_EDITOR' && section === 'content' && (
+                    <div className="space-y-6 animate-in fade-in">
+                        <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+                            <h3 className="font-bold text-slate-800 mb-4 flex items-center">
+                                <PenTool className="w-4 h-4 mr-2" /> Write New Article
+                            </h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Title</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none"
+                                            placeholder="e.g. 5 Revision Tips"
+                                            value={blogTitle}
+                                            onChange={e => setBlogTitle(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Author</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none"
+                                            placeholder="e.g. Admin"
+                                            value={blogAuthor}
+                                            onChange={e => setBlogAuthor(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Category</label>
+                                        <select 
+                                            className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white"
+                                            value={blogCategory}
+                                            onChange={e => setBlogCategory(e.target.value as any)}
+                                        >
+                                            <option value="Strategy">Strategy</option>
+                                            <option value="Motivation">Motivation</option>
+                                            <option value="Subject-wise">Subject-wise</option>
+                                            <option value="Updates">Updates</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="space-y-4">
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Image URL</label>
+                                        <input 
+                                            type="text" 
+                                            className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none"
+                                            placeholder="https://..."
+                                            value={blogImage}
+                                            onChange={e => setBlogImage(e.target.value)}
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Excerpt (Short Description)</label>
+                                        <textarea 
+                                            className="w-full p-2.5 border border-slate-200 rounded-lg text-sm h-24 resize-none focus:ring-2 focus:ring-blue-100 outline-none"
+                                            placeholder="Summary..."
+                                            value={blogExcerpt}
+                                            onChange={e => setBlogExcerpt(e.target.value)}
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="mb-4">
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Content (HTML Supported)</label>
+                                <textarea 
+                                    className="w-full p-3 border border-slate-200 rounded-lg text-sm h-48 bg-white focus:ring-2 focus:ring-blue-100 outline-none"
+                                    placeholder="Write article content here..."
+                                    value={blogContent}
+                                    onChange={e => setBlogContent(e.target.value)}
+                                />
+                            </div>
+                            <button onClick={submitBlogPost} className="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 flex items-center shadow-lg transition-transform active:scale-95">
+                                <Plus className="w-4 h-4 mr-2" /> Publish Article
+                            </button>
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-slate-100">
+                            <h3 className="font-bold text-slate-700 mb-4 flex items-center justify-between">
+                                <span>Published Articles</span>
+                                <span className="bg-slate-100 text-slate-600 px-2 py-1 rounded text-xs">{blogPosts.length} Total</span>
+                            </h3>
+                            <div className="space-y-3">
+                                {blogPosts.map(post => (
+                                    <div key={post.id} className="bg-white p-4 rounded-lg border border-slate-200 flex justify-between items-start">
+                                        <div>
+                                            <h4 className="font-bold text-slate-800 text-sm">{post.title}</h4>
+                                            <div className="flex items-center text-xs text-slate-500 mt-1 space-x-2">
+                                                <span>{post.date}</span>
+                                                <span>•</span>
+                                                <span className="bg-slate-100 px-1.5 py-0.5 rounded uppercase font-bold text-[10px]">{post.category}</span>
+                                            </div>
+                                        </div>
+                                        <button 
+                                            onClick={() => onDeleteBlogPost && onDeleteBlogPost(post.id)}
+                                            className="text-slate-300 hover:text-red-500 transition-colors"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
                 {/* 5. USER MANAGEMENT */}
-                {view === 'USERS' && (
+                {view === 'USERS' && section === 'users' && (
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
@@ -531,7 +754,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 )}
             </div>
 
-            {/* Edit User Modal */}
+            {/* Edit User Modal - Same as before */}
             {editingUser && (
                 <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 animate-in fade-in">
                     <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95">

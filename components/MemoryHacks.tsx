@@ -94,7 +94,7 @@ const MemoryHacks: React.FC<MemoryHacksProps> = ({ hacks }) => {
                 </div>
             ) : (
                 <div className="space-y-8">
-                    {Object.entries(groupedHacks).map(([category, categoryHacks]) => (
+                    {Object.entries(groupedHacks).map(([category, categoryHacks]: [string, MemoryHack[]]) => (
                         <div key={category} className="space-y-4">
                             <div className="flex items-center space-x-2 border-b border-slate-200 pb-2">
                                 <Layers className="w-4 h-4 text-slate-400" />
@@ -129,7 +129,7 @@ const MemoryHacks: React.FC<MemoryHacksProps> = ({ hacks }) => {
                                         </div>
 
                                         <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-1">
-                                            {hack.tags && hack.tags.map((tag: string, idx: number) => (
+                                            {hack.tags && hack.tags.map((tag, idx) => (
                                                 <span key={idx} className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded flex items-center">
                                                     <Hash className="w-2.5 h-2.5 mr-0.5 opacity-50" /> {tag}
                                                 </span>

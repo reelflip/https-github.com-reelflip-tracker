@@ -1,4 +1,5 @@
 
+
 export type Role = 'STUDENT' | 'ADMIN' | 'PARENT';
 
 export interface User {
@@ -9,6 +10,8 @@ export interface User {
   isVerified?: boolean; // New field for email verification
   targetYear?: number;
   targetExam?: string; // New field for specific exam (JEE, BITSAT, etc.)
+  dob?: string;       // YYYY-MM-DD
+  gender?: 'MALE' | 'FEMALE' | 'OTHER' | '';
   avatarUrl?: string;
   parentId?: string; // If student, links to parent
   studentId?: string; // If parent, links to student
@@ -187,6 +190,15 @@ export interface ExamComparisonItem {
     dates: string;
 }
 
+export interface ContactMessage {
+    id: number;
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    created_at?: string;
+}
+
 export interface MockDataState {
   users: User[];
   syllabus: Subject[];
@@ -200,6 +212,7 @@ declare global {
   interface Window {
     IITJEE_CONFIG?: {
       enableDevTools: boolean;
+      gaMeasurementId: string;
     }
   }
 }
