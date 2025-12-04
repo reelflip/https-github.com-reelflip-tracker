@@ -1,8 +1,9 @@
 
 import React, { useState, useEffect } from 'react';
-import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem, TopicStatus, Role } from './types';
-import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS } from './constants';
+import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem, TopicStatus, Role, MemoryHack } from './types';
+import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS } from './constants';
 import Layout from './components/Layout';
+import PublicLayout from './components/PublicLayout';
 import Dashboard from './components/Dashboard';
 import SyllabusTracker from './components/SyllabusTracker';
 import TestCenter from './components/TestCenter';
@@ -17,7 +18,12 @@ import MistakeNotebook from './components/MistakeNotebook';
 import WellnessCorner from './components/WellnessCorner';
 import FlashcardDeck from './components/FlashcardDeck';
 import BacklogManager from './components/BacklogManager';
-import { API_BASE_URL } from './config'; // Ensure this exists or use relative path logic
+import MemoryHacks from './components/MemoryHacks';
+import AboutUs from './components/AboutUs';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import ContactUs from './components/ContactUs';
+import Blog from './components/Blog';
+import { API_BASE_URL } from './config'; 
 
 // Initial global questions combined from constants
 const INITIAL_QUESTIONS: Question[] = MOCK_TESTS.flatMap(t => t.questions).reduce((acc, current) => {
@@ -46,6 +52,7 @@ function App() {
   const [goals, setGoals] = useState<DailyGoal[]>([]);
   const [flashcards, setFlashcards] = useState<Flashcard[]>(INITIAL_FLASHCARDS);
   const [backlogs, setBacklogs] = useState<BacklogItem[]>([]);
+  const [hacks, setHacks] = useState<MemoryHack[]>(INITIAL_MEMORY_HACKS);
 
   // --- API: Fetch Data on Login ---
   useEffect(() => {
@@ -135,6 +142,17 @@ function App() {
                   front: f.front,
                   back: f.back,
                   difficulty: f.difficulty
+              })));
+          }
+          if (data.hacks && data.hacks.length > 0) {
+              setHacks(data.hacks.map((h: any) => ({
+                  id: h.id,
+                  subjectId: h.subject_id,
+                  category: h.category,
+                  title: h.title,
+                  description: h.description,
+                  trick: h.trick,
+                  tags: h.tags_json ? JSON.parse(h.tags_json) : []
               })));
           }
           if (data.notifications) setNotifications(data.notifications);
@@ -291,7 +309,20 @@ function App() {
   // --- Render Logic ---
 
   if (!currentUser) {
-    return <AuthScreen onLogin={setCurrentUser} />;
+    // If not logged in, check if user wants to see public pages
+    switch (activeTab) {
+      case 'about':
+        return <PublicLayout onNavigate={setActiveTab}><AboutUs /></PublicLayout>;
+      case 'privacy':
+        return <PublicLayout onNavigate={setActiveTab}><PrivacyPolicy /></PublicLayout>;
+      case 'contact':
+        return <PublicLayout onNavigate={setActiveTab}><ContactUs /></PublicLayout>;
+      case 'blog':
+        return <PublicLayout onNavigate={setActiveTab}><Blog /></PublicLayout>;
+      default:
+        // Default to AuthScreen (Login/Register)
+        return <AuthScreen onLogin={setCurrentUser} onNavigate={setActiveTab} />;
+    }
   }
 
   const renderContent = () => {
@@ -359,6 +390,17 @@ function App() {
         return <FlashcardDeck cards={flashcards} />;
       case 'backlogs':
         return <BacklogManager backlogs={backlogs} onAddBacklog={handleAddBacklog} onToggleStatus={handleToggleBacklog} onDeleteBacklog={handleDeleteBacklog} />;
+      case 'hacks':
+        return <MemoryHacks hacks={hacks} />;
+      // Also render public pages inside logged-in layout if desired
+      case 'about':
+        return <AboutUs />;
+      case 'privacy':
+        return <PrivacyPolicy />;
+      case 'contact':
+        return <ContactUs />;
+      case 'blog':
+        return <Blog />;
       case 'parent_view':
         // Reuse Dashboard for Parent but read-only conceptually (handled by fetching logic)
         return (
@@ -374,9 +416,12 @@ function App() {
             />
         );
       default:
+        // Default Fallback to avoid blank screen
         return (
-            <div className="flex items-center justify-center h-full text-slate-400">
-                <p>Welcome to JEE Tracker. Select a tab to begin.</p>
+            <div className="flex flex-col items-center justify-center h-full text-slate-400 p-10 text-center">
+                <p className="text-lg font-bold mb-2">Page Not Found</p>
+                <p className="text-sm">The requested tab "{activeTab}" does not exist or you do not have permission to view it.</p>
+                <button onClick={() => setActiveTab('dashboard')} className="mt-4 text-blue-600 hover:underline">Return to Dashboard</button>
             </div>
         );
     }
@@ -389,6 +434,7 @@ function App() {
       onTabChange={setActiveTab}
       onLogout={() => {
           setCurrentUser(null);
+          setActiveTab('dashboard'); // Reset to login screen
           setProgress({});
           setGoals([]);
           setMistakes([]);

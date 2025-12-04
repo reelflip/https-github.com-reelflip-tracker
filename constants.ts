@@ -1,6 +1,5 @@
 
-
-import { Subject, User, Test, Question, Quote, Flashcard } from './types';
+import { Subject, User, Test, Question, Quote, Flashcard, MemoryHack, BlogPost } from './types';
 
 export const COACHING_INSTITUTES = [
     "Allen Career Institute",
@@ -60,6 +59,277 @@ export const DEFAULT_QUOTES: Quote[] = [
     { id: 'q3', text: "The secret of getting ahead is getting started.", author: "Mark Twain" },
     { id: 'q4', text: "Believe you can and you're halfway there.", author: "Theodore Roosevelt" },
     { id: 'q5', text: "Your time is limited, don't waste it living someone else's life.", author: "Steve Jobs" }
+];
+
+export const BLOG_POSTS: BlogPost[] = [
+    {
+        id: 'blog_1',
+        title: 'The 1-7-30 Revision Strategy: Beating the Forgetting Curve',
+        excerpt: 'Why do you forget formulas 2 days after studying? Learn the scientifically proven method to retain 90% of what you learn.',
+        author: 'Rahul Sharma (IIT Bombay)',
+        date: 'Oct 15, 2024',
+        category: 'Strategy',
+        imageUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1000',
+        content: `
+            <p>We've all been there. You spend 4 hours mastering Rotational Motion, solving every problem in the book. Two weeks later, you open a mock test, and your mind goes blank. You remember studying it, but the formula for Moment of Inertia of a solid cone just won't come to you.</p>
+            <br/>
+            <h3 class="text-xl font-bold text-slate-800">The Problem: Ebbinghaus Forgetting Curve</h3>
+            <p>The human brain is wired to forget. Research shows that within 24 hours of learning something new, we forget about 50-80% of it unless we review it. By day 30, we retain less than 5%.</p>
+            <br/>
+            <h3 class="text-xl font-bold text-slate-800">The Solution: Spaced Repetition (1-7-30)</h3>
+            <p>To hack your brain's retention, you need to interrupt the forgetting curve at specific intervals:</p>
+            <ul class="list-disc pl-5 space-y-2 mt-2">
+                <li><strong>The 1st Review (24 Hours):</strong> Revise the topic the very next day. This signals to your brain that this information is important. It takes only 10-15 minutes but restores retention to 100%.</li>
+                <li><strong>The 2nd Review (7 Days):</strong> Revise it again a week later. This pushes the memory from short-term to medium-term storage.</li>
+                <li><strong>The 3rd Review (30 Days):</strong> The final seal. Reviewing it after a month cements it into long-term memory.</li>
+            </ul>
+            <br/>
+            <p>Using the <strong>IIT JEE Prep Syllabus Tracker</strong>, you can easily mark topics for revision. Don't just study hard; study smart.</p>
+        `
+    },
+    {
+        id: 'blog_2',
+        title: 'Physics: Why "Deriving" is Better Than "Memorizing"',
+        excerpt: 'Stop mugging up formulas. Understanding the derivation is the key to solving Advanced level problems.',
+        author: 'A. Verma (Physics Faculty)',
+        date: 'Oct 10, 2024',
+        category: 'Subject-wise',
+        imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=1000',
+        content: `
+            <p>In JEE Mains, you might get away with direct formula application. But JEE Advanced is a different beast. It tests your understanding of the <em>assumptions</em> behind the formulas.</p>
+            <br/>
+            <h3 class="text-xl font-bold text-slate-800">Case Study: Projectile Motion</h3>
+            <p>Everyone knows <em>R = u²sin(2θ)/g</em>. But this formula assumes:</p>
+            <ol class="list-decimal pl-5 space-y-2 mt-2">
+                <li>The landing point is at the same height as the launch point.</li>
+                <li>There is no air resistance.</li>
+                <li>The ground is flat (not an inclined plane).</li>
+            </ol>
+            <br/>
+            <p>If a question asks for the range on an inclined plane, or if there's a wind force, the standard formula fails. If you know how to derive the equation of trajectory using <em>x = ut</em> and <em>y = ut - 1/2gt²</em>, you can solve ANY variation of the problem.</p>
+            <br/>
+            <p><strong>Actionable Tip:</strong> For every chapter in Physics, maintain a "Derivation Notebook". Before memorizing the final result, write down the starting conditions and the steps to get there.</p>
+        `
+    },
+    {
+        id: 'blog_3',
+        title: 'Managing Stress: The 4-7-8 Breathing Technique',
+        excerpt: 'Exam anxiety is real. Here is a simple tool you can use right inside the exam hall to calm your nerves.',
+        author: 'Dr. S. Gupta (Psychologist)',
+        date: 'Oct 05, 2024',
+        category: 'Motivation',
+        imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=1000',
+        content: `
+            <p>Your heart is racing. Your palms are sweaty. You read the first question of the paper, and your mind goes blank. This is the "Fight or Flight" response, and it shuts down the logical part of your brain (prefrontal cortex).</p>
+            <br/>
+            <h3 class="text-xl font-bold text-slate-800">The Reset Button</h3>
+            <p>You can hack your nervous system using the <strong>4-7-8 Breathing Technique</strong>. You can do this invisibly in the exam hall:</p>
+            <br/>
+            <ul class="list-disc pl-5 space-y-2">
+                <li><strong>Inhale</strong> quietly through the nose for <strong>4 seconds</strong>.</li>
+                <li><strong>Hold</strong> the breath for <strong>7 seconds</strong>.</li>
+                <li><strong>Exhale</strong> completely through the mouth for <strong>8 seconds</strong>.</li>
+            </ul>
+            <br/>
+            <p>Repeat this cycle 4 times. This forces your body to switch from "Sympathetic" (Panic) to "Parasympathetic" (Calm) mode. Your heart rate will drop, and your logical brain will come back online.</p>
+            <br/>
+            <p>Check out the <strong>Wellness Corner</strong> in the app for a guided visual aid of this technique.</p>
+        `
+    }
+];
+
+export const INITIAL_MEMORY_HACKS: MemoryHack[] = [
+    // --- CHEMISTRY ---
+    // Inorganic
+    {
+        id: 'h1',
+        subjectId: 'chem',
+        category: 'Inorganic Chemistry',
+        title: 'Electrochemical Series (Reactivity)',
+        description: 'Order of reduction potential (decreasing reactivity).',
+        trick: 'Likh Ba Kana Mazey se Ala Manjan Kar Fekona Cd CoNi Suno Prabhat Hai Kyu Aayi Hogi Aaj Pitayi Aur Free\n(Li K Ba Ca Na Mg Al Mn Zn Cr Fe Cd Co Ni Sn Pb H Cu I Hg Ag Pt Au F)',
+        tags: ['Electrochemistry', 'Redox', 'Metals']
+    },
+    {
+        id: 'h2',
+        subjectId: 'chem',
+        category: 'Inorganic Chemistry',
+        title: 'D-Block Period 4 Elements',
+        description: 'Scandium to Zinc sequence.',
+        trick: 'Science Teacher Vineeta Criplani Man Fenko Ni Kyu Zaan hai\n(Sc Ti V Cr Mn Fe Co Ni Cu Zn)',
+        tags: ['Periodic Table', 'Transition Elements']
+    },
+    {
+        id: 'h_chem_lan',
+        subjectId: 'chem',
+        category: 'Inorganic Chemistry',
+        title: 'Lanthanides Series (57-71)',
+        description: 'Sequence of Lanthanoids.',
+        trick: 'Seene Par Nadiya Prem Ki Samayi Yu Gadgad Tab Dil Hua Aur Tum Laajwab Lagte Ho\n(Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu)',
+        tags: ['Periodic Table', 'F-Block']
+    },
+    {
+        id: 'h_chem_act',
+        subjectId: 'chem',
+        category: 'Inorganic Chemistry',
+        title: 'Actinides Series',
+        description: 'Sequence of Actinoids.',
+        trick: 'Thode Pehelwan Unse Niptenge Purane Aam Kam Bikenge Cafe Pe Aish Farmao Madamn Nashta Lao\n(Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr)',
+        tags: ['Periodic Table', 'F-Block']
+    },
+    
+    // Physical
+    {
+        id: 'h3',
+        subjectId: 'chem',
+        category: 'Physical Chemistry',
+        title: 'Oxidation vs Reduction',
+        description: 'Defining oxidation and reduction based on electrons.',
+        trick: 'OIL RIG\n(Oxidation Is Loss, Reduction Is Gain of electrons)',
+        tags: ['Redox', 'Basics']
+    },
+    {
+        id: 'h4',
+        subjectId: 'chem',
+        category: 'Physical Chemistry',
+        title: 'Bond Order Formula Shortcut',
+        description: 'Quickly find Bond Order for diatomic molecules (up to 20e).',
+        trick: '14 electrons = Bond Order 3.0 (N2)\nFor every +1 or -1 electron from 14, subtract 0.5 from Bond Order.\nExample: O2 (16e) -> 14+2 -> 3.0 - 1.0 = 2.0\nExample: CN- (14e) -> 3.0',
+        tags: ['Chemical Bonding', 'MOT']
+    },
+
+    // Organic
+    {
+        id: 'h_org_meta',
+        subjectId: 'chem',
+        category: 'Organic Chemistry',
+        title: 'Meta Directing Groups',
+        description: 'Groups that direct incoming electrophiles to meta position.',
+        trick: 'Queens Now Prefer Chocolate And Strawberries\n(Quaternary amine, Nitro, Phenyl, Carbonyl, Acid, Sulfonic, Cyano)',
+        tags: ['GOC', 'Aromatic Compounds']
+    },
+    {
+        id: 'h_org_orph',
+        subjectId: 'chem',
+        category: 'Organic Chemistry',
+        title: 'Ortho/Para Directing Groups',
+        description: 'Activators.',
+        trick: 'AHA\n(Alkyl, Halogen, Amino/Hydroxyl)',
+        tags: ['GOC', 'Aromatic Compounds']
+    },
+
+    // --- PHYSICS ---
+    // Electromagnetism
+    {
+        id: 'h5',
+        subjectId: 'phys',
+        category: 'Electromagnetism',
+        title: 'Resistor Color Code',
+        description: 'Black, Brown, Red, Orange, Yellow, Green, Blue, Violet, Grey, White.',
+        trick: 'B B ROY of Great Britain had a Very Good Wife\n(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)\nTolerance: Gold 5%, Silver 10%',
+        tags: ['Current Electricity', 'Resistors']
+    },
+    {
+        id: 'h6',
+        subjectId: 'phys',
+        category: 'Modern Physics',
+        title: 'Electromagnetic Spectrum',
+        description: 'Order of increasing frequency (decreasing wavelength).',
+        trick: 'Rich Men In Vegas Use Xpensive Gadgets\n(Radio, Micro, Infra, Visible, UV, X-ray, Gamma)',
+        tags: ['EM Waves', 'Wavelength']
+    },
+    {
+        id: 'h7',
+        subjectId: 'phys',
+        category: 'Electromagnetism',
+        title: 'Fleming\'s Left Hand Rule',
+        description: 'For Motors (Force direction).',
+        trick: 'FBI (USA Agency)\nThumb = F (Force)\nIndex = B (Magnetic Field)\nMiddle = I (Current)',
+        tags: ['Magnetism', 'Lorentz Force']
+    },
+    
+    // Mechanics
+    {
+        id: 'h_phys_visc',
+        subjectId: 'phys',
+        category: 'Mechanics',
+        title: 'Terminal Velocity Dependence',
+        description: 'Dependence on radius.',
+        trick: 'Terminal velocity is "Two" much dependent on radius.\n(v_t is proportional to r^2)',
+        tags: ['Fluids', 'Viscosity']
+    },
+    {
+        id: 'h_phys_proj',
+        subjectId: 'phys',
+        category: 'Mechanics',
+        title: 'Max Range Angle',
+        description: 'Projectile motion range.',
+        trick: '45 degrees is the sweet spot for distance.\nSin(2*45) = Sin(90) = 1 (Max value)',
+        tags: ['Kinematics']
+    },
+
+    // --- MATHS ---
+    // Trigonometry
+    {
+        id: 'h8',
+        subjectId: 'math',
+        category: 'Trigonometry',
+        title: 'Trigonometric Signs (Quadrants)',
+        description: 'Signs of trig functions in 1st, 2nd, 3rd, 4th quadrants.',
+        trick: 'Add Sugar To Coffee (or All Silver Tea Cups)\n1st (A): All Positive\n2nd (S): Sin Positive\n3rd (T): Tan Positive\n4th (C): Cos Positive',
+        tags: ['Trigonometry', 'Basics']
+    },
+    {
+        id: 'h_math_sin',
+        subjectId: 'math',
+        category: 'Trigonometry',
+        title: 'Sin(A+B) vs Cos(A+B)',
+        description: 'Formulas for compound angles.',
+        trick: 'Sin is friendly (mixes sin & cos) and truthful (sign stays same).\nCos is racist (keeps cos with cos) and lying (sign changes).',
+        tags: ['Trigonometry', 'Compound Angles']
+    },
+
+    // Calculus
+    {
+        id: 'h9',
+        subjectId: 'math',
+        category: 'Calculus',
+        title: 'Integration by Parts (u & v selection)',
+        description: 'Order of preference for choosing the "u" function.',
+        trick: 'ILATE\nI = Inverse Trig\nL = Logarithmic\nA = Algebraic\nT = Trigonometric\nE = Exponential',
+        tags: ['Integration', 'By Parts']
+    },
+    
+    // Algebra
+    {
+        id: 'h10',
+        subjectId: 'math',
+        category: 'Algebra',
+        title: 'Matrix Determinant (3x3)',
+        description: 'Sarrus Rule Visual.',
+        trick: 'Copy first 2 columns to the right. Add down-right diagonals, subtract up-right diagonals.',
+        tags: ['Matrices', 'Determinants']
+    },
+    {
+        id: 'h_math_roots',
+        subjectId: 'math',
+        category: 'Algebra',
+        title: 'Nature of Roots (Quadratic)',
+        description: 'Discriminant D = b^2 - 4ac',
+        trick: 'D > 0: Real & Distinct (Positive vibes, different paths)\nD = 0: Real & Equal (Balanced)\nD < 0: Imaginary (Negative vibes, unreal)',
+        tags: ['Quadratic Equations']
+    },
+    
+    // Coordinate Geometry
+    {
+        id: 'h_math_ellipse',
+        subjectId: 'math',
+        category: 'Coordinate Geometry',
+        title: 'Eccentricity of Ellipse vs Hyperbola',
+        description: 'Formula for eccentricity.',
+        trick: 'Ellipse (Less than 1): 1 - (b/a)^2\nHyperbola (More than 1): 1 + (b/a)^2\n(Plus for Hyper because it\'s "Hyper")',
+        tags: ['Conics', 'Ellipse', 'Hyperbola']
+    }
 ];
 
 export const INITIAL_FLASHCARDS: Flashcard[] = [

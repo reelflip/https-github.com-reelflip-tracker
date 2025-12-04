@@ -16,14 +16,16 @@ import {
   ChevronDown,
   Loader2,
   CheckCircle2,
-  Zap
+  Zap,
+  Users
 } from 'lucide-react';
 
 interface AuthScreenProps {
   onLogin: (user: User) => void;
+  onNavigate: (page: string) => void;
 }
 
-const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
+const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
   const [isRegistering, setIsRegistering] = useState(false); // Default to login
   const [role, setRole] = useState<Role>('STUDENT');
   const [error, setError] = useState('');
@@ -35,6 +37,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     name: '',
     email: '',
     password: '',
+    confirmPassword: '',
     institute: '',
     targetYear: '2025',
     securityQuestion: 'What is the name of your first pet?',
@@ -47,6 +50,13 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     setSuccessMessage('');
     setIsLoading(true);
     
+    // Client-side Validation
+    if (isRegistering && formData.password !== formData.confirmPassword) {
+        setError("Passwords do not match.");
+        setIsLoading(false);
+        return;
+    }
+
     try {
         const endpoint = isRegistering ? '/api/register.php' : '/api/login.php';
         
@@ -96,7 +106,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
             // Registration Successful: Don't login automatically
             setIsRegistering(false); // Switch to Login view
             setSuccessMessage("Registration successful! Please log in with your credentials.");
-            setFormData(prev => ({ ...prev, password: '' })); // Clear password for security
+            setFormData(prev => ({ ...prev, password: '', confirmPassword: '' })); // Clear password for security
             window.scrollTo({ top: 0, behavior: 'smooth' }); // Ensure user sees message
         } else {
             // Login Successful - Require User Object
@@ -134,17 +144,42 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
     }
   };
 
+  // --- Quick Login Handlers (Offline Mode) ---
+  
+  const handleStudentShortcut = () => {
+      onLogin({
+          id: 'local_student',
+          name: 'Demo Student',
+          email: 'student@demo.com',
+          role: 'STUDENT',
+          isVerified: true,
+          institute: 'Allen',
+          targetYear: 2025,
+          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=student'
+      });
+  };
+
+  const handleParentShortcut = () => {
+      onLogin({
+          id: 'local_parent',
+          name: 'Demo Parent',
+          email: 'parent@demo.com',
+          role: 'PARENT',
+          isVerified: true,
+          studentId: 'local_student',
+          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=parent'
+      });
+  };
+
   const handleAdminShortcut = () => {
-      // Local Bypass for Admin (No DB Check)
-      // Useful for checking deployment status or accessing System Docs when DB is down
-      const localAdmin: User = {
+      onLogin({
           id: 'local_admin',
           name: 'System Admin (Local)',
           email: 'admin@local',
           role: 'ADMIN',
-          isVerified: true
-      };
-      onLogin(localAdmin);
+          isVerified: true,
+          avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=admin'
+      });
   };
 
   return (
@@ -166,7 +201,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                 </div>
             </div>
             
-            <h2 className="text-3xl font-bold text-blue-600 tracking-wide mb-3">TRACKER</h2>
+            <h2 className="text-3xl font-bold text-blue-600 tracking-wide mb-3">PREP</h2>
             
             <div className="flex items-center justify-center gap-4 px-12">
                 <div className="h-px bg-slate-200 flex-1"></div>
@@ -188,7 +223,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                         setIsRegistering(!isRegistering);
                         setError('');
                         setSuccessMessage('');
-                        setFormData(prev => ({ ...prev, password: '' })); // Clear pass
+                        setFormData(prev => ({ ...prev, password: '', confirmPassword: '' })); 
                     }}
                     className="text-sm font-medium text-blue-600 hover:text-blue-800 transition-colors"
                 >
@@ -315,6 +350,24 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     </div>
                 </div>
 
+                {/* Confirm Password (Register Only) */}
+                {isRegistering && (
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Confirm Password</label>
+                        <div className="relative group">
+                            <Lock className="absolute left-4 top-3.5 text-slate-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
+                            <input 
+                                type="password" 
+                                placeholder="Re-enter password"
+                                className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
+                                value={formData.confirmPassword}
+                                onChange={(e) => setFormData({...formData, confirmPassword: e.target.value})}
+                                required
+                            />
+                        </div>
+                    </div>
+                )}
+
                 {/* Account Recovery Setup (Register Only) */}
                 {isRegistering && (
                     <div className="bg-blue-50 rounded-xl p-4 border border-blue-100 mt-2">
@@ -384,19 +437,56 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin }) => {
                     )}
                 </button>
 
-                {/* Admin Shortcut */}
+                {/* Quick Login Shortcuts (Offline/Test) */}
                 {!isRegistering && (
-                    <button
-                        type="button"
-                        onClick={handleAdminShortcut}
-                        disabled={isLoading}
-                        className="w-full bg-slate-900 text-white text-xs font-bold py-3 rounded-lg hover:bg-slate-800 flex items-center justify-center space-x-2 mt-4 transition-colors"
-                    >
-                        <Zap className="w-4 h-4 text-yellow-400 fill-yellow-400" />
-                        <span>Quick Admin Login (Local/Offline)</span>
-                    </button>
+                    <div className="mt-6 pt-6 border-t border-slate-100">
+                        <p className="text-[10px] font-bold text-slate-400 uppercase text-center mb-3">Developer Shortcuts (Offline)</p>
+                        <div className="grid grid-cols-3 gap-2">
+                            <button
+                                type="button"
+                                onClick={handleStudentShortcut}
+                                className="flex flex-col items-center justify-center p-3 bg-blue-50 hover:bg-blue-100 rounded-xl text-blue-700 transition-colors border border-blue-100"
+                            >
+                                <div className="bg-white p-1.5 rounded-full mb-1 shadow-sm">
+                                    <UserIcon className="w-4 h-4" />
+                                </div>
+                                <span className="text-[10px] font-bold">Student</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleParentShortcut}
+                                className="flex flex-col items-center justify-center p-3 bg-green-50 hover:bg-green-100 rounded-xl text-green-700 transition-colors border border-green-100"
+                            >
+                                <div className="bg-white p-1.5 rounded-full mb-1 shadow-sm">
+                                    <Users className="w-4 h-4" />
+                                </div>
+                                <span className="text-[10px] font-bold">Parent</span>
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleAdminShortcut}
+                                className="flex flex-col items-center justify-center p-3 bg-slate-100 hover:bg-slate-200 rounded-xl text-slate-700 transition-colors border border-slate-200"
+                            >
+                                <div className="bg-white p-1.5 rounded-full mb-1 shadow-sm">
+                                    <Shield className="w-4 h-4" />
+                                </div>
+                                <span className="text-[10px] font-bold">Admin</span>
+                            </button>
+                        </div>
+                    </div>
                 )}
             </form>
+            
+            {/* Footer Links */}
+            <div className="mt-8 text-center space-x-4 text-xs text-slate-400 font-medium flex flex-wrap justify-center gap-y-2">
+                <button onClick={() => onNavigate('about')} className="hover:text-blue-600 transition-colors">About Us</button>
+                <span>•</span>
+                <button onClick={() => onNavigate('blog')} className="hover:text-blue-600 transition-colors">Blog</button>
+                <span>•</span>
+                <button onClick={() => onNavigate('privacy')} className="hover:text-blue-600 transition-colors">Privacy Policy</button>
+                <span>•</span>
+                <button onClick={() => onNavigate('contact')} className="hover:text-blue-600 transition-colors">Contact</button>
+            </div>
         </div>
       </div>
     </div>

@@ -1,9 +1,11 @@
 
-import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, MOCK_USERS } from '../constants';
+
+
+import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS } from '../constants';
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR JEE TRACKER PRO
+  let sql = `-- DATABASE SCHEMA FOR IIT JEE PREP
 -- Generated for Hostinger / Shared Hosting (MySQL)
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
@@ -31,6 +33,7 @@ DROP TABLE IF EXISTS users;
 DROP TABLE IF EXISTS notifications;
 DROP TABLE IF EXISTS quotes;
 DROP TABLE IF EXISTS flashcards;
+DROP TABLE IF EXISTS memory_hacks;
 
 SET FOREIGN_KEY_CHECKS = 1;
 
@@ -213,7 +216,7 @@ CREATE TABLE timetable_settings (
 );
 
 --
--- 8. NOTIFICATIONS, QUOTES & FLASHCARDS
+-- 8. NOTIFICATIONS, QUOTES, FLASHCARDS & HACKS
 --
 CREATE TABLE notifications (
     id VARCHAR(50) PRIMARY KEY,
@@ -236,6 +239,17 @@ CREATE TABLE flashcards (
     front TEXT NOT NULL,
     back TEXT NOT NULL,
     difficulty ENUM('HARD', 'MEDIUM', 'EASY') DEFAULT 'MEDIUM',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE memory_hacks (
+    id VARCHAR(50) PRIMARY KEY,
+    subject_id ENUM('phys', 'chem', 'math') NOT NULL,
+    category VARCHAR(100) DEFAULT 'General',
+    title VARCHAR(255) NOT NULL,
+    description TEXT,
+    trick TEXT NOT NULL,
+    tags_json JSON,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -290,12 +304,27 @@ CREATE TABLE flashcards (
       sql += flashcardValues + `;\n`;
   }
 
-  // 5. Seed Questions & Tests
+  // 5. Seed Memory Hacks
+  if (INITIAL_MEMORY_HACKS.length > 0) {
+      sql += `\n-- Seeding Memory Hacks\n`;
+      sql += `INSERT IGNORE INTO memory_hacks (id, subject_id, category, title, description, trick, tags_json) VALUES \n`;
+      const hackValues = INITIAL_MEMORY_HACKS.map(h => {
+          const safeTitle = h.title.replace(/'/g, "''");
+          const safeDesc = h.description.replace(/'/g, "''");
+          const safeCat = h.category.replace(/'/g, "''");
+          const safeTrick = h.trick.replace(/'/g, "''").replace(/\\/g, '\\\\');
+          const safeTags = JSON.stringify(h.tags).replace(/'/g, "''");
+          return `('${h.id}', '${h.subjectId}', '${safeCat}', '${safeTitle}', '${safeDesc}', '${safeTrick}', '${safeTags}')`;
+      }).join(',\n');
+      sql += hackValues + `;\n`;
+  }
+
+  // 6. Seed Questions & Tests
   const allQuestions: Question[] = [];
   const questionIds = new Set();
   
   MOCK_TESTS.forEach(test => {
-      test.questions.forEach(q => {
+      test.questions.forEach((q: Question) => {
           if (!questionIds.has(q.id)) {
               questionIds.add(q.id);
               allQuestions.push(q);
@@ -333,11 +362,11 @@ CREATE TABLE flashcards (
       sql += linkValues.join(',\n') + `;\n`;
   }
   
-  // 6. Seed ADMIN User
+  // 7. Seed ADMIN User
   sql += `\n-- Seeding Admin User (Pass: Ishika@123)\n`;
   sql += `INSERT IGNORE INTO users (email, password_hash, full_name, role, is_verified) VALUES ('admin', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'System Administrator', 'ADMIN', 1);\n`;
 
-  // 7. Seed Demo Student & Parent
+  // 8. Seed Demo Student & Parent
   sql += `\n-- Seeding Demo Student (innfriend1@gmail.com / 123456) and Parent (vikas.00@gmail.com / 123456)\n`;
   // Real hash for 123456: $2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm
   const hash123456 = "$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm";
@@ -345,7 +374,7 @@ CREATE TABLE flashcards (
   sql += `INSERT IGNORE INTO users (email, password_hash, full_name, role, is_verified, institute, target_year) VALUES ('innfriend1@gmail.com', '${hash123456}', 'InnFriend Student', 'STUDENT', 1, 'Allen Career Institute', 2025);\n`;
   sql += `INSERT IGNORE INTO users (email, password_hash, full_name, role, is_verified) VALUES ('vikas.00@gmail.com', '${hash123456}', 'Vikas Parent', 'PARENT', 1);\n`;
   
-  // 8. Link Parent to Student
+  // 9. Link Parent to Student
   sql += `\n-- Linking Parent to Student\n`;
   sql += `SET @student_id = (SELECT id FROM users WHERE email = 'innfriend1@gmail.com');\n`;
   sql += `SET @parent_id = (SELECT id FROM users WHERE email = 'vikas.00@gmail.com');\n`;
@@ -422,7 +451,7 @@ try {
 include_once 'config.php';
 echo json_encode([
     "status" => "active", 
-    "message" => "JEE Tracker API is running", 
+    "message" => "IIT JEE Prep API is running", 
     "timestamp" => date('c'),
     "info" => "Use endpoints like /login.php, /test_db.php etc."
 ]);
@@ -668,6 +697,9 @@ $quotes = $conn->query("SELECT * FROM quotes ORDER BY RAND() LIMIT 10")->fetchAl
 // Flashcards
 $flashcards = $conn->query("SELECT * FROM flashcards")->fetchAll(PDO::FETCH_ASSOC);
 
+// Memory Hacks
+$hacks = $conn->query("SELECT * FROM memory_hacks")->fetchAll(PDO::FETCH_ASSOC);
+
 // Notifications
 $notifs = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -677,6 +709,7 @@ $tests = $conn->query("SELECT * FROM tests")->fetchAll(PDO::FETCH_ASSOC);
 echo json_encode([
     "quotes" => $quotes,
     "flashcards" => $flashcards,
+    "hacks" => $hacks,
     "notifications" => $notifs,
     "tests" => $tests
 ]);
@@ -891,7 +924,7 @@ export const generateFrontendGuide = (): string => {
     return `# HOSTINGER DEPLOYMENT MANUAL (ZERO-TO-HERO GUIDE)
 ======================================================
 
-This guide assumes you have a clean Hostinger Shared Hosting plan and a domain (e.g., iitjeetracker.com).
+This guide assumes you have a clean Hostinger Shared Hosting plan and a domain (e.g., iitjeeprep.com).
 
 TROUBLESHOOTING 403 ERRORS (ACCESS FORBIDDEN)
 ---------------------------------------------

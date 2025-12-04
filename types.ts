@@ -151,6 +151,27 @@ export interface BacklogItem {
     status: 'PENDING' | 'CLEARED';
 }
 
+export interface MemoryHack {
+    id: string;
+    subjectId: 'phys' | 'chem' | 'math';
+    category: string; // e.g. "Inorganic", "Mechanics", "Calculus"
+    title: string;
+    description: string;
+    trick: string; // The actual mnemonic or shortcut
+    tags: string[];
+}
+
+export interface BlogPost {
+    id: string;
+    title: string;
+    excerpt: string;
+    content: string; // HTML or Markdown text
+    author: string;
+    date: string;
+    category: 'Strategy' | 'Motivation' | 'Subject-wise' | 'Updates';
+    imageUrl?: string;
+}
+
 export interface MockDataState {
   users: User[];
   syllabus: Subject[];
