@@ -65,7 +65,7 @@ function App() {
             fetchAdminData();
         }
     }
-  }, [currentUser]);
+  }, [currentUser?.id, currentUser?.role]);
 
   const fetchDashboardData = async () => {
       if (!currentUser) return;
@@ -80,6 +80,25 @@ function App() {
           if (!res.ok) return; // Silent fail in demo
           const data = await res.json();
           
+          // --- PROFILE SYNC (Critical for Connection Requests) ---
+          if (data.userProfileSync && currentUser.id === targetUserId) {
+              const synced = data.userProfileSync;
+              // Check if any connection data changed
+              if (
+                  JSON.stringify(synced.pendingRequest) !== JSON.stringify(currentUser.pendingRequest) ||
+                  synced.parentId !== currentUser.parentId ||
+                  synced.studentId !== currentUser.studentId
+              ) {
+                  console.log("Syncing Profile Data from Server...");
+                  setCurrentUser(prev => prev ? ({ 
+                      ...prev, 
+                      pendingRequest: synced.pendingRequest,
+                      parentId: synced.parentId,
+                      studentId: synced.studentId
+                  }) : null);
+              }
+          }
+
           if (data.progress) {
               // Convert array to record object
               const progObj: Record<string, TopicProgress> = {};
@@ -204,7 +223,7 @@ function App() {
       // pending requests with a fresh user object.
       const existingUser = allUsers.find(u => u.id === user.id);
       
-      if (existingUser) {
+      if (existingUser && window.IITJEE_CONFIG?.enableDevTools) {
           // Merge to keep existing state (like pendingRequest) but allow new props
           setCurrentUser({ ...existingUser, ...user });
       } else {
@@ -389,21 +408,6 @@ function App() {
 
   // --- Connection Handlers ---
   const handleSendConnectionRequest = (studentIdentifier: string) => {
-      // 1. Update Mock State (for local dev)
-      setAllUsers(prevUsers => prevUsers.map(u => {
-          if (u.id === studentIdentifier || u.email === studentIdentifier) {
-              return { 
-                  ...u, 
-                  pendingRequest: { 
-                      fromId: currentUser?.id || 'parent_local', 
-                      fromName: currentUser?.name || 'Parent', 
-                      type: 'PARENT_LINK' 
-                  } 
-              };
-          }
-          return u;
-      }));
-
       // 2. Call API (for production)
       if (currentUser) {
           fetch('/api/send_request.php', {
@@ -414,7 +418,16 @@ function App() {
                   parent_id: currentUser.id,
                   parent_name: currentUser.name
               })
-          }).catch(err => console.error("Failed to send request", err));
+          })
+          .then(res => res.json())
+          .then(data => {
+              if (data.message === "Request Sent Successfully") {
+                  // Success
+              } else {
+                  console.error(data.message);
+              }
+          })
+          .catch(err => console.error("Failed to send request", err));
       }
   };
 
@@ -422,22 +435,12 @@ function App() {
       if (currentUser && currentUser.pendingRequest) {
           const parentId = currentUser.pendingRequest.fromId;
           
-          // 1. Update Mock State
+          // 1. Optimistic Update
           const updatedStudent = { ...currentUser, pendingRequest: undefined };
           if (accept) {
               updatedStudent.parentId = parentId;
           }
           setCurrentUser(updatedStudent);
-
-          setAllUsers(prevUsers => prevUsers.map(u => {
-              if (u.id === parentId) {
-                  return { ...u, studentId: accept ? currentUser.id : undefined };
-              }
-              if (u.id === currentUser.id) {
-                  return updatedStudent;
-              }
-              return u;
-          }));
 
           // 2. Call API (for production)
           fetch('/api/respond_request.php', {

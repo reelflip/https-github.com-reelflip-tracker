@@ -19,7 +19,8 @@ import {
   Copy,
   ChevronDown,
   Target,
-  Loader2
+  Loader2,
+  Users
 } from 'lucide-react';
 
 interface ProfileSettingsProps {
@@ -68,38 +69,6 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
   return (
     <div className="max-w-3xl mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4">
       
-      {/* --- Connection Notifications (Student) --- */}
-      {user.role === 'STUDENT' && user.pendingRequest && (
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 shadow-sm flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in zoom-in-95">
-           <div className="flex items-start gap-3">
-               <div className="bg-amber-100 p-2 rounded-full mt-1">
-                   <LinkIcon className="w-5 h-5 text-amber-700" />
-               </div>
-               <div>
-                   <h3 className="font-bold text-amber-900 text-lg">Connection Request</h3>
-                   <p className="text-amber-800 text-sm">
-                       <strong>{user.pendingRequest.fromName}</strong> wants to link to your account as your Parent.
-                   </p>
-                   <p className="text-amber-700/70 text-xs mt-1">They will be able to see your progress and test scores.</p>
-               </div>
-           </div>
-           <div className="flex space-x-3 w-full md:w-auto">
-               <button 
-                  onClick={() => onRespondRequest && onRespondRequest(false)}
-                  className="flex-1 md:flex-none px-4 py-2 border border-amber-300 text-amber-800 rounded-lg hover:bg-amber-100 font-medium flex items-center justify-center"
-               >
-                   <XCircle className="w-4 h-4 mr-2" /> Decline
-               </button>
-               <button 
-                  onClick={() => onRespondRequest && onRespondRequest(true)}
-                  className="flex-1 md:flex-none px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-bold shadow-md flex items-center justify-center"
-               >
-                   <CheckCircle2 className="w-4 h-4 mr-2" /> Accept
-               </button>
-           </div>
-        </div>
-      )}
-
       {/* Header */}
       <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-4">
          <div className="flex items-center space-x-4">
@@ -135,50 +104,98 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
              </div>
          )}
       </div>
-      
-      {/* Parent Connection Section */}
-      {user.role === 'PARENT' && (
-          <div className="bg-blue-50 border border-blue-100 p-6 rounded-2xl">
-              <h3 className="font-bold text-blue-900 flex items-center mb-4">
-                  <LinkIcon className="w-5 h-5 mr-2" /> Connect to Child
-              </h3>
-              
-              {user.studentId ? (
-                   <div className="flex items-center space-x-2 text-green-700 bg-green-50 p-4 rounded-xl border border-green-100">
-                       <CheckCircle2 className="w-5 h-5" />
-                       <span className="font-medium">Connected to Student ID: <strong>{user.studentId}</strong></span>
-                   </div>
-              ) : (
-                  <div className="space-y-4">
-                      <p className="text-sm text-blue-800">Enter the <strong>Student ID</strong> found on your child's profile settings page.</p>
-                      <div className="flex flex-col sm:flex-row gap-3">
-                          <input 
-                              type="text" 
-                              placeholder="Enter Student ID (e.g. u1)"
-                              value={studentIdInput}
-                              onChange={(e) => setStudentIdInput(e.target.value)}
-                              className="flex-1 px-4 py-2 border border-blue-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none"
-                          />
-                          <button 
-                              type="button"
-                              onClick={handleConnect}
-                              className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-sm flex items-center justify-center whitespace-nowrap"
-                          >
-                              <UserPlus className="w-4 h-4 mr-2" /> Send Request
-                          </button>
+
+      {/* --- Family & Connections Section --- */}
+      <div className="bg-white p-6 rounded-2xl shadow-sm border border-slate-100">
+          <h3 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
+              <Users className="w-5 h-5 mr-2 text-blue-600" /> Family Connections
+          </h3>
+
+          {user.role === 'STUDENT' ? (
+              // Student View
+              <div>
+                  {user.pendingRequest ? (
+                      <div className="bg-amber-50 border border-amber-200 rounded-xl p-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4 animate-in zoom-in-95">
+                        <div className="flex items-start gap-3">
+                            <div className="bg-amber-100 p-2 rounded-full mt-1">
+                                <LinkIcon className="w-5 h-5 text-amber-700" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-amber-900 text-base">Connection Request</h3>
+                                <p className="text-amber-800 text-sm">
+                                    <strong>{user.pendingRequest.fromName}</strong> wants to link to your account as your Parent.
+                                </p>
+                                <p className="text-amber-700/70 text-xs mt-1">They will be able to see your progress and test scores.</p>
+                            </div>
+                        </div>
+                        <div className="flex space-x-3 w-full md:w-auto">
+                            <button 
+                                onClick={() => onRespondRequest && onRespondRequest(false)}
+                                className="flex-1 md:flex-none px-4 py-2 border border-amber-300 text-amber-800 rounded-lg hover:bg-amber-100 font-medium flex items-center justify-center text-xs"
+                            >
+                                <XCircle className="w-4 h-4 mr-2" /> Decline
+                            </button>
+                            <button 
+                                onClick={() => onRespondRequest && onRespondRequest(true)}
+                                className="flex-1 md:flex-none px-6 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 font-bold shadow-md flex items-center justify-center text-xs"
+                            >
+                                <CheckCircle2 className="w-4 h-4 mr-2" /> Accept
+                            </button>
+                        </div>
                       </div>
-                      
-                      {/* Success Feedback */}
-                      {requestStatus === 'SUCCESS' && (
-                          <div className="flex items-center text-green-700 bg-green-100 p-3 rounded-lg border border-green-200 text-sm animate-in fade-in slide-in-from-top-1">
-                              <CheckCircle2 className="w-4 h-4 mr-2 shrink-0" />
-                              Request Sent! Ask your child to accept it in their Profile settings.
+                  ) : user.parentId ? (
+                      <div className="flex items-center text-green-700 bg-green-50 p-4 rounded-xl border border-green-200">
+                          <CheckCircle2 className="w-5 h-5 mr-3" />
+                          <div>
+                              <p className="font-bold text-sm">Active Connection</p>
+                              <p className="text-xs opacity-80">Linked to Parent ID: {user.parentId}</p>
                           </div>
-                      )}
-                  </div>
-              )}
-          </div>
-      )}
+                      </div>
+                  ) : (
+                      <p className="text-sm text-slate-500 italic flex items-center">
+                          <AlertCircle className="w-4 h-4 mr-2" /> No active family connections. Share your Student ID with your parent to get started.
+                      </p>
+                  )}
+              </div>
+          ) : (
+              // Parent View
+              <div>
+                  {user.studentId ? (
+                       <div className="flex items-center space-x-3 text-green-700 bg-green-50 p-4 rounded-xl border border-green-200">
+                           <CheckCircle2 className="w-5 h-5" />
+                           <span className="font-medium">Connected to Student ID: <strong>{user.studentId}</strong></span>
+                       </div>
+                  ) : (
+                      <div className="space-y-4">
+                          <p className="text-sm text-slate-600">Enter the <strong>Student ID</strong> found on your child's profile settings page.</p>
+                          <div className="flex flex-col sm:flex-row gap-3">
+                              <input 
+                                  type="text" 
+                                  placeholder="Enter Student ID (e.g. u1)"
+                                  value={studentIdInput}
+                                  onChange={(e) => setStudentIdInput(e.target.value)}
+                                  className="flex-1 px-4 py-2 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-500 outline-none text-sm"
+                              />
+                              <button 
+                                  type="button"
+                                  onClick={handleConnect}
+                                  className="bg-blue-600 text-white px-6 py-2 rounded-xl font-bold hover:bg-blue-700 shadow-sm flex items-center justify-center whitespace-nowrap text-sm"
+                              >
+                                  <UserPlus className="w-4 h-4 mr-2" /> Send Request
+                              </button>
+                          </div>
+                          
+                          {requestStatus === 'SUCCESS' && (
+                              <div className="flex items-center text-green-700 bg-green-100 p-3 rounded-lg border border-green-200 text-sm animate-in fade-in slide-in-from-top-1">
+                                  <CheckCircle2 className="w-4 h-4 mr-2 shrink-0" />
+                                  Request Sent! Ask your child to accept it in their Profile settings.
+                              </div>
+                          )}
+                      </div>
+                  )}
+              </div>
+          )}
+      </div>
 
       {/* Form */}
       <form onSubmit={handleSubmit} className="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 space-y-6">

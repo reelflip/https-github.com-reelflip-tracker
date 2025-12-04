@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { generateSQLSchema, getBackendFiles, generateFrontendGuide, generateHtaccess, getDeploymentPhases } from '../services/generatorService';
-import { Download, Database, Code, Terminal, FileCode, BookOpen, CheckCircle, Activity, Play, AlertCircle, Server, Folder, File, Settings, Key, User as UserIcon, Package } from 'lucide-react';
+import { Download, Database, Code, Terminal, FileCode, BookOpen, CheckCircle, Activity, Play, AlertCircle, Server, Folder, File, Settings, Key, User as UserIcon, Package, Search } from 'lucide-react';
 import JSZip from 'jszip';
 
 const SystemDocs: React.FC = () => {
@@ -43,7 +43,9 @@ const SystemDocs: React.FC = () => {
             const apiFolder = zip.folder("api");
             if (apiFolder) {
                 backendFiles.forEach(file => {
-                    apiFolder.file(file.name, file.content);
+                    if (file.folder === 'api') {
+                        apiFolder.file(file.name, file.content);
+                    }
                 });
             }
 
@@ -97,6 +99,10 @@ const SystemDocs: React.FC = () => {
     const phases = getDeploymentPhases();
     // Pass dynamic config to generator so config.php is accurate
     const backendFiles = getBackendFiles(dbConfig);
+    
+    // Extract SEO files
+    const seoFiles = backendFiles.filter(f => f.folder === 'root');
+    const apiFiles = backendFiles.filter(f => f.folder === 'api');
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
@@ -107,7 +113,7 @@ const SystemDocs: React.FC = () => {
                         <div className="flex items-center gap-3 mb-2">
                             <h2 className="text-3xl font-bold">System Documentation</h2>
                             <span className="px-2 py-1 rounded-md bg-slate-700 border border-slate-600 text-xs font-mono text-cyan-400 shadow-sm">
-                                v1.7 (Stable)
+                                v1.8 (Stable)
                             </span>
                         </div>
                         <p className="text-slate-400 text-lg max-w-xl">Deployment tools for Hostinger Shared Hosting.</p>
@@ -250,7 +256,7 @@ const SystemDocs: React.FC = () => {
                     </div>
                     
                     <div className="grid grid-cols-1 gap-2 max-h-96 overflow-y-auto custom-scrollbar pr-2">
-                        {backendFiles.map((file, idx) => (
+                        {apiFiles.map((file, idx) => (
                             <div key={idx} className="flex justify-between items-center bg-slate-800 p-3 rounded border border-slate-700 hover:border-purple-500 transition-colors">
                                 <div>
                                     <div className="flex items-center space-x-2">
@@ -281,6 +287,8 @@ const SystemDocs: React.FC = () => {
                         <div className="flex items-center text-yellow-400 font-bold mb-1"><Folder className="w-3 h-3 mr-2" /> public_html/</div>
                         <div className="ml-4 space-y-1">
                             <div className="flex items-center text-slate-400"><File className="w-3 h-3 mr-2" /> .htaccess</div>
+                            <div className="flex items-center text-slate-400"><File className="w-3 h-3 mr-2" /> robots.txt</div>
+                            <div className="flex items-center text-slate-400"><File className="w-3 h-3 mr-2" /> sitemap.xml</div>
                             <div className="flex items-center text-slate-400"><File className="w-3 h-3 mr-2" /> index.html</div>
                             <div className="flex items-center text-blue-400"><Folder className="w-3 h-3 mr-2" /> assets/</div>
                             <div className="ml-8 text-slate-500">└── index-Xa3...js</div>
@@ -290,40 +298,47 @@ const SystemDocs: React.FC = () => {
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> config.php</div>
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> login.php</div>
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> register.php</div>
-                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> verify.php</div>
-                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> get_dashboard.php</div>
-                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> get_common.php</div>
-                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> sync_progress.php</div>
-                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> manage_goals.php</div>
-                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> manage_backlogs.php</div>
-                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> manage_mistakes.php</div>
-                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> save_timetable.php</div>
-                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> test_db.php</div>
+                                {/* ... other files ... */}
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> index.php</div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                {/* 4. Server Config (.htaccess) */}
+                {/* 4. Server Config (.htaccess & SEO) */}
                 <div className="md:col-span-1 bg-slate-800 text-slate-300 p-6 rounded-2xl overflow-hidden shadow-xl font-mono text-xs border border-slate-700">
                     <div className="flex justify-between items-center mb-4 border-b border-slate-700 pb-3">
-                        <h3 className="text-white font-bold flex items-center text-sm"><FileCode className="mr-2 w-4 h-4 text-orange-400"/> 4. Server Config (.htaccess)</h3>
-                        <button 
-                            onClick={() => downloadFile('.htaccess', generateHtaccess())}
-                            className="bg-orange-600 hover:bg-orange-500 text-white px-4 py-1.5 rounded flex items-center shadow-lg transition-colors"
-                        >
-                            <Download className="w-3 h-3 mr-1" /> Download File
-                        </button>
+                        <h3 className="text-white font-bold flex items-center text-sm"><Search className="mr-2 w-4 h-4 text-orange-400"/> 4. SEO & Config</h3>
                     </div>
-                    <div className="p-3 bg-orange-900/20 rounded border border-orange-500/30 mb-4">
+                    
+                    <div className="space-y-2">
+                        {seoFiles.map((file, idx) => (
+                            <div key={idx} className="flex justify-between items-center bg-slate-900/50 p-2 rounded border border-slate-600">
+                                <span className="text-orange-300 font-bold ml-2">{file.name}</span>
+                                <button 
+                                    onClick={() => downloadFile(file.name, file.content)}
+                                    className="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded text-[10px] uppercase font-bold"
+                                >
+                                    Download
+                                </button>
+                            </div>
+                        ))}
+                        <div className="flex justify-between items-center bg-slate-900/50 p-2 rounded border border-slate-600">
+                            <span className="text-orange-300 font-bold ml-2">.htaccess</span>
+                            <button 
+                                onClick={() => downloadFile('.htaccess', generateHtaccess())}
+                                className="bg-orange-600 hover:bg-orange-500 text-white px-3 py-1 rounded text-[10px] uppercase font-bold"
+                            >
+                                Download
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="p-3 bg-orange-900/20 rounded border border-orange-500/30 mt-4">
                         <p className="text-orange-300 font-sans text-sm">
-                            <strong>Crucial:</strong> Upload this file to your <code>public_html</code> folder. It prevents "404 Not Found" errors.
+                            <strong>Crucial:</strong> Upload these files to your <code>public_html</code> root folder to fix 404 errors and SEO rankings.
                         </p>
                     </div>
-                    <pre className="overflow-x-auto h-24 text-slate-300 whitespace-pre-wrap no-scrollbar p-2 bg-black/40 rounded-lg border border-slate-700/50">
-                        {generateHtaccess()}
-                    </pre>
                 </div>
 
                 {/* 5. DATABASE DIAGNOSTICS (Live Tester) */}

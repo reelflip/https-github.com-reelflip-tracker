@@ -169,20 +169,20 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
         
         {/* Header Section (Logo) */}
         <div className="pt-10 pb-4 text-center">
-            <h1 className="text-4xl font-sans font-bold tracking-tight mb-4">
-                <span className="text-slate-900">IIT</span> <span className="text-orange-500">GEE</span>
-            </h1>
-            
-            <div className="flex justify-center mb-4">
-                <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center ring-4 ring-slate-50 shadow-lg relative">
+            <h1 className="flex flex-col items-center">
+                <span className="text-4xl font-sans font-bold tracking-tight mb-4 block">
+                    <span className="text-slate-900">IIT</span> <span className="text-orange-500">GEE</span>
+                </span>
+                
+                <div className="w-20 h-20 bg-slate-900 rounded-full flex items-center justify-center ring-4 ring-slate-50 shadow-lg relative mb-4">
                      <div className="absolute inset-0 bg-gradient-to-b from-slate-800 to-slate-900 rounded-full"></div>
                      <TrendingUp className="w-10 h-10 text-blue-400 relative z-10" strokeWidth={2.5} />
                      <div className="absolute top-4 right-5 text-[8px] text-yellow-400 opacity-80">{'α'}</div>
                      <div className="absolute bottom-4 left-5 text-[8px] text-cyan-400 opacity-80">{'∑'}</div>
                 </div>
-            </div>
-            
-            <h2 className="text-3xl font-bold text-blue-600 tracking-wide mb-3">PREP</h2>
+                
+                <span className="text-3xl font-bold text-blue-600 tracking-wide mb-3 block">PREP</span>
+            </h1>
             
             <div className="flex items-center justify-center gap-4 px-12">
                 <div className="h-px bg-slate-200 flex-1"></div>
@@ -195,9 +195,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
         <div className="px-8 pb-10 flex-1">
             {/* View Toggle Header */}
             <div className="flex justify-between items-baseline mb-6 mt-4">
-                <h3 className="text-xl font-bold text-slate-800">
+                <h2 className="text-xl font-bold text-slate-800">
                     {isRegistering ? 'Create Account' : 'Welcome Back'}
-                </h3>
+                </h2>
                 <button 
                     type="button"
                     onClick={() => {
@@ -216,7 +216,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                 
                 {/* Role Selector (Register Only) */}
                 {isRegistering && (
-                    <div className="flex p-1 bg-slate-50 rounded-lg border border-slate-200 mb-6">
+                    <div className="flex p-1 bg-slate-50 rounded-lg border border-slate-200 mb-6" role="group" aria-label="Select Role">
                         <button
                             type="button"
                             onClick={() => setRole('STUDENT')}
@@ -243,12 +243,13 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                 {/* Full Name (Register Only) */}
                 {isRegistering && (
                     <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Full Name</label>
+                        <label htmlFor="fullName" className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Full Name</label>
                         <div className="relative group">
                             <UserIcon className="absolute left-4 top-3.5 text-slate-400 w-5 h-5" />
                             <input 
+                                id="fullName"
                                 type="text" 
-                                placeholder="Student Name"
+                                placeholder={role === 'PARENT' ? "Parent Name" : "Student Name"}
                                 className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                                 value={formData.name}
                                 onChange={(e) => setFormData({...formData, name: e.target.value})}
@@ -262,10 +263,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                 {isRegistering && role === 'STUDENT' && (
                     <>
                         <div className="space-y-1">
-                            <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Institute</label>
+                            <label htmlFor="institute" className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Institute</label>
                             <div className="relative">
                                 <Building className="absolute left-4 top-3.5 text-slate-400 w-4 h-4 z-10" />
                                 <select 
+                                    id="institute"
                                     className="w-full pl-10 pr-8 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
                                     value={formData.institute}
                                     onChange={(e) => setFormData({...formData, institute: e.target.value})}
@@ -281,10 +283,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
 
                         <div className="grid grid-cols-5 gap-3">
                             <div className="col-span-3 space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Target Exam</label>
+                                <label htmlFor="targetExam" className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Target Exam</label>
                                 <div className="relative">
                                     <Target className="absolute left-4 top-3.5 text-slate-400 w-4 h-4 z-10" />
                                     <select 
+                                        id="targetExam"
                                         className="w-full pl-10 pr-8 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
                                         value={formData.targetExam}
                                         onChange={(e) => setFormData({...formData, targetExam: e.target.value})}
@@ -298,10 +301,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                             </div>
                             
                             <div className="col-span-2 space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Year</label>
+                                <label htmlFor="targetYear" className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Year</label>
                                 <div className="relative">
                                     <Calendar className="absolute left-3 top-3.5 text-slate-400 w-4 h-4 z-10" />
                                     <select 
+                                        id="targetYear"
                                         className="w-full pl-9 pr-6 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
                                         value={formData.targetYear}
                                         onChange={(e) => setFormData({...formData, targetYear: e.target.value})}
@@ -319,14 +323,15 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
 
                 {/* Email Address */}
                 <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">
+                    <label htmlFor="email" className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">
                         {isRegistering ? 'Email Address' : 'Email or Username'}
                     </label>
                     <div className="relative group">
                         <Mail className="absolute left-4 top-3.5 text-slate-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
                         <input 
+                            id="email"
                             type="text" 
-                            placeholder={isRegistering ? "student@example.com" : "Email or 'admin'"}
+                            placeholder={isRegistering ? (role === 'PARENT' ? "parent@example.com" : "student@example.com") : "Email or 'admin'"}
                             className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
                             value={formData.email}
                             onChange={(e) => setFormData({...formData, email: e.target.value})}
@@ -337,10 +342,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
 
                 {/* Password */}
                 <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Password</label>
+                    <label htmlFor="password" className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Password</label>
                     <div className="relative group">
                         <Lock className="absolute left-4 top-3.5 text-slate-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
                         <input 
+                            id="password"
                             type="password" 
                             placeholder={isRegistering ? "Create password" : "Enter password"}
                             className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
@@ -354,10 +360,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                 {/* Confirm Password (Register Only) */}
                 {isRegistering && (
                     <div className="space-y-1">
-                        <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Confirm Password</label>
+                        <label htmlFor="confirmPassword" className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Confirm Password</label>
                         <div className="relative group">
                             <Lock className="absolute left-4 top-3.5 text-slate-400 w-5 h-5 group-focus-within:text-blue-500 transition-colors" />
                             <input 
+                                id="confirmPassword"
                                 type="password" 
                                 placeholder="Re-enter password"
                                 className="w-full pl-12 pr-4 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none transition-all placeholder:text-slate-400"
@@ -379,10 +386,11 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                         
                         <div className="space-y-3">
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Security Question</label>
+                                <label htmlFor="securityQuestion" className="text-[10px] font-bold text-slate-400 uppercase ml-1">Security Question</label>
                                 <div className="relative">
                                     <HelpCircle className="absolute left-3 top-2.5 text-slate-400 w-4 h-4" />
                                     <select 
+                                        id="securityQuestion"
                                         className="w-full pl-9 pr-2 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-blue-400 bg-white"
                                         value={formData.securityQuestion}
                                         onChange={(e) => setFormData({...formData, securityQuestion: e.target.value})}
@@ -395,8 +403,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                             </div>
                             
                             <div className="space-y-1">
-                                <label className="text-[10px] font-bold text-slate-400 uppercase ml-1">Answer</label>
+                                <label htmlFor="securityAnswer" className="text-[10px] font-bold text-slate-400 uppercase ml-1">Answer</label>
                                 <input 
+                                    id="securityAnswer"
                                     type="text" 
                                     placeholder="e.g. Fluffy"
                                     className="w-full px-3 py-2 border border-slate-200 rounded-lg text-sm text-slate-700 focus:outline-none focus:border-blue-400 bg-white"

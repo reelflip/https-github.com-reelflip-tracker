@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Mail, Phone, MapPin, Send, MessageSquare } from 'lucide-react';
 import SEO from './SEO';
@@ -74,8 +73,9 @@ const ContactUs: React.FC = () => {
              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase">Your Name</label>
+                      <label htmlFor="name" className="text-xs font-bold text-slate-500 uppercase">Your Name</label>
                       <input 
+                        id="name"
                         type="text" 
                         required
                         className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none"
@@ -85,8 +85,9 @@ const ContactUs: React.FC = () => {
                       />
                    </div>
                    <div className="space-y-2">
-                      <label className="text-xs font-bold text-slate-500 uppercase">Your Email</label>
+                      <label htmlFor="email" className="text-xs font-bold text-slate-500 uppercase">Your Email</label>
                       <input 
+                        id="email"
                         type="email" 
                         required
                         className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none"
@@ -98,8 +99,9 @@ const ContactUs: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                   <label className="text-xs font-bold text-slate-500 uppercase">Subject</label>
+                   <label htmlFor="subject" className="text-xs font-bold text-slate-500 uppercase">Subject</label>
                    <input 
+                     id="subject"
                      type="text" 
                      required
                      className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none"
@@ -110,8 +112,9 @@ const ContactUs: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                   <label className="text-xs font-bold text-slate-500 uppercase">Message</label>
+                   <label htmlFor="message" className="text-xs font-bold text-slate-500 uppercase">Message</label>
                    <textarea 
+                     id="message"
                      required
                      className="w-full p-3 border border-slate-200 rounded-xl focus:ring-2 focus:ring-blue-100 outline-none h-32 resize-none"
                      placeholder="Type your message here..."

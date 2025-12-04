@@ -408,6 +408,44 @@ export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: s
     const dbPass = dbConfig?.pass || ""; // User must provide this for security in UI
     const dbName = dbConfig?.name || "u131922718_iitjee_tracker";
 
+    const sitemapContent = `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+   <url>
+      <loc>https://iitgeeprep.com/</loc>
+      <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+      <changefreq>daily</changefreq>
+      <priority>1.0</priority>
+   </url>
+   <url>
+      <loc>https://iitgeeprep.com/about</loc>
+      <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://iitgeeprep.com/blog</loc>
+      <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+      <changefreq>weekly</changefreq>
+      <priority>0.9</priority>
+   </url>
+   <url>
+      <loc>https://iitgeeprep.com/exams</loc>
+      <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+      <changefreq>monthly</changefreq>
+      <priority>0.8</priority>
+   </url>
+   <url>
+      <loc>https://iitgeeprep.com/contact</loc>
+      <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+      <changefreq>yearly</changefreq>
+      <priority>0.5</priority>
+   </url>
+</urlset>`;
+
+    const robotsContent = `User-agent: *
+Allow: /
+Sitemap: https://iitgeeprep.com/sitemap.xml`;
+
     return [
         {
             name: "README.txt",
@@ -429,11 +467,24 @@ QUICK SETUP GUIDE:
    - Right click all .php files -> Permissions -> 644
 4. DATABASE: Import the latest database.sql file via phpMyAdmin.
 5. TEST: Visit iitgeeprep.com/api/test_db.php to verify connection.
+6. SEO: Upload sitemap.xml and robots.txt to public_html root.
 
 TROUBLESHOOTING:
 - 403 Forbidden: Check permissions or delete .htaccess in api folder temporarily.
 - 500 Error: Check config.php for typo in password.
 `
+        },
+        {
+            name: "sitemap.xml",
+            folder: "root",
+            desc: "SEO Sitemap (Upload to public_html)",
+            content: sitemapContent
+        },
+        {
+            name: "robots.txt",
+            folder: "root",
+            desc: "SEO Robots file (Upload to public_html)",
+            content: robotsContent
         },
         {
             name: "config.php",
@@ -599,36 +650,45 @@ $data = json_decode(file_get_contents("php://input"));
 
 if(isset($data->student_identifier) && isset($data->parent_id)) {
     try {
-        // Find Student by Email or ID
-        $query = "SELECT id FROM users WHERE (email = ? OR id = ?) AND role = 'STUDENT' LIMIT 1";
+        $identifier = trim($data->student_identifier);
+        
+        // Find Student by Email or ID (Case Insensitive)
+        $query = "SELECT id, email FROM users WHERE (email = :id OR id = :id) AND role = 'STUDENT' LIMIT 1";
         $stmt = $conn->prepare($query);
-        $stmt->execute([$data->student_identifier, $data->student_identifier]);
+        $stmt->bindParam(":id", $identifier);
+        $stmt->execute();
         
         if($stmt->rowCount() > 0) {
             $student = $stmt->fetch(PDO::FETCH_ASSOC);
             $studentId = $student['id'];
             
+            // Prevent self-linking or re-linking if already active (optional)
+            
             $requestJson = json_encode([
                 "fromId" => $data->parent_id,
                 "fromName" => $data->parent_name,
-                "type" => "PARENT_LINK"
+                "type" => "PARENT_LINK",
+                "date" => date('Y-m-d')
             ]);
             
             $update = $conn->prepare("UPDATE users SET pending_request_json = ? WHERE id = ?");
             if($update->execute([$requestJson, $studentId])) {
-                echo json_encode(["message" => "Request Sent"]);
+                echo json_encode(["message" => "Request Sent Successfully"]);
             } else {
                 http_response_code(500);
-                echo json_encode(["message" => "Failed to update student"]);
+                echo json_encode(["message" => "Failed to update student record"]);
             }
         } else {
             http_response_code(404);
-            echo json_encode(["message" => "Student not found"]);
+            echo json_encode(["message" => "Student account not found with this ID/Email"]);
         }
     } catch(PDOException $e) {
         http_response_code(500);
         echo json_encode(["message" => "Database error: " . $e->getMessage()]);
     }
+} else {
+    http_response_code(400);
+    echo json_encode(["message" => "Missing required fields"]);
 }
 ?>`
         },
@@ -773,30 +833,48 @@ if ($method === 'PUT' && isset($data->id)) {
         {
             name: "get_dashboard.php",
             folder: "api",
-            desc: "Dashboard Data Fetcher.",
+            desc: "Dashboard Data Fetcher & Profile Sync.",
             content: `<?php
 include_once 'config.php';
 $user_id = $_GET['user_id'];
 if (!$user_id) { echo json_encode(["error" => "No User ID"]); exit(); }
 try {
+    // 1. Fetch User Profile Data (for Sync)
+    $userQuery = $conn->prepare("SELECT id, pending_request_json, parent_id, student_id FROM users WHERE id = ?");
+    $userQuery->execute([$user_id]);
+    $userData = $userQuery->fetch(PDO::FETCH_ASSOC);
+    
+    $userProfileSync = [
+        "pendingRequest" => $userData['pending_request_json'] ? json_decode($userData['pending_request_json']) : null,
+        "parentId" => $userData['parent_id'],
+        "studentId" => $userData['student_id']
+    ];
+
+    // 2. Fetch Progress, Goals, etc.
     $progQuery = $conn->prepare("SELECT * FROM topic_progress WHERE user_id = ?");
     $progQuery->execute([$user_id]);
     $progress = $progQuery->fetchAll(PDO::FETCH_ASSOC);
+    
     $goalsQuery = $conn->prepare("SELECT * FROM daily_goals WHERE user_id = ? AND created_at = CURDATE()");
     $goalsQuery->execute([$user_id]);
     $goals = $goalsQuery->fetchAll(PDO::FETCH_ASSOC);
+    
     $blogQuery = $conn->prepare("SELECT * FROM backlogs WHERE user_id = ?");
     $blogQuery->execute([$user_id]);
     $backlogs = $blogQuery->fetchAll(PDO::FETCH_ASSOC);
+    
     $mistakeQuery = $conn->prepare("SELECT * FROM mistake_notebook WHERE user_id = ?");
     $mistakeQuery->execute([$user_id]);
     $mistakes = $mistakeQuery->fetchAll(PDO::FETCH_ASSOC);
+    
     $ttQuery = $conn->prepare("SELECT generated_slots_json FROM timetable_settings WHERE user_id = ?");
     $ttQuery->execute([$user_id]);
     $timetable = $ttQuery->fetch(PDO::FETCH_ASSOC);
+    
     $attemptsQuery = $conn->prepare("SELECT * FROM test_attempts WHERE user_id = ? ORDER BY attempt_date DESC");
     $attemptsQuery->execute([$user_id]);
     $attempts = $attemptsQuery->fetchAll(PDO::FETCH_ASSOC);
+    
     // Fetch detailed results for attempts (optional, can be separate API for speed)
     foreach($attempts as &$attempt) {
         $detailQuery = $conn->prepare("SELECT * FROM attempt_details WHERE attempt_id = ?");
@@ -810,7 +888,9 @@ try {
             ];
         }, $details);
     }
+    
     echo json_encode([ 
+        "userProfileSync" => $userProfileSync,
         "progress" => $progress, 
         "goals" => $goals, 
         "backlogs" => $backlogs, 
@@ -1026,7 +1106,8 @@ export const getDeploymentPhases = () => {
             steps: [
                 "Open \`public_html\` in Hostinger.",
                 "Upload the CONTENTS of the \`dist\` folder (index.html + assets folder).",
-                "Upload the \`.htaccess\` file to \`public_html\` to fix routing."
+                "Upload the \`.htaccess\` file to \`public_html\` to fix routing.",
+                "Upload sitemap.xml and robots.txt to `public_html`."
             ]
         }
     ];
@@ -1069,6 +1150,7 @@ Welcome to IITGEEPrep deployment. This guide will walk you through setting up th
 4. Go back to Hostinger File Manager (\`public_html\` folder).
 5. Upload \`index.html\` and the \`assets\` folder here.
 6. Upload the \`.htaccess\` file (from System Docs) to \`public_html\` (same level as index.html).
+7. Upload \`sitemap.xml\` and \`robots.txt\` to \`public_html\`.
 
 ## 4. Permissions Check
 If you see "403 Forbidden" errors:

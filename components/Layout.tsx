@@ -77,6 +77,12 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
 
   const navItems = getNavItems();
 
+  // Check for pending requests to show badge
+  const hasNotification = (id: string) => {
+      if (id === 'profile' && currentUser.role === 'STUDENT' && currentUser.pendingRequest) return true;
+      return false;
+  };
+
   // Helper to get vibrant styles for mobile menu items
   const getMobileMenuStyles = (id: string, isActive: boolean) => {
       const baseStyle = "border transition-all duration-200 shadow-sm relative overflow-hidden group";
@@ -146,14 +152,19 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
             <button
               key={item.id}
               onClick={() => onTabChange(item.id)}
-              className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${
+              className={`w-full flex items-center justify-between px-4 py-3 rounded-lg transition-all relative ${
                 activeTab === item.id 
                   ? 'bg-blue-600 text-white shadow-lg shadow-blue-900/50' 
                   : 'text-slate-400 hover:bg-slate-800 hover:text-white'
               }`}
             >
-              <item.icon size={20} />
-              <span className="font-medium">{item.label}</span>
+              <div className="flex items-center space-x-3">
+                  <item.icon size={20} />
+                  <span className="font-medium">{item.label}</span>
+              </div>
+              {hasNotification(item.id) && (
+                  <span className="h-2.5 w-2.5 rounded-full bg-red-500 border border-slate-900 animate-pulse"></span>
+              )}
             </button>
           ))}
         </nav>
@@ -161,13 +172,16 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
         <div className="p-4 border-t border-slate-800">
           <div 
             onClick={() => onTabChange('profile')}
-            className="flex items-center space-x-3 mb-4 px-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors group"
+            className="flex items-center space-x-3 mb-4 px-2 cursor-pointer hover:bg-slate-800 p-2 rounded transition-colors group relative"
           >
             <img src={currentUser.avatarUrl || "https://picsum.photos/40/40"} alt="Profile" className="w-8 h-8 rounded-full bg-slate-700 border border-slate-600 group-hover:border-blue-400" />
             <div className="overflow-hidden">
               <p className="text-sm font-medium truncate group-hover:text-blue-300 transition-colors">{currentUser.name}</p>
               <p className="text-xs text-slate-500 truncate">{currentUser.email}</p>
             </div>
+            {hasNotification('profile') && (
+                <span className="absolute top-2 right-2 h-2 w-2 rounded-full bg-red-500"></span>
+            )}
           </div>
           <button 
             onClick={onLogout}
@@ -185,10 +199,13 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
           <span className="font-bold text-lg text-blue-400">IITGEEPrep</span>
         </div>
         <div 
-            className="flex items-center space-x-3 cursor-pointer"
+            className="flex items-center space-x-3 cursor-pointer relative"
             onClick={() => onTabChange('profile')}
         >
           <img src={currentUser.avatarUrl || "https://picsum.photos/40/40"} alt="Profile" className="w-8 h-8 rounded-full border border-slate-700" />
+          {hasNotification('profile') && (
+              <span className="absolute top-0 right-0 h-2.5 w-2.5 rounded-full bg-red-500 border border-slate-900"></span>
+          )}
         </div>
       </header>
 
@@ -236,11 +253,16 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                 onTabChange(item.id);
                 setIsMobileMenuOpen(false);
             }}
-            className={`flex flex-col items-center justify-center w-full py-2 space-y-1 ${
+            className={`flex flex-col items-center justify-center w-full py-2 space-y-1 relative ${
               activeTab === item.id ? 'text-blue-600' : 'text-slate-400'
             }`}
           >
-            <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+            <div className="relative">
+                <item.icon size={20} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+                {hasNotification(item.id) && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                )}
+            </div>
             <span className="text-[10px] font-medium truncate max-w-[64px]">{item.label}</span>
           </button>
         ))}
@@ -251,7 +273,13 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                 onClick={() => setIsMobileMenuOpen(true)}
                 className={`flex flex-col items-center justify-center w-full py-2 space-y-1 ${isMobileMenuOpen ? 'text-blue-600' : 'text-slate-400'}`}
             >
-            <Menu size={20} />
+            <div className="relative">
+                <Menu size={20} />
+                {/* Show dot on More if any hidden item has notification */}
+                {navItems.slice(3).some(i => hasNotification(i.id)) && (
+                    <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
+                )}
+            </div>
             <span className="text-[10px] font-medium">More</span>
             </button>
         )}
@@ -300,8 +328,11 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                             `}
                             style={{ animationDelay: `${idx * 50}ms` }}
                         >
-                            <div className={`p-3 rounded-full ${isActive ? 'bg-white/20' : 'bg-slate-50 group-hover:bg-slate-100'} transition-colors`}>
+                            <div className={`p-3 rounded-full relative ${isActive ? 'bg-white/20' : 'bg-slate-50 group-hover:bg-slate-100'} transition-colors`}>
                                 <item.icon size={28} strokeWidth={1.5} />
+                                {hasNotification(item.id) && (
+                                    <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-red-500 border-2 border-white animate-pulse"></span>
+                                )}
                             </div>
                             <span className="font-bold text-xs tracking-wide">{item.label}</span>
                             
