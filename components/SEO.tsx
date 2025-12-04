@@ -8,7 +8,7 @@ interface SEOProps {
 
 const SEO: React.FC<SEOProps> = ({ title, description }) => {
   useEffect(() => {
-    document.title = `${title} | IIT JEE Prep`;
+    document.title = `${title} | IITGEEPrep`;
     const metaDesc = document.querySelector('meta[name="description"]');
     if (metaDesc) {
       metaDesc.setAttribute('content', description);

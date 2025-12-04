@@ -1,28 +1,75 @@
 
 import React, { useState, useEffect } from 'react';
-import { Test, Question, TestAttempt, QuestionResult } from '../types';
-import { Clock, Check, AlertCircle, Star } from 'lucide-react';
+import { Test, Question, TestAttempt, QuestionResult, User } from '../types';
+import { Clock, Check, AlertCircle, Star, Filter, Target, Zap, Globe, Layers, Eye, EyeOff } from 'lucide-react';
 
 interface TestCenterProps {
   availableTests: Test[];
   attempts: TestAttempt[];
   onCompleteTest: (attempt: TestAttempt) => void;
+  user?: User | null;
 }
 
-const TestCenter: React.FC<TestCenterProps> = ({ availableTests, attempts, onCompleteTest }) => {
+const TestCenter: React.FC<TestCenterProps> = ({ availableTests, attempts, onCompleteTest, user }) => {
   const [activeTest, setActiveTest] = useState<Test | null>(null);
+  const [activeTab, setActiveTab] = useState<'JEE' | 'BITSAT' | 'VITEEE' | 'OTHER' | 'ADMIN'>('JEE');
+  const [showAllExams, setShowAllExams] = useState(false);
 
-  const adminTests = availableTests.filter(t => t.category === 'ADMIN');
-  const pastPapers = availableTests.filter(t => t.category === 'PAST_PAPER');
+  // Set default tab based on user's target exam
+  useEffect(() => {
+      if (user?.targetExam) {
+          if (user.targetExam.includes('JEE')) setActiveTab('JEE');
+          else if (user.targetExam.includes('BITSAT')) setActiveTab('BITSAT');
+          else if (user.targetExam.includes('VITEEE')) setActiveTab('VITEEE');
+      }
+  }, [user]);
+
+  // Determine if we should restrict visibility
+  const isTargetJEE = user?.targetExam?.includes('JEE');
+  
+  // Filter tests based on active tab
+  const displayTests = availableTests.filter(t => {
+      if (activeTab === 'ADMIN') return t.category === 'ADMIN';
+      if (t.category === 'ADMIN') return false; // Don't show admin tests in other tabs
+
+      if (activeTab === 'JEE') return t.examType === 'JEE' || !t.examType; // Default to JEE if no type
+      if (activeTab === 'BITSAT') return t.examType === 'BITSAT';
+      if (activeTab === 'VITEEE') return t.examType === 'VITEEE';
+      if (activeTab === 'OTHER') return ['MET', 'SRMJEEE', 'OTHER', 'AMUEEE'].includes(t.examType || '');
+      return false;
+  });
 
   const getBadgeStyle = (difficulty: string) => {
       switch(difficulty) {
-          case 'MAINS': return 'bg-orange-100 text-orange-700';
-          case 'ADVANCED': return 'bg-purple-100 text-purple-700';
-          case 'CUSTOM': return 'bg-green-100 text-green-700';
-          default: return 'bg-slate-100 text-slate-700';
+          case 'MAINS': return 'bg-orange-100 text-orange-700 border-orange-200';
+          case 'ADVANCED': return 'bg-purple-100 text-purple-700 border-purple-200';
+          case 'CUSTOM': return 'bg-green-100 text-green-700 border-green-200';
+          default: return 'bg-slate-100 text-slate-700 border-slate-200';
       }
   };
+
+  const getExamColor = (type?: string) => {
+      switch(type) {
+          case 'BITSAT': return 'text-purple-600 bg-purple-50 border-purple-200';
+          case 'VITEEE': return 'text-cyan-600 bg-cyan-50 border-cyan-200';
+          case 'MET': return 'text-blue-600 bg-blue-50 border-blue-200';
+          case 'SRMJEEE': return 'text-teal-600 bg-teal-50 border-teal-200';
+          default: return 'text-slate-600 bg-slate-50 border-slate-200';
+      }
+  };
+
+  const allTabs = [
+      { id: 'JEE', label: 'JEE Main & Adv', icon: Target },
+      { id: 'BITSAT', label: 'BITSAT', icon: Zap },
+      { id: 'VITEEE', label: 'VITEEE', icon: Layers },
+      { id: 'OTHER', label: 'Other Exams', icon: Globe },
+      { id: 'ADMIN', label: 'Custom / Admin', icon: Star },
+  ];
+
+  // If user is strictly JEE and hasn't opted to show all, hide BITSAT/VITEEE etc.
+  const visibleTabs = (!showAllExams && isTargetJEE) 
+      ? allTabs.filter(t => t.id === 'JEE' || t.id === 'ADMIN')
+      : allTabs;
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -31,39 +78,72 @@ const TestCenter: React.FC<TestCenterProps> = ({ availableTests, attempts, onCom
             {/* Header Banner */}
             <div className="bg-gradient-to-r from-blue-700 to-indigo-800 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
                 <div className="relative z-10">
-                    <h1 className="text-3xl font-bold mb-2">Previous Year Papers Archive</h1>
-                    <p className="text-blue-100 text-lg opacity-90 max-w-2xl">Attempt actual JEE papers in a simulated NTA-style environment.</p>
+                    <h1 className="text-3xl font-bold mb-2">Exam Archive & Mock Center</h1>
+                    <p className="text-blue-100 text-lg opacity-90 max-w-2xl">
+                        {isTargetJEE && !showAllExams 
+                            ? "Focused Mode: Showing relevant JEE Main & Advanced Papers." 
+                            : "Attempt past year papers and mock tests for various engineering exams."}
+                    </p>
                 </div>
                 {/* Decorative circles */}
                 <div className="absolute top-0 right-0 -mr-16 -mt-16 w-64 h-64 rounded-full bg-white opacity-5"></div>
                 <div className="absolute bottom-0 right-20 w-32 h-32 rounded-full bg-white opacity-10"></div>
             </div>
            
-           {/* Admin Test Series */}
-           {adminTests.length > 0 && (
-               <section>
-                   <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                       <Star className="w-5 h-5 text-yellow-500 mr-2 fill-yellow-500" /> Admin Test Series
-                   </h2>
+           {/* Exam Tabs & Toggle */}
+           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+               <div className="flex space-x-2 overflow-x-auto pb-1 no-scrollbar">
+                   {visibleTabs.map(tab => (
+                       <button
+                            key={tab.id}
+                            onClick={() => setActiveTab(tab.id as any)}
+                            className={`
+                                flex items-center px-5 py-2.5 rounded-xl font-bold text-sm whitespace-nowrap transition-all
+                                ${activeTab === tab.id 
+                                    ? 'bg-slate-900 text-white shadow-md transform scale-[1.02]' 
+                                    : 'bg-white text-slate-500 border border-slate-200 hover:bg-slate-50'
+                                }
+                            `}
+                       >
+                           <tab.icon className={`w-4 h-4 mr-2 ${activeTab === tab.id ? 'text-blue-400' : 'text-slate-400'}`} />
+                           {tab.label}
+                       </button>
+                   ))}
+               </div>
+               
+               {isTargetJEE && (
+                   <button 
+                       onClick={() => setShowAllExams(!showAllExams)}
+                       className="text-xs font-bold text-slate-500 flex items-center hover:text-blue-600 transition-colors whitespace-nowrap"
+                   >
+                       {showAllExams ? <EyeOff className="w-3 h-3 mr-1"/> : <Eye className="w-3 h-3 mr-1"/>}
+                       {showAllExams ? "Focus on My Target" : "Show All Exams"}
+                   </button>
+               )}
+           </div>
+
+           {/* Test Grid */}
+           <div className="min-h-[300px]">
+               {displayTests.length > 0 ? (
                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {adminTests.map(test => (
-                            <TestCard key={test.id} test={test} onStart={() => setActiveTest(test)} badgeStyle={getBadgeStyle(test.difficulty)} />
+                        {displayTests.map(test => (
+                            <TestCard 
+                                key={test.id} 
+                                test={test} 
+                                onStart={() => setActiveTest(test)} 
+                                badgeStyle={getBadgeStyle(test.difficulty)}
+                                examStyle={getExamColor(test.examType)}
+                            />
                         ))}
                    </div>
-               </section>
-           )}
-
-           {/* Official Past Papers */}
-           <section>
-               <h2 className="text-lg font-bold text-slate-800 mb-4 flex items-center">
-                   Official Past Papers
-               </h2>
-               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    {pastPapers.map(test => (
-                        <TestCard key={test.id} test={test} onStart={() => setActiveTest(test)} badgeStyle={getBadgeStyle(test.difficulty)} />
-                    ))}
-               </div>
-           </section>
+               ) : (
+                   <div className="flex flex-col items-center justify-center h-64 bg-white rounded-xl border border-dashed border-slate-300">
+                       <Filter className="w-10 h-10 text-slate-300 mb-2" />
+                       <p className="text-slate-500 font-medium">No tests found for this category.</p>
+                       <p className="text-xs text-slate-400 mt-1">Try switching tabs or check back later.</p>
+                   </div>
+               )}
+           </div>
         </>
       ) : (
         <ActiveTestSession test={activeTest} onFinish={(results) => {
@@ -79,19 +159,29 @@ interface TestCardProps {
     test: Test;
     onStart: () => void;
     badgeStyle: string;
+    examStyle: string;
 }
 
-const TestCard: React.FC<TestCardProps> = ({ test, onStart, badgeStyle }) => (
+const TestCard: React.FC<TestCardProps> = ({ test, onStart, badgeStyle, examStyle }) => (
     <div className="bg-white border border-slate-200 rounded-xl p-6 shadow-sm hover:shadow-md hover:border-blue-300 transition-all flex flex-col justify-between h-full group">
         <div>
             <div className="flex justify-between items-start mb-3">
-                <h3 className="font-bold text-slate-800 text-lg leading-tight group-hover:text-blue-600 transition-colors">{test.title}</h3>
+                <div className="space-y-2">
+                    {test.examType && test.examType !== 'JEE' && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase border ${examStyle}`}>
+                            {test.examType}
+                        </span>
+                    )}
+                    <h3 className="font-bold text-slate-800 text-lg leading-tight group-hover:text-blue-600 transition-colors">
+                        {test.title}
+                    </h3>
+                </div>
             </div>
             <div className="flex items-center space-x-3 mb-6">
                 <div className="flex items-center text-xs font-medium text-slate-500 bg-slate-50 px-2 py-1 rounded">
                     <Clock className="w-3.5 h-3.5 mr-1" /> {test.durationMinutes} Mins
                 </div>
-                <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide ${badgeStyle}`}>
+                <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide border ${badgeStyle}`}>
                     {test.difficulty}
                 </span>
             </div>

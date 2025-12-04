@@ -23,6 +23,7 @@ import AboutUs from './components/AboutUs';
 import PrivacyPolicy from './components/PrivacyPolicy';
 import ContactUs from './components/ContactUs';
 import Blog from './components/Blog';
+import ExamGuide from './components/ExamGuide';
 import { API_BASE_URL } from './config'; 
 
 // Initial global questions combined from constants
@@ -53,12 +54,16 @@ function App() {
   const [flashcards, setFlashcards] = useState<Flashcard[]>(INITIAL_FLASHCARDS);
   const [backlogs, setBacklogs] = useState<BacklogItem[]>([]);
   const [hacks, setHacks] = useState<MemoryHack[]>(INITIAL_MEMORY_HACKS);
+  const [allUsers, setAllUsers] = useState<User[]>([]); // New state for admin user list
 
   // --- API: Fetch Data on Login ---
   useEffect(() => {
     if (currentUser) {
         fetchDashboardData();
         fetchCommonData();
+        if (currentUser.role === 'ADMIN') {
+            fetchAdminData();
+        }
     }
   }, [currentUser]);
 
@@ -161,6 +166,19 @@ function App() {
           console.error("Failed to fetch common data", err);
       }
   };
+
+  const fetchAdminData = async () => {
+      try {
+          const res = await fetch(`/api/get_users.php`);
+          if (!res.ok) return;
+          const data = await res.json();
+          if (Array.isArray(data)) {
+              setAllUsers(data);
+          }
+      } catch (err) {
+          console.error("Failed to fetch users", err);
+      }
+  }
 
   // --- Handlers ---
 
@@ -319,6 +337,8 @@ function App() {
         return <PublicLayout onNavigate={setActiveTab}><ContactUs /></PublicLayout>;
       case 'blog':
         return <PublicLayout onNavigate={setActiveTab}><Blog /></PublicLayout>;
+      case 'exams':
+        return <PublicLayout onNavigate={setActiveTab}><ExamGuide /></PublicLayout>;
       default:
         // Default to AuthScreen (Login/Register)
         return <AuthScreen onLogin={setCurrentUser} onNavigate={setActiveTab} />;
@@ -355,6 +375,7 @@ function App() {
             availableTests={tests} 
             attempts={attempts} 
             onCompleteTest={handleCompleteTest} 
+            user={currentUser}
           />
         );
       case 'focus':
@@ -366,7 +387,7 @@ function App() {
       case 'users':
         return (
             <AdminPanel 
-                users={MOCK_USERS} 
+                users={allUsers.length > 0 ? allUsers : MOCK_USERS} 
                 questionBank={questions} 
                 quotes={quotes}
                 activeTab={activeTab}
@@ -401,6 +422,8 @@ function App() {
         return <ContactUs />;
       case 'blog':
         return <Blog />;
+      case 'exams':
+        return <ExamGuide />;
       case 'parent_view':
         // Reuse Dashboard for Parent but read-only conceptually (handled by fetching logic)
         return (
@@ -438,6 +461,7 @@ function App() {
           setProgress({});
           setGoals([]);
           setMistakes([]);
+          setAllUsers([]);
       }}
     >
       {renderContent()}

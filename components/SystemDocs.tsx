@@ -15,7 +15,7 @@ const SystemDocs: React.FC = () => {
     });
 
     // Test Diagnostic State
-    const [testUrl, setTestUrl] = useState('https://iitjeetracker.com/api');
+    const [testUrl, setTestUrl] = useState('https://iitgeeprep.com/api');
     const [testResult, setTestResult] = useState<any>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [isZipping, setIsZipping] = useState(false);
@@ -337,7 +337,7 @@ const SystemDocs: React.FC = () => {
                                 className="w-full bg-slate-800 border border-slate-600 rounded-lg p-2.5 text-white text-sm focus:border-blue-500 outline-none"
                                 value={testUrl}
                                 onChange={(e) => setTestUrl(e.target.value)}
-                                placeholder="https://your-domain.com/api"
+                                placeholder="https://iitgeeprep.com/api"
                             />
                         </div>
                         <button 

@@ -21,7 +21,8 @@ import {
   Globe,
   ShieldCheck,
   Mail,
-  FileText
+  FileText,
+  Award
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -133,8 +134,8 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
       {/* Desktop Sidebar */}
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-white h-screen fixed left-0 top-0 z-50 shadow-xl">
         <div className="p-6 border-b border-slate-800">
-          <h1 className="text-2xl font-bold tracking-tight text-blue-400">IIT JEE Prep</h1>
-          <p className="text-xs text-slate-400 mt-1">v1.4 (Feature Update) • {currentUser.role}</p>
+          <h1 className="text-2xl font-bold tracking-tight text-blue-400">IITGEEPrep</h1>
+          <p className="text-xs text-slate-400 mt-1">v1.4 (Live) • {currentUser.role}</p>
         </div>
         
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto no-scrollbar">
@@ -178,7 +179,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
       {/* Mobile Header */}
       <header className="md:hidden fixed top-0 w-full bg-slate-900 text-white z-50 px-4 py-3 flex items-center justify-between shadow-md">
         <div className="flex items-center space-x-2">
-          <span className="font-bold text-lg text-blue-400">IIT JEE Prep</span>
+          <span className="font-bold text-lg text-blue-400">IITGEEPrep</span>
         </div>
         <div 
             className="flex items-center space-x-3 cursor-pointer"
@@ -198,7 +199,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
         <footer className="bg-white border-t border-slate-200 py-6 px-4 md:px-8 mt-auto">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
                 <div className="mb-4 md:mb-0">
-                    &copy; 2025 IIT JEE Prep. All rights reserved.
+                    &copy; 2025 IITGEEPrep. All rights reserved.
                 </div>
                 <div className="flex space-x-6 flex-wrap justify-center gap-y-2">
                     <button onClick={() => onTabChange('about')} className="hover:text-blue-600 transition-colors flex items-center">
@@ -206,6 +207,9 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                     </button>
                     <button onClick={() => onTabChange('blog')} className="hover:text-blue-600 transition-colors flex items-center">
                         <FileText className="w-3 h-3 mr-1" /> Blog
+                    </button>
+                    <button onClick={() => onTabChange('exams')} className="hover:text-blue-600 transition-colors flex items-center">
+                        <Award className="w-3 h-3 mr-1" /> Exams Guide
                     </button>
                     <button onClick={() => onTabChange('privacy')} className="hover:text-blue-600 transition-colors flex items-center">
                         <ShieldCheck className="w-3 h-3 mr-1" /> Privacy Policy

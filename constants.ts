@@ -1,5 +1,5 @@
 
-import { Subject, User, Test, Question, Quote, Flashcard, MemoryHack, BlogPost } from './types';
+import { Subject, User, Test, Question, Quote, Flashcard, MemoryHack, BlogPost, ExamComparisonItem } from './types';
 
 export const COACHING_INSTITUTES = [
     "Allen Career Institute",
@@ -21,6 +21,21 @@ export const COACHING_INSTITUTES = [
     "Self Study / Online Only"
 ];
 
+export const TARGET_EXAMS = [
+    "JEE Main & Advanced",
+    "NEET (Medical)",
+    "BITSAT (BITS Pilani)",
+    "VITEEE (VIT)",
+    "SRMJEEE (SRM)",
+    "MET (Manipal)",
+    "MHT-CET (Maharashtra)",
+    "WBJEE (West Bengal)",
+    "COMEDK (Karnataka)",
+    "AMUEEE (Aligarh)",
+    "CUET (Central Univ)",
+    "Other Engineering Exam"
+];
+
 export const TARGET_YEARS = [2025, 2026, 2027, 2028];
 
 export const MOCK_USERS: User[] = [
@@ -39,6 +54,7 @@ export const MOCK_USERS: User[] = [
       isVerified: true,
       institute: 'Allen Career Institute',
       targetYear: 2025,
+      targetExam: 'JEE Main & Advanced',
       avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=innfriend1',
       parentId: 'u_parent_demo'
   },
@@ -138,6 +154,105 @@ export const BLOG_POSTS: BlogPost[] = [
     }
 ];
 
+export const EXAM_COMPARISON_DATA: ExamComparisonItem[] = [
+    { 
+      name: 'JEE Advanced', 
+      difficulty: 5, 
+      color: 'text-red-600 bg-red-50 border-red-100',
+      barColor: 'bg-red-600',
+      borderColor: 'border-l-red-600',
+      hoverBg: 'hover:bg-red-50/50',
+      focus: 'Deep concepts, tricky, multi-step problems. Tests analytical thinking and subject depth.',
+      desc: 'The gateway to the IITs. Requires high IQ application, not just memory.',
+      colleges: '23 IITs, IISc Bangalore, IISERs, RGIPT, IIPE.',
+      dates: 'Late May / Early June'
+    },
+    { 
+      name: 'JEE Main', 
+      difficulty: 4, 
+      color: 'text-orange-600 bg-orange-50 border-orange-100',
+      barColor: 'bg-orange-500',
+      borderColor: 'border-l-orange-500',
+      hoverBg: 'hover:bg-orange-50/50',
+      focus: 'Balanced approach + NCERT. Speed & Accuracy are crucial.',
+      desc: 'Screening for JEE Advanced. Entry to top government colleges.',
+      colleges: '31 NITs, 26 IIITs, 33 GFTIs, DTU, NSUT, and many state colleges.',
+      dates: 'Session 1: January | Session 2: April'
+    },
+    { 
+      name: 'BITSAT', 
+      difficulty: 3, 
+      color: 'text-purple-600 bg-purple-50 border-purple-100',
+      barColor: 'bg-purple-500',
+      borderColor: 'border-l-purple-500',
+      hoverBg: 'hover:bg-purple-50/50',
+      focus: 'Speed + Accuracy. Shorter questions, includes English & Logic.',
+      desc: 'Known for having more questions in less time (130 Qs in 3 hrs).',
+      colleges: 'BITS Pilani, BITS Goa, BITS Hyderabad.',
+      dates: 'Session 1: Late May | Session 2: Late June'
+    },
+    { 
+      name: 'VITEEE', 
+      difficulty: 2, 
+      color: 'text-cyan-600 bg-cyan-50 border-cyan-100',
+      barColor: 'bg-cyan-500',
+      borderColor: 'border-l-cyan-500',
+      hoverBg: 'hover:bg-cyan-50/50',
+      focus: 'Direct application. Strictly based on NCERT pattern. No negative marking.',
+      desc: 'Entrance for one of India\'s most popular private universities.',
+      colleges: 'VIT Vellore, VIT Chennai, VIT AP, VIT Bhopal.',
+      dates: 'Mid April (approx. 10 days window)'
+    },
+    { 
+      name: 'MET (Manipal)', 
+      difficulty: 3, 
+      color: 'text-blue-600 bg-blue-50 border-blue-100',
+      barColor: 'bg-blue-500',
+      borderColor: 'border-l-blue-600',
+      hoverBg: 'hover:bg-blue-50/50',
+      focus: 'Calculation-heavy. Requires fast numerical solving skills.',
+      desc: 'Entrance for Manipal Academy of Higher Education.',
+      colleges: 'Manipal Inst of Tech (MIT) Manipal, Bengaluru, Jaipur.',
+      dates: 'Phase 1: Mid April | Phase 2: Mid May'
+    },
+    { 
+      name: 'SRMJEEE', 
+      difficulty: 2, 
+      color: 'text-teal-600 bg-teal-50 border-teal-100',
+      barColor: 'bg-teal-500',
+      borderColor: 'border-l-teal-500',
+      hoverBg: 'hover:bg-teal-50/50',
+      focus: 'Moderate level. Standard textbook problems.',
+      desc: 'Admission to SRM University campuses.',
+      colleges: 'SRM Kattankulathur, Ramapuram, NCR Ghaziabad.',
+      dates: 'Phase 1: April | Phase 2: June | Phase 3: July'
+    },
+    { 
+      name: 'AMUEEE', 
+      difficulty: 3, 
+      color: 'text-indigo-600 bg-indigo-50 border-indigo-100',
+      barColor: 'bg-indigo-500',
+      borderColor: 'border-l-indigo-600',
+      hoverBg: 'hover:bg-indigo-50/50',
+      focus: 'Concept + Formula application. Moderate difficulty.',
+      desc: 'For Aligarh Muslim University engineering programs.',
+      colleges: 'ZHCET (AMU Aligarh).',
+      dates: 'Mid May'
+    },
+    { 
+      name: 'CUET-UG', 
+      difficulty: 1, 
+      color: 'text-green-600 bg-green-50 border-green-100',
+      barColor: 'bg-green-500',
+      borderColor: 'border-l-green-500',
+      hoverBg: 'hover:bg-green-50/50',
+      focus: 'Strictly NCERT-based. Fundamental understanding.',
+      desc: 'Central Universities Entrance Test. Basic domain knowledge.',
+      colleges: 'University of Delhi (DU), BHU, JNU, and 40+ Central Univs.',
+      dates: 'Mid May to End May'
+    },
+];
+
 export const INITIAL_MEMORY_HACKS: MemoryHack[] = [
     // --- CHEMISTRY ---
     // Inorganic
@@ -150,806 +265,451 @@ export const INITIAL_MEMORY_HACKS: MemoryHack[] = [
         trick: 'Likh Ba Kana Mazey se Ala Manjan Kar Fekona Cd CoNi Suno Prabhat Hai Kyu Aayi Hogi Aaj Pitayi Aur Free\n(Li K Ba Ca Na Mg Al Mn Zn Cr Fe Cd Co Ni Sn Pb H Cu I Hg Ag Pt Au F)',
         tags: ['Electrochemistry', 'Redox', 'Metals']
     },
+    // Periodic Table
     {
         id: 'h2',
         subjectId: 'chem',
         category: 'Inorganic Chemistry',
-        title: 'D-Block Period 4 Elements',
-        description: 'Scandium to Zinc sequence.',
-        trick: 'Science Teacher Vineeta Criplani Man Fenko Ni Kyu Zaan hai\n(Sc Ti V Cr Mn Fe Co Ni Cu Zn)',
-        tags: ['Periodic Table', 'Transition Elements']
+        title: 'Group 1 Elements (Alkali Metals)',
+        description: 'Li, Na, K, Rb, Cs, Fr',
+        trick: 'LiNa Ki Ruby Se Friendship',
+        tags: ['Periodic Table', 'S-Block']
     },
-    {
-        id: 'h_chem_lan',
-        subjectId: 'chem',
-        category: 'Inorganic Chemistry',
-        title: 'Lanthanides Series (57-71)',
-        description: 'Sequence of Lanthanoids.',
-        trick: 'Seene Par Nadiya Prem Ki Samayi Yu Gadgad Tab Dil Hua Aur Tum Laajwab Lagte Ho\n(Ce Pr Nd Pm Sm Eu Gd Tb Dy Ho Er Tm Yb Lu)',
-        tags: ['Periodic Table', 'F-Block']
-    },
-    {
-        id: 'h_chem_act',
-        subjectId: 'chem',
-        category: 'Inorganic Chemistry',
-        title: 'Actinides Series',
-        description: 'Sequence of Actinoids.',
-        trick: 'Thode Pehelwan Unse Niptenge Purane Aam Kam Bikenge Cafe Pe Aish Farmao Madamn Nashta Lao\n(Th Pa U Np Pu Am Cm Bk Cf Es Fm Md No Lr)',
-        tags: ['Periodic Table', 'F-Block']
-    },
-    
-    // Physical
     {
         id: 'h3',
         subjectId: 'chem',
-        category: 'Physical Chemistry',
-        title: 'Oxidation vs Reduction',
-        description: 'Defining oxidation and reduction based on electrons.',
-        trick: 'OIL RIG\n(Oxidation Is Loss, Reduction Is Gain of electrons)',
-        tags: ['Redox', 'Basics']
+        category: 'Inorganic Chemistry',
+        title: 'Group 2 Elements (Alkaline Earth)',
+        description: 'Be, Mg, Ca, Sr, Ba, Ra',
+        trick: 'Beta Mange Car Scooter Baap Raazi',
+        tags: ['Periodic Table', 'S-Block']
     },
     {
         id: 'h4',
         subjectId: 'chem',
-        category: 'Physical Chemistry',
-        title: 'Bond Order Formula Shortcut',
-        description: 'Quickly find Bond Order for diatomic molecules (up to 20e).',
-        trick: '14 electrons = Bond Order 3.0 (N2)\nFor every +1 or -1 electron from 14, subtract 0.5 from Bond Order.\nExample: O2 (16e) -> 14+2 -> 3.0 - 1.0 = 2.0\nExample: CN- (14e) -> 3.0',
-        tags: ['Chemical Bonding', 'MOT']
+        category: 'Inorganic Chemistry',
+        title: 'Group 13 Elements (Boron Family)',
+        description: 'B, Al, Ga, In, Tl',
+        trick: 'Baigan Aloo Gajar In Thaila',
+        tags: ['Periodic Table', 'P-Block']
     },
-
-    // Organic
-    {
-        id: 'h_org_meta',
-        subjectId: 'chem',
-        category: 'Organic Chemistry',
-        title: 'Meta Directing Groups',
-        description: 'Groups that direct incoming electrophiles to meta position.',
-        trick: 'Queens Now Prefer Chocolate And Strawberries\n(Quaternary amine, Nitro, Phenyl, Carbonyl, Acid, Sulfonic, Cyano)',
-        tags: ['GOC', 'Aromatic Compounds']
-    },
-    {
-        id: 'h_org_orph',
-        subjectId: 'chem',
-        category: 'Organic Chemistry',
-        title: 'Ortho/Para Directing Groups',
-        description: 'Activators.',
-        trick: 'AHA\n(Alkyl, Halogen, Amino/Hydroxyl)',
-        tags: ['GOC', 'Aromatic Compounds']
-    },
-
-    // --- PHYSICS ---
-    // Electromagnetism
     {
         id: 'h5',
-        subjectId: 'phys',
-        category: 'Electromagnetism',
-        title: 'Resistor Color Code',
-        description: 'Black, Brown, Red, Orange, Yellow, Green, Blue, Violet, Grey, White.',
-        trick: 'B B ROY of Great Britain had a Very Good Wife\n(0, 1, 2, 3, 4, 5, 6, 7, 8, 9)\nTolerance: Gold 5%, Silver 10%',
-        tags: ['Current Electricity', 'Resistors']
+        subjectId: 'chem',
+        category: 'Inorganic Chemistry',
+        title: 'Group 14 Elements (Carbon Family)',
+        description: 'C, Si, Ge, Sn, Pb',
+        trick: 'Kahe Sita Ji Suno Prabhu',
+        tags: ['Periodic Table', 'P-Block']
     },
     {
         id: 'h6',
-        subjectId: 'phys',
-        category: 'Modern Physics',
-        title: 'Electromagnetic Spectrum',
-        description: 'Order of increasing frequency (decreasing wavelength).',
-        trick: 'Rich Men In Vegas Use Xpensive Gadgets\n(Radio, Micro, Infra, Visible, UV, X-ray, Gamma)',
-        tags: ['EM Waves', 'Wavelength']
+        subjectId: 'chem',
+        category: 'Inorganic Chemistry',
+        title: 'Group 15 Elements (Nitrogen Family)',
+        description: 'N, P, As, Sb, Bi',
+        trick: 'Nana Patekar Aishwarya Sab Bimar',
+        tags: ['Periodic Table', 'P-Block']
     },
     {
         id: 'h7',
-        subjectId: 'phys',
-        category: 'Electromagnetism',
-        title: 'Fleming\'s Left Hand Rule',
-        description: 'For Motors (Force direction).',
-        trick: 'FBI (USA Agency)\nThumb = F (Force)\nIndex = B (Magnetic Field)\nMiddle = I (Current)',
-        tags: ['Magnetism', 'Lorentz Force']
+        subjectId: 'chem',
+        category: 'Inorganic Chemistry',
+        title: 'Group 16 Elements (Oxygen Family)',
+        description: 'O, S, Se, Te, Po',
+        trick: 'Oh Style Se Tepoo (Cheat with style)',
+        tags: ['Periodic Table', 'P-Block']
     },
-    
+    {
+        id: 'h8',
+        subjectId: 'chem',
+        category: 'Inorganic Chemistry',
+        title: 'Group 17 Elements (Halogens)',
+        description: 'F, Cl, Br, I, At',
+        trick: 'Phir Kal Bahar Aayegi Aunty',
+        tags: ['Periodic Table', 'P-Block']
+    },
+    {
+        id: 'h9',
+        subjectId: 'chem',
+        category: 'Inorganic Chemistry',
+        title: 'Group 18 Elements (Noble Gases)',
+        description: 'He, Ne, Ar, Kr, Xe, Rn',
+        trick: 'Heena Neena Aur Kareena Ka X-Ray Rangeen',
+        tags: ['Periodic Table', 'P-Block']
+    },
+    // Organic
+    {
+        id: 'h10',
+        subjectId: 'chem',
+        category: 'Organic Chemistry',
+        title: 'Ortho/Para Directors (Activators)',
+        description: 'Groups that direct incoming electrophiles to O/P positions.',
+        trick: 'AHA! (Alkyl, Halogen, Amino/Hydroxyl)',
+        tags: ['GOC', 'Reactions']
+    },
+    {
+        id: 'h11',
+        subjectId: 'chem',
+        category: 'Organic Chemistry',
+        title: 'Aldol Condensation Requirement',
+        description: 'Which aldehydes/ketones undergo Aldol?',
+        trick: 'Alpha H hai toh Aldol hai. (Must contain Alpha Hydrogen)',
+        tags: ['Aldehydes', 'Ketones', 'Reactions']
+    },
+    {
+        id: 'h12',
+        subjectId: 'chem',
+        category: 'Organic Chemistry',
+        title: 'Cannizzaro Reaction Requirement',
+        description: 'Which aldehydes undergo Cannizzaro?',
+        trick: 'NO Alpha H = Cannizzaro (e.g. HCHO, PhCHO)',
+        tags: ['Aldehydes', 'Reactions']
+    },
+
+    // --- PHYSICS ---
     // Mechanics
     {
-        id: 'h_phys_visc',
+        id: 'h13',
         subjectId: 'phys',
         category: 'Mechanics',
-        title: 'Terminal Velocity Dependence',
-        description: 'Dependence on radius.',
-        trick: 'Terminal velocity is "Two" much dependent on radius.\n(v_t is proportional to r^2)',
-        tags: ['Fluids', 'Viscosity']
+        title: 'Equations of Motion (Validity)',
+        description: 'When can you apply v = u + at?',
+        trick: 'Only when "a" is constant! Check if F is constant or function of time/position.',
+        tags: ['Kinematics']
     },
     {
-        id: 'h_phys_proj',
+        id: 'h14',
         subjectId: 'phys',
         category: 'Mechanics',
-        title: 'Max Range Angle',
-        description: 'Projectile motion range.',
-        trick: '45 degrees is the sweet spot for distance.\nSin(2*45) = Sin(90) = 1 (Max value)',
-        tags: ['Kinematics']
+        title: 'Work Done by Conservative Force',
+        description: 'Relation between Work and Potential Energy',
+        trick: 'W_con = -ΔU (Work by conservative force is negative of change in PE)',
+        tags: ['Work Energy Power']
+    },
+    // Electrodynamics
+    {
+        id: 'h15',
+        subjectId: 'phys',
+        category: 'Electrodynamics',
+        title: 'Color Code for Resistors',
+        description: 'Black Brown Red Orange Yellow Green Blue Violet Grey White',
+        trick: 'B B ROY of Great Britain had a Very Good Wife',
+        tags: ['Current Electricity']
+    },
+    {
+        id: 'h16',
+        subjectId: 'phys',
+        category: 'Electrodynamics',
+        title: 'Fleming Left vs Right Hand Rule',
+        description: 'Which hand for what?',
+        trick: 'M-G-R: Motor-Generator-Right. (Left for Motor, Right for Generator)',
+        tags: ['Magnetism']
+    },
+    // Optics
+    {
+        id: 'h17',
+        subjectId: 'phys',
+        category: 'Optics',
+        title: 'Concave/Convex Mirror Focal Length',
+        description: 'Sign convention for mirrors and lenses.',
+        trick: 'Concave = Cave = Inwards = Negative (-ve). Convex = Positive (+ve).',
+        tags: ['Ray Optics']
+    },
+    {
+        id: 'h18',
+        subjectId: 'phys',
+        category: 'Modern Physics',
+        title: 'Lyman, Balmer, Paschen Series',
+        description: 'Order of Hydrogen Spectrum Series',
+        trick: 'Lo Blood Pressure (BP), Blood Pressure (BP) High. \n(Lyman, Balmer, Paschen, Brackett, Pfund, Humphrey)',
+        tags: ['Atoms']
     },
 
     // --- MATHS ---
     // Trigonometry
     {
-        id: 'h8',
+        id: 'h19',
         subjectId: 'math',
         category: 'Trigonometry',
-        title: 'Trigonometric Signs (Quadrants)',
-        description: 'Signs of trig functions in 1st, 2nd, 3rd, 4th quadrants.',
-        trick: 'Add Sugar To Coffee (or All Silver Tea Cups)\n1st (A): All Positive\n2nd (S): Sin Positive\n3rd (T): Tan Positive\n4th (C): Cos Positive',
-        tags: ['Trigonometry', 'Basics']
+        title: 'Signs of Trig Ratios in Quadrants',
+        description: 'Q1, Q2, Q3, Q4 positive ratios.',
+        trick: 'Add Sugar To Coffee (All, Sin, Tan, Cos)',
+        tags: ['Trigonometry']
     },
-    {
-        id: 'h_math_sin',
-        subjectId: 'math',
-        category: 'Trigonometry',
-        title: 'Sin(A+B) vs Cos(A+B)',
-        description: 'Formulas for compound angles.',
-        trick: 'Sin is friendly (mixes sin & cos) and truthful (sign stays same).\nCos is racist (keeps cos with cos) and lying (sign changes).',
-        tags: ['Trigonometry', 'Compound Angles']
-    },
-
     // Calculus
     {
-        id: 'h9',
+        id: 'h20',
         subjectId: 'math',
         category: 'Calculus',
-        title: 'Integration by Parts (u & v selection)',
-        description: 'Order of preference for choosing the "u" function.',
-        trick: 'ILATE\nI = Inverse Trig\nL = Logarithmic\nA = Algebraic\nT = Trigonometric\nE = Exponential',
-        tags: ['Integration', 'By Parts']
+        title: 'Integration by Parts (Order)',
+        description: 'Order of choosing first function (u).',
+        trick: 'ILATE (Inverse, Log, Algebraic, Trig, Exponential)',
+        tags: ['Integration']
     },
-    
-    // Algebra
-    {
-        id: 'h10',
-        subjectId: 'math',
-        category: 'Algebra',
-        title: 'Matrix Determinant (3x3)',
-        description: 'Sarrus Rule Visual.',
-        trick: 'Copy first 2 columns to the right. Add down-right diagonals, subtract up-right diagonals.',
-        tags: ['Matrices', 'Determinants']
-    },
-    {
-        id: 'h_math_roots',
-        subjectId: 'math',
-        category: 'Algebra',
-        title: 'Nature of Roots (Quadratic)',
-        description: 'Discriminant D = b^2 - 4ac',
-        trick: 'D > 0: Real & Distinct (Positive vibes, different paths)\nD = 0: Real & Equal (Balanced)\nD < 0: Imaginary (Negative vibes, unreal)',
-        tags: ['Quadratic Equations']
-    },
-    
     // Coordinate Geometry
     {
-        id: 'h_math_ellipse',
+        id: 'h21',
         subjectId: 'math',
         category: 'Coordinate Geometry',
-        title: 'Eccentricity of Ellipse vs Hyperbola',
-        description: 'Formula for eccentricity.',
-        trick: 'Ellipse (Less than 1): 1 - (b/a)^2\nHyperbola (More than 1): 1 + (b/a)^2\n(Plus for Hyper because it\'s "Hyper")',
-        tags: ['Conics', 'Ellipse', 'Hyperbola']
+        title: 'Eccentricity of Conics',
+        description: 'Range of e for different shapes.',
+        trick: 'Circle (e=0) < Ellipse (0<e<1) < Parabola (e=1) < Hyperbola (e>1). Alphabetical order C-E-P-H matches value increase!',
+        tags: ['Conic Sections']
+    },
+    // Algebra
+    {
+        id: 'h22',
+        subjectId: 'math',
+        category: 'Algebra',
+        title: 'Cube Roots of Unity (1, ω, ω²)',
+        description: 'Properties of Omega',
+        trick: 'Sum is Zero (1+ω+ω²=0). Product is One (ω³=1).',
+        tags: ['Complex Numbers']
+    },
+    {
+        id: 'h23',
+        subjectId: 'math',
+        category: 'Vectors',
+        title: 'Cross Product Direction',
+        description: 'i x j = k',
+        trick: 'Follow the Circle: i -> j -> k is positive. Going against (j -> i) is negative.',
+        tags: ['Vectors']
     }
 ];
 
 export const INITIAL_FLASHCARDS: Flashcard[] = [
-    // --- PHYSICS ---
-    // Mechanics
-    { id: 'ph_1', subjectId: 'phys', front: 'Equation of Trajectory (Projectile Motion)', back: 'y = x tan(θ) - (gx²) / (2u² cos²θ)', difficulty: 'MEDIUM' },
-    { id: 'ph_2', subjectId: 'phys', front: 'Maximum Range of Projectile', back: 'R_max = u² / g (at θ = 45°)', difficulty: 'EASY' },
-    { id: 'ph_3', subjectId: 'phys', front: 'Pseudo Force Direction', back: 'Opposite to the acceleration of the non-inertial frame. F_p = -ma', difficulty: 'EASY' },
-    { id: 'ph_4', subjectId: 'phys', front: 'Work-Energy Theorem', back: 'W_all_forces = ΔK (Change in Kinetic Energy)', difficulty: 'EASY' },
-    { id: 'ph_5', subjectId: 'phys', front: 'Center of Mass (Semi-Circular Ring)', back: 'y_cm = 2R / π', difficulty: 'HARD' },
-    { id: 'ph_6', subjectId: 'phys', front: 'Moment of Inertia (Solid Sphere)', back: 'I = (2/5)MR²', difficulty: 'MEDIUM' },
-    { id: 'ph_7', subjectId: 'phys', front: 'Moment of Inertia (Hollow Sphere)', back: 'I = (2/3)MR²', difficulty: 'MEDIUM' },
-    { id: 'ph_8', subjectId: 'phys', front: 'Escape Velocity', back: 'v_e = √(2GM / R) ≈ 11.2 km/s (Earth)', difficulty: 'MEDIUM' },
-    { id: 'ph_9', subjectId: 'phys', front: 'Bernoulli\'s Principle', back: 'P + ½ρv² + ρgh = Constant', difficulty: 'MEDIUM' },
-    { id: 'ph_10', subjectId: 'phys', front: 'Terminal Velocity formula', back: 'v_t = 2r²(ρ - σ)g / 9η', difficulty: 'HARD' },
-    
-    // Thermo & Waves
-    { id: 'ph_11', subjectId: 'phys', front: 'First Law of Thermodynamics', back: 'ΔQ = ΔU + ΔW', difficulty: 'EASY' },
-    { id: 'ph_12', subjectId: 'phys', front: 'Efficiency of Carnot Engine', back: 'η = 1 - (T_sink / T_source)', difficulty: 'MEDIUM' },
-    { id: 'ph_13', subjectId: 'phys', front: 'Time Period of Simple Pendulum', back: 'T = 2π √(L / g)', difficulty: 'EASY' },
-    { id: 'ph_14', subjectId: 'phys', front: 'Doppler Effect (Apparent Frequency)', back: 'f\' = f (v ± v_o) / (v ∓ v_s)', difficulty: 'HARD' },
+    // PHYSICS
+    { id: 'f1', subjectId: 'phys', difficulty: 'EASY', front: 'Equation for Range of Projectile', back: 'R = (u² sin 2θ) / g' },
+    { id: 'f2', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Moment of Inertia: Solid Sphere', back: 'I = (2/5)MR²' },
+    { id: 'f3', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Moment of Inertia: Hollow Sphere', back: 'I = (2/3)MR²' },
+    { id: 'f4', subjectId: 'phys', difficulty: 'HARD', front: 'Escape Velocity Formula', back: 'v = √(2GM/R) or √(2gR)' },
+    { id: 'f5', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Time Period of Simple Pendulum', back: 'T = 2π √(L/g)' },
+    { id: 'f6', subjectId: 'phys', difficulty: 'EASY', front: 'Ohm\'s Law', back: 'V = IR' },
+    { id: 'f7', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Capacitance of Parallel Plate', back: 'C = (ε₀A) / d' },
+    { id: 'f8', subjectId: 'phys', difficulty: 'HARD', front: 'Biot-Savart Law (Mag Field)', back: 'dB = (μ₀/4π) * (Idl x r) / r³' },
+    { id: 'f9', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Young\'s Double Slit Fringe Width', back: 'β = (λD) / d' },
+    { id: 'f10', subjectId: 'phys', difficulty: 'HARD', front: 'De-Broglie Wavelength', back: 'λ = h / mv = h / p' },
+    { id: 'f11', subjectId: 'phys', difficulty: 'MEDIUM', front: 'First Law of Thermodynamics', back: 'ΔQ = ΔU + ΔW' },
+    { id: 'f12', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Centripetal Acceleration', back: 'a = v² / r = ω²r' },
+    { id: 'f13', subjectId: 'phys', difficulty: 'HARD', front: 'Bernoulli\'s Equation', back: 'P + ½ρv² + ρgh = Constant' },
+    { id: 'f14', subjectId: 'phys', difficulty: 'EASY', front: 'Power Formula (Electricity)', back: 'P = VI = I²R = V²/R' },
+    { id: 'f15', subjectId: 'phys', difficulty: 'MEDIUM', front: 'Malus Law (Polarization)', back: 'I = I₀ cos²θ' },
 
-    // Electromagnetism
-    { id: 'ph_15', subjectId: 'phys', front: 'Coulomb\'s Law', back: 'F = k(q₁q₂) / r²', difficulty: 'EASY' },
-    { id: 'ph_16', subjectId: 'phys', front: 'Electric Field due to Infite Line Charge', back: 'E = λ / (2πε₀r)', difficulty: 'MEDIUM' },
-    { id: 'ph_17', subjectId: 'phys', front: 'Capacitance of Parallel Plate', back: 'C = (Kε₀A) / d', difficulty: 'EASY' },
-    { id: 'ph_18', subjectId: 'phys', front: 'Energy Stored in Capacitor', back: 'U = ½CV² = Q² / 2C', difficulty: 'EASY' },
-    { id: 'ph_19', subjectId: 'phys', front: 'Biot-Savart Law (Mag Field)', back: 'dB = (μ₀/4π) * (Idl x r) / r³', difficulty: 'HARD' },
-    { id: 'ph_20', subjectId: 'phys', front: 'Magnetic Field inside Solenoid', back: 'B = μ₀ni', difficulty: 'MEDIUM' },
-    { id: 'ph_21', subjectId: 'phys', front: 'Resonant Frequency (LCR Circuit)', back: 'ω = 1 / √(LC)', difficulty: 'MEDIUM' },
+    // CHEMISTRY
+    { id: 'c1', subjectId: 'chem', difficulty: 'EASY', front: 'Ideal Gas Equation', back: 'PV = nRT' },
+    { id: 'c2', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Nernst Equation (EMF)', back: 'E = E° - (0.059/n) log Q' },
+    { id: 'c3', subjectId: 'chem', difficulty: 'HARD', front: 'Bragg\'s Equation', back: 'nλ = 2d sinθ' },
+    { id: 'c4', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Rate constant (First Order)', back: 'k = (2.303/t) log(a / a-x)' },
+    { id: 'c5', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Half life (First Order)', back: 't½ = 0.693 / k' },
+    { id: 'c6', subjectId: 'chem', difficulty: 'EASY', front: 'pH Formula', back: 'pH = -log[H+]' },
+    { id: 'c7', subjectId: 'chem', difficulty: 'HARD', front: 'Rydberg Formula (Hydrogen)', back: '1/λ = R (1/n₁² - 1/n₂²)' },
+    { id: 'c8', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Gibbs Free Energy', back: 'ΔG = ΔH - TΔS' },
+    { id: 'c9', subjectId: 'chem', difficulty: 'HARD', front: 'Cannizzaro Reaction Product', back: 'Disproportionation: Alcohol + Carboxylic Acid Salt' },
+    { id: 'c10', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Reimer-Tiemann Reaction Product', back: 'Salicylaldehyde (from Phenol)' },
+    { id: 'c11', subjectId: 'chem', difficulty: 'EASY', front: 'General Formula: Alkanes', back: 'CnH(2n+2)' },
+    { id: 'c12', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Hybridization of Carbon in Ethene', back: 'sp² (Trigonal Planar)' },
+    { id: 'c13', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Molality formula', back: 'Moles of solute / Mass of solvent (kg)' },
+    { id: 'c14', subjectId: 'chem', difficulty: 'HARD', front: 'Arrhenius Equation', back: 'k = A * e^(-Ea/RT)' },
+    { id: 'c15', subjectId: 'chem', difficulty: 'MEDIUM', front: 'Bond Order Formula', back: '½ (Nb - Na)' },
 
-    // Optics & Modern Physics
-    { id: 'ph_22', subjectId: 'phys', front: 'Lens Maker\'s Formula', back: '1/f = (μ - 1)(1/R₁ - 1/R₂)', difficulty: 'HARD' },
-    { id: 'ph_23', subjectId: 'phys', front: 'Young\'s Double Slit (Fringe Width)', back: 'β = Dλ / d', difficulty: 'MEDIUM' },
-    { id: 'ph_24', subjectId: 'phys', front: 'Einstein\'s Photoelectric Equation', back: 'K_max = hν - Φ (Work Function)', difficulty: 'MEDIUM' },
-    { id: 'ph_25', subjectId: 'phys', front: 'De-Broglie Wavelength', back: 'λ = h / p = h / mv', difficulty: 'EASY' },
-    { id: 'ph_26', subjectId: 'phys', front: 'Radioactive Decay Law', back: 'N = N₀ e^(-λt)', difficulty: 'MEDIUM' },
-
-    // --- CHEMISTRY ---
-    // Physical
-    { id: 'ch_1', subjectId: 'chem', front: 'Rydberg Formula (Hydrogen)', back: '1/λ = R (1/n₁² - 1/n₂²)', difficulty: 'MEDIUM' },
-    { id: 'ch_2', subjectId: 'chem', front: 'Ideal Gas Equation', back: 'PV = nRT', difficulty: 'EASY' },
-    { id: 'ch_3', subjectId: 'chem', front: 'Compressibility Factor (Z)', back: 'Z = PV / nRT', difficulty: 'MEDIUM' },
-    { id: 'ch_4', subjectId: 'chem', front: 'Gibbs Helmholtz Equation', back: 'ΔG = ΔH - TΔS', difficulty: 'MEDIUM' },
-    { id: 'ch_5', subjectId: 'chem', front: 'Work done (Isothermal Reversible)', back: 'W = -2.303 nRT log(V₂/V₁)', difficulty: 'HARD' },
-    { id: 'ch_6', subjectId: 'chem', front: 'Bragg\'s Equation', back: 'nλ = 2d sin(θ)', difficulty: 'MEDIUM' },
-    { id: 'ch_7', subjectId: 'chem', front: 'Raoult\'s Law', back: 'P_total = P_A°x_A + P_B°x_B', difficulty: 'EASY' },
-    { id: 'ch_8', subjectId: 'chem', front: 'Nernst Equation (EMF)', back: 'E = E° - (0.0591/n) log Q', difficulty: 'HARD' },
-    { id: 'ch_9', subjectId: 'chem', front: 'First Order Kinetics (Half Life)', back: 't_½ = 0.693 / k', difficulty: 'EASY' },
-    { id: 'ch_10', subjectId: 'chem', front: 'Arrhenius Equation', back: 'k = A e^(-Ea / RT)', difficulty: 'MEDIUM' },
-
-    // Inorganic
-    { id: 'ch_11', subjectId: 'chem', front: 'Bond Order Formula', back: 'BO = ½ (Nb - Na)', difficulty: 'EASY' },
-    { id: 'ch_12', subjectId: 'chem', front: 'Hybridization Formula', back: 'H = ½ (V + M - C + A)', difficulty: 'MEDIUM' },
-    { id: 'ch_13', subjectId: 'chem', front: 'Spin Only Magnetic Moment', back: 'μ = √(n(n+2)) BM', difficulty: 'MEDIUM' },
-    { id: 'ch_14', subjectId: 'chem', front: 'Flame Test: Sodium (Na)', back: 'Golden Yellow', difficulty: 'EASY' },
-    { id: 'ch_15', subjectId: 'chem', front: 'Flame Test: Copper (Cu)', back: 'Bluish Green', difficulty: 'EASY' },
-
-    // Organic
-    { id: 'ch_16', subjectId: 'chem', front: 'Markovnikov\'s Rule', back: 'Negative part of reagent goes to Carbon with fewer Hydrogens.', difficulty: 'EASY' },
-    { id: 'ch_17', subjectId: 'chem', front: 'Anti-Markovnikov (Peroxide Effect)', back: 'Only valid for HBr + Peroxide. Br goes to Carbon with MORE Hydrogens.', difficulty: 'MEDIUM' },
-    { id: 'ch_18', subjectId: 'chem', front: 'Lucas Reagent', back: 'Conc. HCl + Anhydrous ZnCl₂ (Distinguishes Alcohols)', difficulty: 'MEDIUM' },
-    { id: 'ch_19', subjectId: 'chem', front: 'Reimer-Tiemann Reaction Product', back: 'Salicylaldehyde (from Phenol)', difficulty: 'HARD' },
-    { id: 'ch_20', subjectId: 'chem', front: 'Cannizzaro Reaction Condition', back: 'Aldehydes with NO alpha-hydrogen + Conc. Base', difficulty: 'HARD' },
-    { id: 'ch_21', subjectId: 'chem', front: 'Aldol Condensation Condition', back: 'Aldehydes/Ketones WITH alpha-hydrogen + Dilute Base', difficulty: 'HARD' },
-    { id: 'ch_22', subjectId: 'chem', front: 'Hinsberg Reagent', back: 'Benzenesulfonyl chloride (Separates 1°, 2°, 3° Amines)', difficulty: 'HARD' },
-
-    // --- MATHEMATICS ---
-    // Algebra
-    { id: 'ma_1', subjectId: 'math', front: 'Sum of roots (Quadratic)', back: 'α + β = -b/a', difficulty: 'EASY' },
-    { id: 'ma_2', subjectId: 'math', front: 'Product of roots (Quadratic)', back: 'αβ = c/a', difficulty: 'EASY' },
-    { id: 'ma_3', subjectId: 'math', front: 'Sum of n terms of GP', back: 'Sn = a(r^n - 1) / (r - 1) for r > 1', difficulty: 'MEDIUM' },
-    { id: 'ma_4', subjectId: 'math', front: 'Sum of Infinite GP', back: 'S_inf = a / (1 - r) for |r| < 1', difficulty: 'EASY' },
-    { id: 'ma_5', subjectId: 'math', front: 'Logarithm Power Rule', back: 'log(a^b) = b log(a)', difficulty: 'EASY' },
-    { id: 'ma_6', subjectId: 'math', front: 'Binomial General Term', back: 'T_(r+1) = nCr (x)^(n-r) (y)^r', difficulty: 'MEDIUM' },
-    { id: 'ma_7', subjectId: 'math', front: 'Expansion of e^x', back: '1 + x + x²/2! + x³/3! + ...', difficulty: 'HARD' },
-
-    // Trigonometry
-    { id: 'ma_8', subjectId: 'math', front: 'sin(A+B)', back: 'sinAcosB + cosAsinB', difficulty: 'EASY' },
-    { id: 'ma_9', subjectId: 'math', front: 'cos(2A)', back: 'cos²A - sin²A = 2cos²A - 1', difficulty: 'MEDIUM' },
-    { id: 'ma_10', subjectId: 'math', front: 'Sine Rule', back: 'a/sinA = b/sinB = c/sinC = 2R', difficulty: 'MEDIUM' },
-    { id: 'ma_11', subjectId: 'math', front: 'Cosine Rule (side a)', back: 'a² = b² + c² - 2bc cosA', difficulty: 'MEDIUM' },
-
-    // Coordinate Geometry
-    { id: 'ma_12', subjectId: 'math', front: 'Slope Point Form', back: 'y - y₁ = m(x - x₁)', difficulty: 'EASY' },
-    { id: 'ma_13', subjectId: 'math', front: 'Distance of point from line', back: '|ax₁ + by₁ + c| / √(a² + b²)', difficulty: 'MEDIUM' },
-    { id: 'ma_14', subjectId: 'math', front: 'Condition for Orthogonality of 2 circles', back: '2g₁g₂ + 2f₁f₂ = c₁ + c₂', difficulty: 'HARD' },
-    { id: 'ma_15', subjectId: 'math', front: 'Length of Latus Rectum (Parabola y²=4ax)', back: '4a', difficulty: 'MEDIUM' },
-    { id: 'ma_16', subjectId: 'math', front: 'Eccentricity of Ellipse', back: 'e = √(1 - b²/a²) where a > b', difficulty: 'MEDIUM' },
-
-    // Calculus
-    { id: 'ma_17', subjectId: 'math', front: 'Limit (sin x / x) as x->0', back: '1', difficulty: 'EASY' },
-    { id: 'ma_18', subjectId: 'math', front: 'Derivative of tan(x)', back: 'sec²(x)', difficulty: 'EASY' },
-    { id: 'ma_19', subjectId: 'math', front: 'Integration by Parts', back: '∫uv dx = u∫v dx - ∫(u\' ∫v dx) dx', difficulty: 'HARD' },
-    { id: 'ma_20', subjectId: 'math', front: 'Area under curve y=f(x)', back: '∫ y dx (from a to b)', difficulty: 'EASY' },
-    
-    // Vectors & 3D
-    { id: 'ma_21', subjectId: 'math', front: 'Dot Product (a . b)', back: '|a||b| cosθ', difficulty: 'EASY' },
-    { id: 'ma_22', subjectId: 'math', front: 'Cross Product Magnitude', back: '|a||b| sinθ', difficulty: 'EASY' },
-    { id: 'ma_23', subjectId: 'math', front: 'Volume of Parallelepiped', back: '[a b c] (Scalar Triple Product)', difficulty: 'HARD' },
-    { id: 'ma_24', subjectId: 'math', front: 'Shortest Distance (Skew Lines)', back: '|(a₂-a₁) . (b₁ x b₂)| / |b₁ x b₂|', difficulty: 'HARD' }
+    // MATHS
+    { id: 'm1', subjectId: 'math', difficulty: 'EASY', front: 'Quadratic Roots Formula', back: 'x = (-b ± √D) / 2a' },
+    { id: 'm2', subjectId: 'math', difficulty: 'MEDIUM', front: 'Sum of AP (n terms)', back: 'S = n/2 [2a + (n-1)d]' },
+    { id: 'm3', subjectId: 'math', difficulty: 'HARD', front: 'Sum of GP (infinite)', back: 'S = a / (1-r) where |r|<1' },
+    { id: 'm4', subjectId: 'math', difficulty: 'MEDIUM', front: 'Distance of point from line', back: '|ax₁ + by₁ + c| / √(a² + b²)' },
+    { id: 'm5', subjectId: 'math', difficulty: 'HARD', front: 'Integration of ln(x)', back: 'x ln(x) - x + C' },
+    { id: 'm6', subjectId: 'math', difficulty: 'MEDIUM', front: 'Slope of Normal', back: '-1 / (dy/dx)' },
+    { id: 'm7', subjectId: 'math', difficulty: 'EASY', front: 'sin²x + cos²x', back: '1' },
+    { id: 'm8', subjectId: 'math', difficulty: 'HARD', front: 'Expansion of e^x', back: '1 + x + x²/2! + x³/3! + ...' },
+    { id: 'm9', subjectId: 'math', difficulty: 'MEDIUM', front: 'Area of Triangle (Vertices)', back: '½ |x₁(y₂-y₃) + x₂(y₃-y₁) + x₃(y₁-y₂)|' },
+    { id: 'm10', subjectId: 'math', difficulty: 'HARD', front: 'Angle between two lines', back: 'tanθ = |(m₁ - m₂) / (1 + m₁m₂)|' },
+    { id: 'm11', subjectId: 'math', difficulty: 'MEDIUM', front: 'L\'Hospital\'s Rule Condition', back: '0/0 or ∞/∞ form' },
+    { id: 'm12', subjectId: 'math', difficulty: 'EASY', front: 'Derivative of sin(x)', back: 'cos(x)' },
+    { id: 'm13', subjectId: 'math', difficulty: 'MEDIUM', front: 'Projection of a on b', back: '(a . b) / |b|' },
+    { id: 'm14', subjectId: 'math', difficulty: 'HARD', front: 'Equation of Tangent to Circle', back: 'xx₁ + yy₁ = a² (at point x₁, y₁)' },
+    { id: 'm15', subjectId: 'math', difficulty: 'MEDIUM', front: 'Variance Formula', back: 'Σx²/n - (Σx/n)²' }
 ];
 
 export const JEE_SYLLABUS: Subject[] = [
-  {
-    id: 'math',
-    name: 'Mathematics',
-    chapters: [
-      {
-        id: 'm_sets',
-        name: 'Unit 1: Sets, Relations and Functions',
-        topics: [
-          { id: 'm_sets_1', name: 'Sets and their representation' },
-          { id: 'm_sets_2', name: 'Relations and Functions' }
+    {
+        id: 'math',
+        name: 'Mathematics',
+        chapters: [
+            {
+                id: 'm_sets',
+                name: 'SETS, RELATIONS AND FUNCTIONS',
+                topics: [
+                    { id: 'm_set_1', name: 'Sets and their representation' },
+                    { id: 'm_set_2', name: 'Union, intersection and complement of sets' },
+                    { id: 'm_rel_1', name: 'Relations and Types' },
+                    { id: 'm_fun_1', name: 'Functions: One-one, Into, Onto' }
+                ]
+            },
+            {
+                id: 'm_complex',
+                name: 'COMPLEX NUMBERS AND QUADRATIC EQUATIONS',
+                topics: [
+                    { id: 'm_cpx_1', name: 'Complex Numbers Representation' },
+                    { id: 'm_cpx_2', name: 'Argand Diagram & Algebra' },
+                    { id: 'm_quad_1', name: 'Quadratic Equations & Roots' }
+                ]
+            }
         ]
-      },
-      {
-        id: 'm_complex',
-        name: 'Unit 2: Complex Numbers & Quadratic Equations',
-        topics: [
-          { id: 'm_complex_1', name: 'Complex Numbers' },
-          { id: 'm_complex_2', name: 'Quadratic Equations' }
+    },
+    {
+        id: 'phys',
+        name: 'Physics',
+        chapters: [
+            {
+                id: 'p_units',
+                name: 'UNIT 1: Units and Measurements',
+                topics: [
+                    { id: 'p_unit_1', name: 'SI Units & Dimensions' },
+                    { id: 'p_unit_2', name: 'Errors in Measurement' }
+                ]
+            },
+            {
+                id: 'p_kin',
+                name: 'UNIT 2: Kinematics',
+                topics: [
+                    { id: 'p_kin_1', name: 'Motion in Straight Line' },
+                    { id: 'p_kin_2', name: 'Projectile Motion' },
+                    { id: 'p_kin_3', name: 'Relative Velocity' }
+                ]
+            }
         ]
-      },
-      {
-        id: 'm_matrices',
-        name: 'Unit 3: Matrices and Determinants',
-        topics: [
-          { id: 'm_mat_1', name: 'Matrices & Algebra' },
-          { id: 'm_mat_2', name: 'Determinants' }
+    },
+    {
+        id: 'chem',
+        name: 'Chemistry',
+        chapters: [
+            {
+                id: 'c_basic',
+                name: 'UNIT I: SOME BASIC CONCEPTS IN CHEMISTRY',
+                topics: [
+                    { id: 'c_bas_1', name: 'Mole Concept' },
+                    { id: 'c_bas_2', name: 'Stoichiometry' }
+                ]
+            },
+            {
+                id: 'c_atom',
+                name: 'UNIT 2: ATOMIC STRUCTURE',
+                topics: [
+                    { id: 'c_at_1', name: 'Bohr Model & Spectrum' },
+                    { id: 'c_at_2', name: 'Quantum Numbers & Orbitals' }
+                ]
+            }
         ]
-      },
-      {
-        id: 'm_pnc',
-        name: 'Unit 4: Permutations and Combinations',
-        topics: [
-          { id: 'm_pnc_1', name: 'Fundamental Principle' },
-          { id: 'm_pnc_2', name: 'P(n,r) and C(n,r)' }
-        ]
-      },
-      {
-        id: 'm_binomial',
-        name: 'Unit 5: Binomial Theorem',
-        topics: [
-          { id: 'm_bin_1', name: 'Binomial Theorem & Applications' }
-        ]
-      },
-      {
-        id: 'm_seq',
-        name: 'Unit 6: Sequence and Series',
-        topics: [
-          { id: 'm_seq_1', name: 'AP and GP' },
-          { id: 'm_seq_2', name: 'AM and GM' }
-        ]
-      },
-      {
-        id: 'm_calc1',
-        name: 'Unit 7: Limit, Continuity and Differentiability',
-        topics: [
-          { id: 'm_lim_1', name: 'Limits & Continuity' },
-          { id: 'm_lim_2', name: 'Differentiation' },
-          { id: 'm_lim_3', name: 'Applications of Derivatives (Maxima/Minima)' }
-        ]
-      },
-      {
-        id: 'm_calc2',
-        name: 'Unit 8: Integral Calculus',
-        topics: [
-          { id: 'm_int_1', name: 'Indefinite Integrals' },
-          { id: 'm_int_2', name: 'Definite Integrals' }
-        ]
-      },
-      {
-        id: 'm_diff_eq',
-        name: 'Unit 9: Differential Equations',
-        topics: [
-          { id: 'm_de_1', name: 'Order and Degree' },
-          { id: 'm_de_2', name: 'Solutions of ODEs' }
-        ]
-      },
-      {
-        id: 'm_coord',
-        name: 'Unit 10: Co-ordinate Geometry',
-        topics: [
-          { id: 'm_geo_1', name: 'Straight Lines' },
-          { id: 'm_geo_2', name: 'Circles' },
-          { id: 'm_geo_3', name: 'Conic Sections (Parabola, Ellipse, Hyperbola)' }
-        ]
-      },
-      {
-        id: 'm_3d',
-        name: 'Unit 11: Three Dimensional Geometry',
-        topics: [
-          { id: 'm_3d_1', name: 'Coordinates & Distance' },
-          { id: 'm_3d_2', name: 'Lines & Skew Lines' }
-        ]
-      },
-      {
-        id: 'm_vector',
-        name: 'Unit 12: Vector Algebra',
-        topics: [
-          { id: 'm_vec_1', name: 'Vectors & Scalars' },
-          { id: 'm_vec_2', name: 'Scalar & Vector Products' }
-        ]
-      },
-      {
-        id: 'm_stats',
-        name: 'Unit 13: Statistics and Probability',
-        topics: [
-          { id: 'm_stat_1', name: 'Measures of Dispersion' },
-          { id: 'm_stat_2', name: 'Probability & Bayes Theorem' }
-        ]
-      },
-      {
-        id: 'm_trig',
-        name: 'Unit 14: Trigonometry',
-        topics: [
-          { id: 'm_trig_1', name: 'Identities & Functions' },
-          { id: 'm_trig_2', name: 'Inverse Trigonometric Functions' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'phys',
-    name: 'Physics',
-    chapters: [
-      {
-        id: 'p_units',
-        name: 'Unit 1: Units and Measurements',
-        topics: [
-          { id: 'p_unit_1', name: 'SI Units & Dimensions' },
-          { id: 'p_unit_2', name: 'Errors in Measurement' }
-        ]
-      },
-      {
-        id: 'p_kinematics',
-        name: 'Unit 2: Kinematics',
-        topics: [
-          { id: 'p_kin_1', name: 'Motion in Straight Line' },
-          { id: 'p_kin_2', name: 'Projectile & Relative Motion' }
-        ]
-      },
-      {
-        id: 'p_laws',
-        name: 'Unit 3: Laws of Motion',
-        topics: [
-          { id: 'p_law_1', name: 'Newtons Laws & Impulse' },
-          { id: 'p_law_2', name: 'Friction' },
-          { id: 'p_law_3', name: 'Circular Motion Dynamics' }
-        ]
-      },
-      {
-        id: 'p_work',
-        name: 'Unit 4: Work, Energy and Power',
-        topics: [
-          { id: 'p_work_1', name: 'Work-Energy Theorem' },
-          { id: 'p_work_2', name: 'Collisions' }
-        ]
-      },
-      {
-        id: 'p_rot',
-        name: 'Unit 5: Rotational Motion',
-        topics: [
-          { id: 'p_rot_1', name: 'Center of Mass' },
-          { id: 'p_rot_2', name: 'Torque & MOI' },
-          { id: 'p_rot_3', name: 'Rolling Motion' }
-        ]
-      },
-      {
-        id: 'p_grav',
-        name: 'Unit 6: Gravitation',
-        topics: [
-          { id: 'p_grav_1', name: 'Law of Gravitation & Potential' },
-          { id: 'p_grav_2', name: 'Satellites & Escape Velocity' }
-        ]
-      },
-      {
-        id: 'p_solids',
-        name: 'Unit 7: Properties of Solids and Liquids',
-        topics: [
-          { id: 'p_sol_1', name: 'Elasticity (Hookes Law)' },
-          { id: 'p_sol_2', name: 'Fluid Mechanics (Bernoulli)' },
-          { id: 'p_sol_3', name: 'Thermal Expansion & Calorimetry' }
-        ]
-      },
-      {
-        id: 'p_thermo',
-        name: 'Unit 8: Thermodynamics',
-        topics: [
-          { id: 'p_th_1', name: 'Laws of Thermodynamics' },
-          { id: 'p_th_2', name: 'Processes (Iso/Adia/Rev/Irrev)' }
-        ]
-      },
-      {
-        id: 'p_ktg',
-        name: 'Unit 9: Kinetic Theory of Gases',
-        topics: [
-          { id: 'p_ktg_1', name: 'Ideal Gas Equation' },
-          { id: 'p_ktg_2', name: 'DOF & Equipartition' }
-        ]
-      },
-      {
-        id: 'p_osc',
-        name: 'Unit 10: Oscillations and Waves',
-        topics: [
-          { id: 'p_osc_1', name: 'SHM' },
-          { id: 'p_osc_2', name: 'Sound & String Waves' }
-        ]
-      },
-      {
-        id: 'p_elec',
-        name: 'Unit 11: Electrostatics',
-        topics: [
-          { id: 'p_el_1', name: 'Coulombs Law & Field' },
-          { id: 'p_el_2', name: 'Gauss Law' },
-          { id: 'p_el_3', name: 'Potential & Capacitors' }
-        ]
-      },
-      {
-        id: 'p_curr',
-        name: 'Unit 12: Current Electricity',
-        topics: [
-          { id: 'p_cur_1', name: 'Ohms Law & Resistance' },
-          { id: 'p_cur_2', name: 'Kirchhoffs Laws & Instruments' }
-        ]
-      },
-      {
-        id: 'p_mag',
-        name: 'Unit 13: Magnetic Effects of Current',
-        topics: [
-          { id: 'p_mag_1', name: 'Biot-Savart & Ampere Law' },
-          { id: 'p_mag_2', name: 'Force on Charge/Current' },
-          { id: 'p_mag_3', name: 'Magnetism & Matter' }
-        ]
-      },
-      {
-        id: 'p_emi',
-        name: 'Unit 14: EMI and AC',
-        topics: [
-          { id: 'p_emi_1', name: 'Electromagnetic Induction' },
-          { id: 'p_emi_2', name: 'Alternating Currents & LCR' }
-        ]
-      },
-      {
-        id: 'p_emw',
-        name: 'Unit 15: Electromagnetic Waves',
-        topics: [
-          { id: 'p_emw_1', name: 'EM Spectrum & Characteristics' }
-        ]
-      },
-      {
-        id: 'p_optics',
-        name: 'Unit 16: Optics',
-        topics: [
-          { id: 'p_opt_1', name: 'Ray Optics & Instruments' },
-          { id: 'p_opt_2', name: 'Wave Optics (Interference/Diffraction)' }
-        ]
-      },
-      {
-        id: 'p_dual',
-        name: 'Unit 17: Dual Nature of Matter',
-        topics: [
-          { id: 'p_dual_1', name: 'Photoelectric Effect' },
-          { id: 'p_dual_2', name: 'De-Broglie Hypothesis' }
-        ]
-      },
-      {
-        id: 'p_atom',
-        name: 'Unit 18: Atoms and Nuclei',
-        topics: [
-          { id: 'p_at_1', name: 'Bohr Model' },
-          { id: 'p_at_2', name: 'Radioactivity & Nuclear Physics' }
-        ]
-      },
-      {
-        id: 'p_semi',
-        name: 'Unit 19: Electronic Devices',
-        topics: [
-          { id: 'p_semi_1', name: 'Semiconductors & Diodes' },
-          { id: 'p_semi_2', name: 'Logic Gates' }
-        ]
-      },
-      {
-        id: 'p_exp',
-        name: 'Unit 20: Experimental Skills',
-        topics: [
-          { id: 'p_exp_1', name: 'Lab Experiments & Observations' }
-        ]
-      }
-    ]
-  },
-  {
-    id: 'chem',
-    name: 'Chemistry',
-    chapters: [
-      // Physical Chemistry
-      {
-        id: 'c_basic',
-        name: 'Unit 1: Basic Concepts in Chemistry',
-        topics: [
-          { id: 'c_bas_1', name: 'Mole Concept & Stoichiometry' }
-        ]
-      },
-      {
-        id: 'c_atom',
-        name: 'Unit 2: Atomic Structure',
-        topics: [
-          { id: 'c_at_1', name: 'Bohr Model & Quantum Numbers' },
-          { id: 'c_at_2', name: 'Electronic Configuration' }
-        ]
-      },
-      {
-        id: 'c_bond',
-        name: 'Unit 3: Chemical Bonding',
-        topics: [
-          { id: 'c_bn_1', name: 'Ionic & Covalent Bond' },
-          { id: 'c_bn_2', name: 'VSEPR & MO Theory' }
-        ]
-      },
-      {
-        id: 'c_thermo',
-        name: 'Unit 4: Chemical Thermodynamics',
-        topics: [
-          { id: 'c_th_1', name: 'First Law & Enthalpy' },
-          { id: 'c_th_2', name: 'Entropy & Gibbs Energy' }
-        ]
-      },
-      {
-        id: 'c_sol',
-        name: 'Unit 5: Solutions',
-        topics: [
-          { id: 'c_sol_1', name: 'Concentration Terms' },
-          { id: 'c_sol_2', name: 'Colligative Properties' }
-        ]
-      },
-      {
-        id: 'c_equi',
-        name: 'Unit 6: Equilibrium',
-        topics: [
-          { id: 'c_eq_1', name: 'Chemical Equilibrium' },
-          { id: 'c_eq_2', name: 'Ionic Equilibrium (pH, Buffers)' }
-        ]
-      },
-      {
-        id: 'c_redox',
-        name: 'Unit 7: Redox & Electrochemistry',
-        topics: [
-          { id: 'c_red_1', name: 'Redox Reactions' },
-          { id: 'c_red_2', name: 'Cells & Nernst Equation' }
-        ]
-      },
-      {
-        id: 'c_kin',
-        name: 'Unit 8: Chemical Kinetics',
-        topics: [
-          { id: 'c_kin_1', name: 'Rate Laws & Order' },
-          { id: 'c_kin_2', name: 'Arrhenius Equation' }
-        ]
-      },
-      // Inorganic
-      {
-        id: 'c_period',
-        name: 'Unit 9: Classification of Elements',
-        topics: [
-          { id: 'c_per_1', name: 'Periodic Trends' }
-        ]
-      },
-      {
-        id: 'c_pblock',
-        name: 'Unit 10: p-Block Elements',
-        topics: [
-          { id: 'c_pb_1', name: 'Group 13 to 18 Trends' }
-        ]
-      },
-      {
-        id: 'c_dfblock',
-        name: 'Unit 11: d- and f- Block Elements',
-        topics: [
-          { id: 'c_df_1', name: 'Transition Elements' },
-          { id: 'c_df_2', name: 'Lanthanoids' }
-        ]
-      },
-      {
-        id: 'c_coord',
-        name: 'Unit 12: Coordination Compounds',
-        topics: [
-          { id: 'c_co_1', name: 'Nomenclature & Isomerism' },
-          { id: 'c_co_2', name: 'Bonding (VBT/CFT)' }
-        ]
-      },
-      // Organic
-      {
-        id: 'c_org_basic',
-        name: 'Unit 13-14: Basic Organic Chemistry',
-        topics: [
-          { id: 'c_goc_1', name: 'Purification & Analysis' },
-          { id: 'c_goc_2', name: 'Nomenclature & Isomerism' },
-          { id: 'c_goc_3', name: 'Electronic Effects (GOC)' }
-        ]
-      },
-      {
-        id: 'c_hydro',
-        name: 'Unit 15: Hydrocarbons',
-        topics: [
-          { id: 'c_hy_1', name: 'Alkanes, Alkenes, Alkynes' },
-          { id: 'c_hy_2', name: 'Aromatic Hydrocarbons' }
-        ]
-      },
-      {
-        id: 'c_halo',
-        name: 'Unit 16: Haloalkanes & Haloarenes',
-        topics: [
-          { id: 'c_hal_1', name: 'Preparation & Properties' }
-        ]
-      },
-      {
-        id: 'c_oxygen',
-        name: 'Unit 17: Oxygen Containing Compounds',
-        topics: [
-          { id: 'c_ox_1', name: 'Alcohols, Phenols, Ethers' },
-          { id: 'c_ox_2', name: 'Aldehydes & Ketones' },
-          { id: 'c_ox_3', name: 'Carboxylic Acids' }
-        ]
-      },
-      {
-        id: 'c_nitrogen',
-        name: 'Unit 18: Nitrogen Containing Compounds',
-        topics: [
-          { id: 'c_nit_1', name: 'Amines & Diazonium Salts' }
-        ]
-      },
-      {
-        id: 'c_bio',
-        name: 'Unit 19: Biomolecules',
-        topics: [
-          { id: 'c_bio_1', name: 'Carbohydrates & Proteins' },
-          { id: 'c_bio_2', name: 'Vitamins & Nucleic Acids' }
-        ]
-      },
-      {
-        id: 'c_prac',
-        name: 'Unit 20: Practical Chemistry',
-        topics: [
-          { id: 'c_pr_1', name: 'Salt Analysis & Titrations' }
-        ]
-      }
-    ]
-  }
+    }
 ];
 
-const SAMPLE_QUESTIONS: Question[] = [
-  { id: 'q1', subjectId: 'phys', topicId: 'p_kin_1', text: 'A particle moves along a straight line. Its velocity is given by v = 3t^2. What is the acceleration at t=2?', options: ['6 m/s²', '12 m/s²', '3 m/s²', '0 m/s²'], correctOptionIndex: 1 },
-  { id: 'q2', subjectId: 'chem', topicId: 'c_at_1', text: 'Which quantum number defines the orientation of the orbital?', options: ['Principal (n)', 'Azimuthal (l)', 'Magnetic (m)', 'Spin (s)'], correctOptionIndex: 2 },
-  { id: 'q3', subjectId: 'math', topicId: 'm_lim_1', text: 'Evaluate limit x->0 of (sin x)/x', options: ['0', '1', 'Infinity', 'Undefined'], correctOptionIndex: 1 },
-];
+// Reusing existing sample questions logic but ensuring they are exported for MOCK_TESTS
+const Q_PHYS_1 = { id: 'q1', subjectId: 'phys', topicId: 'p_kin_1', text: 'A particle moves along a straight line. Its velocity is given by v = 3t^2. What is the acceleration at t=2?', options: ['6 m/s²', '12 m/s²', '3 m/s²', '0 m/s²'], correctOptionIndex: 1 };
+const Q_CHEM_1 = { id: 'q2', subjectId: 'chem', topicId: 'c_at_1', text: 'Which quantum number defines the orientation of the orbital?', options: ['Principal (n)', 'Azimuthal (l)', 'Magnetic (m)', 'Spin (s)'], correctOptionIndex: 2 };
+const Q_MATH_1 = { id: 'q3', subjectId: 'math', topicId: 'm_lim_1', text: 'Evaluate limit x->0 of (sin x)/x', options: ['0', '1', 'Infinity', 'Undefined'], correctOptionIndex: 1 };
+const Q_LOGIC_1 = { id: 'q_log_1', subjectId: 'logic', topicId: 'general', text: 'If A is brother of B, B is sister of C, and C is father of D, how is D related to A?', options: ['Nephew/Niece', 'Brother', 'Uncle', 'Cousin'], correctOptionIndex: 0 };
+const Q_ENG_1 = { id: 'q_eng_1', subjectId: 'eng', topicId: 'vocab', text: 'Choose the synonym of "Ephemeral":', options: ['Lasting', 'Short-lived', 'Beautiful', 'Heavy'], correctOptionIndex: 1 };
+// New questions for variety
+const Q_LOGIC_2 = { id: 'q_log_2', subjectId: 'logic', topicId: 'series', text: 'Find the next number: 2, 6, 12, 20, ?', options: ['28', '30', '32', '24'], correctOptionIndex: 1 }; // 30 (n^2+n)
+const Q_ENG_2 = { id: 'q_eng_2', subjectId: 'eng', topicId: 'grammar', text: 'Identify the error: "He is senior than me."', options: ['He', 'is', 'senior', 'than'], correctOptionIndex: 3 }; // 'to' instead of 'than'
+
+// NEW QUESTIONS FOR JEE TESTS
+const Q_PHYS_2 = { id: 'q_phys_2', subjectId: 'phys', topicId: 'p_kin_2', text: 'A projectile is fired at 45 degrees. The ratio of range to maximum height is:', options: ['1', '2', '4', '8'], correctOptionIndex: 2 };
+const Q_CHEM_2 = { id: 'q_chem_2', subjectId: 'chem', topicId: 'c_bas_1', text: 'What is the molarity of pure water?', options: ['18 M', '55.5 M', '1 M', '100 M'], correctOptionIndex: 1 };
+const Q_MATH_2 = { id: 'q_math_2', subjectId: 'math', topicId: 'm_quad_1', text: 'If roots of x² - px + q = 0 differ by 1, then:', options: ['p² = 4q', 'p² = 4q + 1', 'p² = 4q - 1', 'q² = 4p'], correctOptionIndex: 1 };
+const Q_PHYS_3 = { id: 'q_phys_3', subjectId: 'phys', topicId: 'p_unit_2', text: 'Which pair has the same dimensions?', options: ['Work and Torque', 'Force and Power', 'Momentum and Energy', 'Impulse and Force'], correctOptionIndex: 0 };
+const Q_CHEM_3 = { id: 'q_chem_3', subjectId: 'chem', topicId: 'c_at_2', text: 'The maximum number of electrons in a subshell with l=2 is:', options: ['6', '10', '14', '2'], correctOptionIndex: 1 };
 
 export const MOCK_TESTS: Test[] = [
   {
-    id: 'admin_t1',
-    title: 'first test series',
-    durationMinutes: 180,
-    questions: SAMPLE_QUESTIONS,
-    category: 'ADMIN',
-    difficulty: 'CUSTOM'
-  },
-  {
-    id: 'jeem_2024_1',
+    id: 'test_demo_1',
     title: 'JEE Mains 2024 (Jan 27 Shift 1)',
     durationMinutes: 180,
-    questions: SAMPLE_QUESTIONS,
     category: 'PAST_PAPER',
-    difficulty: 'MAINS'
+    difficulty: 'MAINS',
+    examType: 'JEE',
+    questions: [Q_PHYS_1, Q_CHEM_1, Q_MATH_1, Q_PHYS_2, Q_CHEM_2]
   },
   {
-    id: 'jeem_2023_1',
-    title: 'JEE Mains 2023 (Apr 10 Shift 2)',
+    id: 'test_jee_main_2023',
+    title: 'JEE Mains 2023 (Jan 24 Shift 2)',
     durationMinutes: 180,
-    questions: SAMPLE_QUESTIONS,
     category: 'PAST_PAPER',
-    difficulty: 'MAINS'
+    difficulty: 'MAINS',
+    examType: 'JEE',
+    questions: [Q_MATH_2, Q_PHYS_3, Q_CHEM_3, Q_PHYS_1, Q_MATH_1]
   },
   {
-    id: 'jeem_2022_1',
-    title: 'JEE Mains 2022 (June 24 Shift 1)',
+    id: 'test_jee_main_2022',
+    title: 'JEE Mains 2022 (July 25 Shift 1)',
     durationMinutes: 180,
-    questions: SAMPLE_QUESTIONS,
     category: 'PAST_PAPER',
-    difficulty: 'MAINS'
+    difficulty: 'MAINS',
+    examType: 'JEE',
+    questions: [Q_CHEM_1, Q_CHEM_2, Q_PHYS_2, Q_MATH_1, Q_PHYS_3]
   },
   {
-    id: 'jeem_2021_1',
-    title: 'JEE Mains 2021 (Feb 24 Shift 2)',
-    durationMinutes: 180,
-    questions: SAMPLE_QUESTIONS,
-    category: 'PAST_PAPER',
-    difficulty: 'MAINS'
-  },
-  {
-    id: 'jeem_2020_1',
-    title: 'JEE Mains 2020 (Sept 2 Shift 1)',
-    durationMinutes: 180,
-    questions: SAMPLE_QUESTIONS,
-    category: 'PAST_PAPER',
-    difficulty: 'MAINS'
-  },
-  {
-    id: 'jeea_2023_1',
+    id: 'test_demo_2',
     title: 'JEE Advanced 2023 (Paper 1)',
     durationMinutes: 180,
-    questions: SAMPLE_QUESTIONS,
     category: 'PAST_PAPER',
-    difficulty: 'ADVANCED'
+    difficulty: 'ADVANCED',
+    examType: 'JEE',
+    questions: [Q_PHYS_1, Q_MATH_1, Q_CHEM_1, Q_PHYS_1]
   },
   {
-    id: 'jeea_2022_1',
-    title: 'JEE Advanced 2022 (Paper 1)',
+    id: 'test_jee_adv_2022',
+    title: 'JEE Advanced 2022 (Paper 2)',
     durationMinutes: 180,
-    questions: SAMPLE_QUESTIONS,
     category: 'PAST_PAPER',
-    difficulty: 'ADVANCED'
+    difficulty: 'ADVANCED',
+    examType: 'JEE',
+    questions: [Q_PHYS_2, Q_MATH_2, Q_CHEM_3, Q_PHYS_3, Q_CHEM_2]
+  },
+  {
+    id: 'test_jee_adv_2021',
+    title: 'JEE Advanced 2021 (Paper 1)',
+    durationMinutes: 180,
+    category: 'PAST_PAPER',
+    difficulty: 'ADVANCED',
+    examType: 'JEE',
+    questions: [Q_MATH_1, Q_PHYS_2, Q_CHEM_1, Q_MATH_2]
+  },
+  {
+    id: 'test_bitsat_1',
+    title: 'BITSAT 2023 (Session 1 Memory Based)',
+    durationMinutes: 180,
+    category: 'PAST_PAPER',
+    difficulty: 'CUSTOM',
+    examType: 'BITSAT',
+    questions: [Q_PHYS_1, Q_CHEM_1, Q_MATH_1, Q_LOGIC_1, Q_ENG_1, Q_LOGIC_2, Q_ENG_2]
+  },
+  {
+    id: 'test_viteee_1',
+    title: 'VITEEE 2022 (Sample Paper)',
+    durationMinutes: 150,
+    category: 'PAST_PAPER',
+    difficulty: 'CUSTOM',
+    examType: 'VITEEE',
+    questions: [Q_PHYS_1, Q_CHEM_1, Q_MATH_1, Q_ENG_1, Q_ENG_2]
+  },
+  {
+    id: 'test_met_1',
+    title: 'MET 2023 (Manipal Entrance)',
+    durationMinutes: 120,
+    category: 'PAST_PAPER',
+    difficulty: 'CUSTOM',
+    examType: 'MET',
+    questions: [Q_PHYS_1, Q_MATH_1, Q_CHEM_1, Q_ENG_1, Q_LOGIC_1]
+  },
+  {
+    id: 'test_srm_1',
+    title: 'SRMJEEE 2023 (Phase 1)',
+    durationMinutes: 150,
+    category: 'PAST_PAPER',
+    difficulty: 'CUSTOM',
+    examType: 'SRMJEEE',
+    questions: [Q_PHYS_1, Q_CHEM_1, Q_MATH_1]
   }
 ];

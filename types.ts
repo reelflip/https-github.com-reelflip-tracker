@@ -8,6 +8,7 @@ export interface User {
   role: Role;
   isVerified?: boolean; // New field for email verification
   targetYear?: number;
+  targetExam?: string; // New field for specific exam (JEE, BITSAT, etc.)
   avatarUrl?: string;
   parentId?: string; // If student, links to parent
   studentId?: string; // If parent, links to student
@@ -72,6 +73,7 @@ export interface Test {
   questions: Question[];
   category: 'ADMIN' | 'PAST_PAPER';
   difficulty: 'MAINS' | 'ADVANCED' | 'CUSTOM';
+  examType?: 'JEE' | 'BITSAT' | 'VITEEE' | 'MET' | 'SRMJEEE' | 'OTHER'; // New field for categorization
 }
 
 export interface QuestionResult {
@@ -170,6 +172,19 @@ export interface BlogPost {
     date: string;
     category: 'Strategy' | 'Motivation' | 'Subject-wise' | 'Updates';
     imageUrl?: string;
+}
+
+export interface ExamComparisonItem {
+    name: string;
+    difficulty: number; // 1-5
+    color: string;
+    barColor: string;
+    borderColor: string;
+    hoverBg: string;
+    focus: string;
+    desc: string;
+    colleges: string;
+    dates: string;
 }
 
 export interface MockDataState {

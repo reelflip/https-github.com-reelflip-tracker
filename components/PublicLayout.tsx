@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { TrendingUp, LogIn, Globe, Shield, Mail, FileText } from 'lucide-react';
+import { TrendingUp, LogIn, Globe, Shield, Mail, FileText, Award } from 'lucide-react';
 
 interface PublicLayoutProps {
   children: React.ReactNode;
@@ -16,7 +16,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children, onNavigate }) => 
              <div className="w-8 h-8 bg-slate-900 rounded-full flex items-center justify-center">
                  <TrendingUp className="w-5 h-5 text-blue-400" />
              </div>
-             <span className="font-bold text-lg text-slate-800">IIT JEE Prep</span>
+             <span className="font-bold text-lg text-slate-800">IITGEEPrep</span>
           </div>
           <button 
             onClick={() => onNavigate('dashboard')}
@@ -36,10 +36,10 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children, onNavigate }) => 
              <div className="col-span-1 md:col-span-2">
                  <div className="flex items-center space-x-2 mb-4 text-white">
                      <TrendingUp className="w-6 h-6 text-blue-500" />
-                     <span className="font-bold text-xl">IIT JEE Prep</span>
+                     <span className="font-bold text-xl">IITGEEPrep</span>
                  </div>
                  <p className="text-sm leading-relaxed max-w-xs">
-                     The ultimate companion for IIT JEE aspirants. Track syllabus, analyze performance, and optimize your preparation journey.
+                     IIT + GEE + Prep. The ultimate companion for IIT JEE and other engineering entrance aspirants.
                  </p>
              </div>
              <div>
@@ -47,6 +47,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children, onNavigate }) => 
                  <ul className="space-y-2 text-sm">
                      <li><button onClick={() => onNavigate('about')} className="hover:text-blue-400 transition-colors">About Us</button></li>
                      <li><button onClick={() => onNavigate('blog')} className="hover:text-blue-400 transition-colors">Blog</button></li>
+                     <li><button onClick={() => onNavigate('exams')} className="hover:text-blue-400 transition-colors">Exams Guide</button></li>
                      <li><button onClick={() => onNavigate('contact')} className="hover:text-blue-400 transition-colors">Contact</button></li>
                      <li><button onClick={() => onNavigate('privacy')} className="hover:text-blue-400 transition-colors">Privacy Policy</button></li>
                  </ul>
@@ -61,7 +62,7 @@ const PublicLayout: React.FC<PublicLayoutProps> = ({ children, onNavigate }) => 
              </div>
          </div>
          <div className="text-center text-xs border-t border-slate-800 pt-8">
-             &copy; 2025 IIT JEE Prep. All rights reserved.
+             &copy; 2025 IITGEEPrep. All rights reserved.
          </div>
       </footer>
     </div>

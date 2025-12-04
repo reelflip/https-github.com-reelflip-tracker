@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { User, Role } from '../types';
-import { COACHING_INSTITUTES, TARGET_YEARS } from '../constants';
+import { COACHING_INSTITUTES, TARGET_YEARS, TARGET_EXAMS } from '../constants';
 import { 
   TrendingUp,
   User as UserIcon, 
@@ -17,7 +17,8 @@ import {
   Loader2,
   CheckCircle2,
   Zap,
-  Users
+  Users,
+  Target
 } from 'lucide-react';
 
 interface AuthScreenProps {
@@ -40,6 +41,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
     confirmPassword: '',
     institute: '',
     targetYear: '2025',
+    targetExam: 'JEE Main & Advanced',
     securityQuestion: 'What is the name of your first pet?',
     securityAnswer: ''
   });
@@ -67,7 +69,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
             password: formData.password,
             role: role,
             institute: formData.institute,
-            targetYear: parseInt(formData.targetYear) || 2025
+            targetYear: parseInt(formData.targetYear) || 2025,
+            targetExam: formData.targetExam
         } : {
             email: overrideCreds ? overrideCreds.email : formData.email,
             password: overrideCreds ? overrideCreds.pass : formData.password
@@ -125,6 +128,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                 role: (rawUser.role || 'STUDENT').toUpperCase() as Role,
                 isVerified: rawUser.isVerified ?? (rawUser.is_verified == 1),
                 targetYear: rawUser.targetYear || (rawUser.target_year ? parseInt(rawUser.target_year) : undefined),
+                targetExam: rawUser.targetExam || rawUser.target_exam,
                 institute: rawUser.institute,
                 school: rawUser.school,
                 course: rawUser.course || rawUser.course_name,
@@ -152,13 +156,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
           role: role,
           isVerified: true,
           targetYear: 2025,
+          targetExam: 'JEE Main & Advanced',
           institute: 'Dev Institute'
       };
-      
-      // If parent, link to student for UI testing
-      if (role === 'PARENT') {
-          mockUser.studentId = 'student_local';
-      }
       
       onLogin(mockUser);
   };
@@ -170,7 +170,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
         {/* Header Section (Logo) */}
         <div className="pt-10 pb-4 text-center">
             <h1 className="text-4xl font-sans font-bold tracking-tight mb-4">
-                <span className="text-slate-900">IIT</span> <span className="text-orange-500">JEE</span>
+                <span className="text-slate-900">IIT</span> <span className="text-orange-500">GEE</span>
             </h1>
             
             <div className="flex justify-center mb-4">
@@ -258,9 +258,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                     </div>
                 )}
 
-                {/* Institute & Year (Register & Student Only) */}
+                {/* Institute, Exam & Year (Register & Student Only) */}
                 {isRegistering && role === 'STUDENT' && (
-                    <div className="grid grid-cols-2 gap-4">
+                    <>
                         <div className="space-y-1">
                             <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Institute</label>
                             <div className="relative">
@@ -278,23 +278,43 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                                 <ChevronDown className="absolute right-4 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
                             </div>
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-400 uppercase tracking-wide ml-1">Target Year</label>
-                            <div className="relative">
-                                <Calendar className="absolute left-4 top-3.5 text-slate-400 w-4 h-4 z-10" />
-                                <select 
-                                    className="w-full pl-10 pr-8 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
-                                    value={formData.targetYear}
-                                    onChange={(e) => setFormData({...formData, targetYear: e.target.value})}
-                                >
-                                    {TARGET_YEARS.map(year => (
-                                        <option key={year} value={year}>{year}</option>
-                                    ))}
-                                </select>
-                                <ChevronDown className="absolute right-4 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
+
+                        <div className="grid grid-cols-5 gap-3">
+                            <div className="col-span-3 space-y-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Target Exam</label>
+                                <div className="relative">
+                                    <Target className="absolute left-4 top-3.5 text-slate-400 w-4 h-4 z-10" />
+                                    <select 
+                                        className="w-full pl-10 pr-8 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
+                                        value={formData.targetExam}
+                                        onChange={(e) => setFormData({...formData, targetExam: e.target.value})}
+                                    >
+                                        {TARGET_EXAMS.map(exam => (
+                                            <option key={exam} value={exam}>{exam}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-4 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
+                                </div>
+                            </div>
+                            
+                            <div className="col-span-2 space-y-1">
+                                <label className="text-[10px] font-bold text-slate-400 uppercase tracking-wide ml-1">Year</label>
+                                <div className="relative">
+                                    <Calendar className="absolute left-3 top-3.5 text-slate-400 w-4 h-4 z-10" />
+                                    <select 
+                                        className="w-full pl-9 pr-6 py-3 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
+                                        value={formData.targetYear}
+                                        onChange={(e) => setFormData({...formData, targetYear: e.target.value})}
+                                    >
+                                        {TARGET_YEARS.map(year => (
+                                            <option key={year} value={year}>{year}</option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-2 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </>
                 )}
 
                 {/* Email Address */}
@@ -456,6 +476,8 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                 <button onClick={() => onNavigate('about')} className="hover:text-blue-600 transition-colors">About Us</button>
                 <span>•</span>
                 <button onClick={() => onNavigate('blog')} className="hover:text-blue-600 transition-colors">Blog</button>
+                <span>•</span>
+                <button onClick={() => onNavigate('exams')} className="hover:text-blue-600 transition-colors">Exams Guide</button>
                 <span>•</span>
                 <button onClick={() => onNavigate('privacy')} className="hover:text-blue-600 transition-colors">Privacy Policy</button>
                 <span>•</span>

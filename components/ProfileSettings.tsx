@@ -1,8 +1,7 @@
 
-
 import React, { useState } from 'react';
 import { User } from '../types';
-import { COACHING_INSTITUTES, TARGET_YEARS } from '../constants';
+import { COACHING_INSTITUTES, TARGET_YEARS, TARGET_EXAMS } from '../constants';
 import { 
   User as UserIcon, 
   Mail, 
@@ -18,7 +17,8 @@ import {
   AlertCircle,
   XCircle,
   Copy,
-  ChevronDown
+  ChevronDown,
+  Target
 } from 'lucide-react';
 
 interface ProfileSettingsProps {
@@ -36,6 +36,7 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
     school: user.school || '',
     course: user.course || '',
     targetYear: user.targetYear,
+    targetExam: user.targetExam || 'JEE Main & Advanced',
     phone: user.phone || ''
   });
 
@@ -216,6 +217,23 @@ const ProfileSettings: React.FC<ProfileSettingsProps> = ({ user, onUpdateUser, o
             {/* Role Specific Fields - Student */}
             {user.role === 'STUDENT' && (
                 <>
+                    <div className="space-y-1.5">
+                        <label className="text-xs font-bold text-slate-500 uppercase ml-1">Target Exam</label>
+                        <div className="relative">
+                            <Target className="absolute left-3 top-3 text-slate-400 w-4 h-4 z-10" />
+                            <select 
+                                className="w-full pl-10 pr-8 py-2.5 border border-slate-200 rounded-xl text-sm text-slate-700 focus:ring-2 focus:ring-blue-100 focus:border-blue-500 outline-none appearance-none bg-white transition-all"
+                                value={formData.targetExam}
+                                onChange={(e) => setFormData({...formData, targetExam: e.target.value})}
+                            >
+                                {TARGET_EXAMS.map(exam => (
+                                    <option key={exam} value={exam}>{exam}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-4 top-3.5 text-slate-400 w-4 h-4 pointer-events-none" />
+                        </div>
+                    </div>
+
                     <div className="space-y-1.5">
                         <label className="text-xs font-bold text-slate-500 uppercase ml-1">Target Year</label>
                         <div className="relative">

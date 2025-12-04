@@ -1,5 +1,5 @@
 {
-  "name": "IIT JEE Prep",
-  "description": "A comprehensive, mobile-first PWA for IIT JEE preparation tracking with role-based access, analytics, and study tools.",
+  "name": "IITGEEPrep",
+  "description": "A comprehensive, mobile-first PWA for IIT JEE and Engineering preparation tracking.",
   "requestFramePermissions": []
 }

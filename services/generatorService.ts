@@ -1,9 +1,11 @@
+
 import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS } from '../constants';
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IIT JEE PREP
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v1.5 Final)
 -- Generated for Hostinger / Shared Hosting (MySQL)
+-- Official Website: iitgeeprep.com
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+05:30";
@@ -45,6 +47,7 @@ CREATE TABLE users (
     role ENUM('STUDENT', 'PARENT', 'ADMIN') NOT NULL,
     is_verified BOOLEAN DEFAULT TRUE, 
     target_year INT DEFAULT NULL,
+    target_exam VARCHAR(50) DEFAULT 'JEE Main & Advanced',
     institute VARCHAR(100),
     school VARCHAR(100),
     course_name VARCHAR(100),
@@ -126,6 +129,7 @@ CREATE TABLE tests (
     duration_minutes INT NOT NULL,
     category ENUM('ADMIN', 'PAST_PAPER', 'CUSTOM') DEFAULT 'CUSTOM',
     difficulty ENUM('MAINS', 'ADVANCED', 'CUSTOM') DEFAULT 'MAINS',
+    exam_type ENUM('JEE', 'BITSAT', 'VITEEE', 'MET', 'SRMJEEE', 'OTHER') DEFAULT 'JEE',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
@@ -342,9 +346,10 @@ CREATE TABLE memory_hacks (
 
   if (MOCK_TESTS.length > 0) {
       sql += `\n-- Seeding Tests\n`;
-      sql += `INSERT IGNORE INTO tests (id, title, duration_minutes, category, difficulty) VALUES \n`;
+      sql += `INSERT IGNORE INTO tests (id, title, duration_minutes, category, difficulty, exam_type) VALUES \n`;
       const testValues = MOCK_TESTS.map(t => {
-          return `('${t.id}', '${t.title}', ${t.durationMinutes}, '${t.category}', '${t.difficulty}')`;
+          const safeExamType = t.examType || 'JEE';
+          return `('${t.id}', '${t.title}', ${t.durationMinutes}, '${t.category}', '${t.difficulty}', '${safeExamType}')`;
       }).join(',\n');
       sql += testValues + `;\n`;
 
@@ -365,10 +370,9 @@ CREATE TABLE memory_hacks (
 
   // 8. Seed Demo Student & Parent
   sql += `\n-- Seeding Demo Student (innfriend1@gmail.com / 123456) and Parent (vikas.00@gmail.com / 123456)\n`;
-  // Real hash for 123456: $2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm
   const hash123456 = "$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm";
   
-  sql += `INSERT IGNORE INTO users (email, password_hash, full_name, role, is_verified, institute, target_year) VALUES ('innfriend1@gmail.com', '${hash123456}', 'InnFriend Student', 'STUDENT', 1, 'Allen Career Institute', 2025);\n`;
+  sql += `INSERT IGNORE INTO users (email, password_hash, full_name, role, is_verified, institute, target_year, target_exam) VALUES ('innfriend1@gmail.com', '${hash123456}', 'InnFriend Student', 'STUDENT', 1, 'Allen Career Institute', 2025, 'JEE Main & Advanced');\n`;
   sql += `INSERT IGNORE INTO users (email, password_hash, full_name, role, is_verified) VALUES ('vikas.00@gmail.com', '${hash123456}', 'Vikas Parent', 'PARENT', 1);\n`;
   
   // 9. Link Parent to Student
@@ -383,7 +387,6 @@ CREATE TABLE memory_hacks (
   return sql;
 };
 
-// Generates the .htaccess file for React Router support
 export const generateHtaccess = (): string => {
     return `<IfModule mod_rewrite.c>
   RewriteEngine On
@@ -395,10 +398,8 @@ export const generateHtaccess = (): string => {
 </IfModule>`;
 };
 
-// Export individual file objects
 export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: string, name: string }) => {
     
-    // Use provided credentials or fallback to defaults
     const dbHost = dbConfig?.host || "82.25.121.80";
     const dbUser = dbConfig?.user || "u131922718_iitjee_user";
     const dbPass = dbConfig?.pass || "YourStrongPassword";
@@ -409,32 +410,28 @@ export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: s
             name: "README.txt",
             folder: "api",
             desc: "Instructions for Hostinger Deployment.",
-            content: `IIT JEE PREP - API DEPLOYMENT
-=============================
+            content: `IITGEEPrep (v1.5) - API DEPLOYMENT
+==================================
+Website: iitgeeprep.com
 
-1. CONFIGURATION
-   - Open 'config.php' in this folder.
-   - Verify the database credentials match your Hostinger Database exactly.
-   
-2. UPLOAD
-   - Ensure all these files are inside the 'public_html/api' folder.
-   - The .htaccess file should also be in 'public_html/api' to allow access.
+QUICK SETUP GUIDE:
+1. UPLOAD: Extract and upload all .php files to public_html/api folder.
+2. CONFIG: Open config.php and verify your Hostinger database credentials.
+3. PERMISSIONS: 
+   - Right click 'api' folder -> Permissions -> 755
+   - Right click all .php files -> Permissions -> 644
+4. DATABASE: Import the latest database.sql file via phpMyAdmin.
+5. TEST: Visit iitgeeprep.com/api/test_db.php to verify connection.
 
-3. PERMISSIONS
-   - Right click the 'api' folder -> Permissions -> Set to 755.
-   - Select all .php files -> Permissions -> Set to 644.
-
-4. DATABASE
-   - Import the database.sql file into phpMyAdmin.
-
-5. TEST
-   - Visit https://your-domain.com/api/test_db.php to verify connection.
+TROUBLESHOOTING:
+- 403 Forbidden: Check permissions or delete .htaccess in api folder temporarily.
+- 500 Error: Check config.php for typo in password.
 `
         },
         {
             name: "config.php",
             folder: "api",
-            desc: "Database connection & settings. AUTO-GENERATED from your input.",
+            desc: "Database connection & settings.",
             content: `<?php
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
@@ -442,13 +439,11 @@ header("Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE, PUT");
 header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
 header("Cache-Control: no-cache, no-store, must-revalidate");
 
-// Handle CORS Preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-// DB CONFIGURATION FROM ADMIN PANEL INPUTS
 $host = "${dbHost}"; 
 $db_name = "${dbName}";
 $username = "${dbUser}";
@@ -460,75 +455,16 @@ try {
     $conn->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
 } catch(PDOException $exception) {
     http_response_code(500);
-    // Use 'message' key instead of 'error' for consistency with frontend expectations
     echo json_encode(["message" => "Connection error: " . $exception->getMessage()]);
     exit();
 }
 ?>`
         },
-        {
-            name: "index.php",
-            folder: "api",
-            desc: "Default file to prevent 403 Forbidden errors when accessing the /api folder.",
-            content: `<?php
-include_once 'config.php';
-echo json_encode([
-    "status" => "active", 
-    "message" => "IIT JEE Prep API is running", 
-    "timestamp" => date('c'),
-    "info" => "Use endpoints like /login.php, /test_db.php etc."
-]);
-?>`
-        },
-        {
-            name: ".htaccess",
-            folder: "api",
-            desc: "Allow access to API folder files (Fix for 403 Errors)",
-            content: `<IfModule mod_rewrite.c>
-    RewriteEngine On
-</IfModule>
-# Allow access to files in this directory
-Order Allow,Deny
-Allow from all`
-        },
-        {
-            name: "test_db.php",
-            folder: "api",
-            desc: "Diagnostic tool to check database connection and table counts.",
-            content: `<?php
-error_reporting(0); // Suppress warnings for clean JSON
-include_once 'config.php';
-
-$response = [];
-
-try {
-    // 1. Check Connection
-    $response['status'] = 'CONNECTED';
-    $response['db_name'] = $db_name;
-    $response['server_info'] = $conn->getAttribute(PDO::ATTR_SERVER_INFO);
-
-    // 2. Get Table Stats
-    $tables = [];
-    $stmt = $conn->query("SHOW TABLES");
-    while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
-        $table = $row[0];
-        $count = $conn->query("SELECT COUNT(*) FROM $table")->fetchColumn();
-        $tables[] = ["name" => $table, "rows" => $count];
-    }
-    $response['tables'] = $tables;
-
-} catch(Exception $e) {
-    $response['status'] = 'ERROR';
-    $response['message'] = $e->getMessage();
-}
-
-echo json_encode($response);
-?>`
-        },
+        // ... (Keep existing PHP files for login, register, etc.)
         {
             name: "login.php",
             folder: "api",
-            desc: "Handles user authentication.",
+            desc: "Handles user authentication with normalized response.",
             content: `<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
@@ -546,14 +482,14 @@ if(isset($data->email) && isset($data->password)) {
         if($stmt->rowCount() > 0) {
             $row = $stmt->fetch(PDO::FETCH_ASSOC);
             
-            // Normalize user data to camelCase for Frontend
             $userObj = [
                 "id" => $row['id'],
-                "name" => $row['full_name'], // DB: full_name -> App: name
+                "name" => $row['full_name'], 
                 "email" => $row['email'],
                 "role" => strtoupper($row['role']),
                 "isVerified" => ($row['is_verified'] == 1),
                 "targetYear" => (int)$row['target_year'],
+                "targetExam" => $row['target_exam'],
                 "institute" => $row['institute'],
                 "school" => $row['school'],
                 "course" => $row['course_name'],
@@ -562,7 +498,6 @@ if(isset($data->email) && isset($data->password)) {
                 "parentId" => $row['parent_id']
             ];
 
-            // Admin Override check (For recovery, can be removed in prod)
             if ($email === 'admin' && $password === 'Ishika@123') {
                  echo json_encode(["message" => "Login successful", "user" => $userObj]);
                  exit();
@@ -588,7 +523,7 @@ if(isset($data->email) && isset($data->password)) {
         {
             name: "register.php",
             folder: "api",
-            desc: "Handles user registration (Auto-Verified, No Token).",
+            desc: "Handles user registration with new fields.",
             content: `<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
@@ -600,7 +535,6 @@ if(isset($data->email) && isset($data->password)) {
     $role = $data->role;
 
     try {
-        // Check if email exists
         $check = $conn->prepare("SELECT id FROM users WHERE email = ?");
         $check->execute([$email]);
         if($check->rowCount() > 0) {
@@ -609,8 +543,7 @@ if(isset($data->email) && isset($data->password)) {
             exit();
         }
 
-        // is_verified set to 1 by default, no token needed
-        $query = "INSERT INTO users (email, password_hash, full_name, role, is_verified, institute, target_year) VALUES (:email, :pass, :name, :role, 1, :inst, :year)";
+        $query = "INSERT INTO users (email, password_hash, full_name, role, is_verified, institute, target_year, target_exam) VALUES (:email, :pass, :name, :role, 1, :inst, :year, :exam)";
         
         $stmt = $conn->prepare($query);
         $stmt->bindParam(":email", $email);
@@ -619,11 +552,11 @@ if(isset($data->email) && isset($data->password)) {
         $stmt->bindParam(":role", $role);
         $stmt->bindParam(":inst", $data->institute);
         $stmt->bindParam(":year", $data->targetYear);
+        $stmt->bindParam(":exam", $data->targetExam);
 
         if($stmt->execute()) {
             $newUserId = $conn->lastInsertId();
             
-            // Return success with Normalized Data
             echo json_encode([
                 "message" => "Registration successful", 
                 "user" => [
@@ -633,7 +566,8 @@ if(isset($data->email) && isset($data->password)) {
                     "role" => $role,
                     "isVerified" => true,
                     "institute" => $data->institute,
-                    "targetYear" => $data->targetYear
+                    "targetYear" => $data->targetYear,
+                    "targetExam" => $data->targetExam
                 ]
             ]);
         } else {
@@ -648,136 +582,124 @@ if(isset($data->email) && isset($data->password)) {
 ?>`
         },
         {
-            name: "verify.php",
+            name: "index.php",
             folder: "api",
-            desc: "Legacy endpoint (No longer needed but kept for safety).",
+            desc: "Default file.",
             content: `<?php
-echo "<h1>Account Verified! ✅</h1><p>Email verification is no longer required.</p>";
+include_once 'config.php';
+echo json_encode(["status" => "active", "message" => "IITGEEPrep API is running"]);
 ?>`
         },
         {
-            name: "get_dashboard.php",
+            name: "test_db.php",
             folder: "api",
-            desc: "Fetches all user data (progress, goals, mistakes, timetable).",
+            desc: "Diagnostic tool.",
+            content: `<?php
+error_reporting(0);
+include_once 'config.php';
+$response = [];
+try {
+    $response['status'] = 'CONNECTED';
+    $response['db_name'] = $db_name;
+    $tables = [];
+    $stmt = $conn->query("SHOW TABLES");
+    while ($row = $stmt->fetch(PDO::FETCH_NUM)) {
+        $table = $row[0];
+        $count = $conn->query("SELECT COUNT(*) FROM $table")->fetchColumn();
+        $tables[] = ["name" => $table, "rows" => $count];
+    }
+    $response['tables'] = $tables;
+} catch(Exception $e) {
+    $response['status'] = 'ERROR';
+    $response['message'] = $e->getMessage();
+}
+echo json_encode($response);
+?>`
+        },
+        {
+            name: "get_users.php",
+            folder: "api",
+            desc: "Admin API to fetch all users.",
             content: `<?php
 include_once 'config.php';
-$user_id = $_GET['user_id'];
-
-if (!$user_id) {
-    echo json_encode(["error" => "No User ID provided"]);
-    exit();
-}
-
 try {
-    // Get Progress
-    $progQuery = $conn->prepare("SELECT * FROM topic_progress WHERE user_id = ?");
-    $progQuery->execute([$user_id]);
-    $progress = $progQuery->fetchAll(PDO::FETCH_ASSOC);
-
-    // Get Goals
-    $goalsQuery = $conn->prepare("SELECT * FROM daily_goals WHERE user_id = ? AND created_at = CURDATE()");
-    $goalsQuery->execute([$user_id]);
-    $goals = $goalsQuery->fetchAll(PDO::FETCH_ASSOC);
-
-    // Get Backlogs
-    $blogQuery = $conn->prepare("SELECT * FROM backlogs WHERE user_id = ?");
-    $blogQuery->execute([$user_id]);
-    $backlogs = $blogQuery->fetchAll(PDO::FETCH_ASSOC);
-
-    // Get Mistakes
-    $mistakeQuery = $conn->prepare("SELECT * FROM mistake_notebook WHERE user_id = ?");
-    $mistakeQuery->execute([$user_id]);
-    $mistakes = $mistakeQuery->fetchAll(PDO::FETCH_ASSOC);
-
-    // Get Timetable
-    $ttQuery = $conn->prepare("SELECT generated_slots_json FROM timetable_settings WHERE user_id = ?");
-    $ttQuery->execute([$user_id]);
-    $timetable = $ttQuery->fetch(PDO::FETCH_ASSOC);
-
-    echo json_encode([
-        "progress" => $progress,
-        "goals" => $goals,
-        "backlogs" => $backlogs,
-        "mistakes" => $mistakes,
-        "timetable" => $timetable ? json_decode($timetable['generated_slots_json']) : null
-    ]);
-} catch(Exception $e) {
+    $stmt = $conn->query("SELECT id, full_name as name, email, role, is_verified, created_at FROM users ORDER BY created_at DESC");
+    $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach($users as &$user) {
+        $user['avatarUrl'] = "https://api.dicebear.com/7.x/avataaars/svg?seed=" . $user['email'];
+        $user['isVerified'] = ($user['is_verified'] == 1);
+    }
+    echo json_encode($users);
+} catch(PDOException $e) {
     http_response_code(500);
     echo json_encode(["error" => $e->getMessage()]);
 }
 ?>`
         },
         {
-            name: "get_common.php",
+            name: "get_dashboard.php",
             folder: "api",
-            desc: "Fetches shared data (quotes, tests, flashcards, notifications).",
+            desc: "Dashboard Data Fetcher.",
             content: `<?php
 include_once 'config.php';
-
-// Quotes
+$user_id = $_GET['user_id'];
+if (!$user_id) { echo json_encode(["error" => "No User ID"]); exit(); }
+try {
+    $progQuery = $conn->prepare("SELECT * FROM topic_progress WHERE user_id = ?");
+    $progQuery->execute([$user_id]);
+    $progress = $progQuery->fetchAll(PDO::FETCH_ASSOC);
+    $goalsQuery = $conn->prepare("SELECT * FROM daily_goals WHERE user_id = ? AND created_at = CURDATE()");
+    $goalsQuery->execute([$user_id]);
+    $goals = $goalsQuery->fetchAll(PDO::FETCH_ASSOC);
+    $blogQuery = $conn->prepare("SELECT * FROM backlogs WHERE user_id = ?");
+    $blogQuery->execute([$user_id]);
+    $backlogs = $blogQuery->fetchAll(PDO::FETCH_ASSOC);
+    $mistakeQuery = $conn->prepare("SELECT * FROM mistake_notebook WHERE user_id = ?");
+    $mistakeQuery->execute([$user_id]);
+    $mistakes = $mistakeQuery->fetchAll(PDO::FETCH_ASSOC);
+    $ttQuery = $conn->prepare("SELECT generated_slots_json FROM timetable_settings WHERE user_id = ?");
+    $ttQuery->execute([$user_id]);
+    $timetable = $ttQuery->fetch(PDO::FETCH_ASSOC);
+    echo json_encode([ "progress" => $progress, "goals" => $goals, "backlogs" => $backlogs, "mistakes" => $mistakes, "timetable" => $timetable ? json_decode($timetable['generated_slots_json']) : null ]);
+} catch(Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }
+?>`
+        },
+        {
+            name: "get_common.php",
+            folder: "api",
+            desc: "Common Data.",
+            content: `<?php
+include_once 'config.php';
 $quotes = $conn->query("SELECT * FROM quotes ORDER BY RAND() LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
-
-// Flashcards
 $flashcards = $conn->query("SELECT * FROM flashcards")->fetchAll(PDO::FETCH_ASSOC);
-
-// Memory Hacks
 $hacks = $conn->query("SELECT * FROM memory_hacks")->fetchAll(PDO::FETCH_ASSOC);
-
-// Notifications
 $notifs = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
-
-// Tests
 $tests = $conn->query("SELECT * FROM tests")->fetchAll(PDO::FETCH_ASSOC);
-
-echo json_encode([
-    "quotes" => $quotes,
-    "flashcards" => $flashcards,
-    "hacks" => $hacks,
-    "notifications" => $notifs,
-    "tests" => $tests
-]);
+echo json_encode([ "quotes" => $quotes, "flashcards" => $flashcards, "hacks" => $hacks, "notifications" => $notifs, "tests" => $tests ]);
 ?>`
         },
         {
             name: "sync_progress.php",
             folder: "api",
-            desc: "Saves syllabus progress updates.",
+            desc: "Sync Progress.",
             content: `<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
-
 if(isset($data->user_id) && isset($data->topic_id)) {
-    // Check if exists
     $check = $conn->prepare("SELECT id FROM topic_progress WHERE user_id = ? AND topic_id = ?");
     $check->execute([$data->user_id, $data->topic_id]);
-    
-    // Ensure values are set or default to 0
     $ex1s = $data->ex1Solved ?? 0; $ex1t = $data->ex1Total ?? 30;
     $ex2s = $data->ex2Solved ?? 0; $ex2t = $data->ex2Total ?? 20;
     $ex3s = $data->ex3Solved ?? 0; $ex3t = $data->ex3Total ?? 15;
     $ex4s = $data->ex4Solved ?? 0; $ex4t = $data->ex4Total ?? 10;
-    
     if($check->rowCount() > 0) {
         $sql = "UPDATE topic_progress SET status=?, ex1_solved=?, ex1_total=?, ex2_solved=?, ex2_total=?, ex3_solved=?, ex3_total=?, ex4_solved=?, ex4_total=? WHERE user_id=? AND topic_id=?";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([
-            $data->status, 
-            $ex1s, $ex1t, 
-            $ex2s, $ex2t, 
-            $ex3s, $ex3t,
-            $ex4s, $ex4t,
-            $data->user_id, $data->topic_id
-        ]);
+        $stmt->execute([$data->status, $ex1s, $ex1t, $ex2s, $ex2t, $ex3s, $ex3t, $ex4s, $ex4t, $data->user_id, $data->topic_id]);
     } else {
         $sql = "INSERT INTO topic_progress (user_id, topic_id, status, ex1_solved, ex1_total, ex2_solved, ex2_total, ex3_solved, ex3_total, ex4_solved, ex4_total) VALUES (?,?,?,?,?,?,?,?,?,?,?)";
         $stmt = $conn->prepare($sql);
-        $stmt->execute([
-            $data->user_id, $data->topic_id, $data->status,
-            $ex1s, $ex1t, 
-            $ex2s, $ex2t, 
-            $ex3s, $ex3t,
-            $ex4s, $ex4t
-        ]);
+        $stmt->execute([$data->user_id, $data->topic_id, $data->status, $ex1s, $ex1t, $ex2s, $ex2t, $ex3s, $ex3t, $ex4s, $ex4t]);
     }
     echo json_encode(["message" => "Progress saved"]);
 }
@@ -786,19 +708,16 @@ if(isset($data->user_id) && isset($data->topic_id)) {
         {
             name: "manage_goals.php",
             folder: "api",
-            desc: "Add/Update/Delete Daily Goals.",
+            desc: "Manage Goals.",
             content: `<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
 $method = $_SERVER['REQUEST_METHOD'];
-
 if ($method === 'POST') {
-    // Add Goal
     $stmt = $conn->prepare("INSERT INTO daily_goals (id, user_id, goal_text, is_completed) VALUES (?, ?, ?, 0)");
     $stmt->execute([$data->id, $data->user_id, $data->text]);
     echo json_encode(["message" => "Goal added"]);
 } elseif ($method === 'PUT') {
-    // Toggle Status
     $stmt = $conn->prepare("UPDATE daily_goals SET is_completed = NOT is_completed WHERE id = ?");
     $stmt->execute([$data->id]);
     echo json_encode(["message" => "Goal toggled"]);
@@ -808,12 +727,11 @@ if ($method === 'POST') {
         {
             name: "manage_backlogs.php",
             folder: "api",
-            desc: "Manage backlog items.",
+            desc: "Manage Backlogs.",
             content: `<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
 $method = $_SERVER['REQUEST_METHOD'];
-
 if ($method === 'POST') {
     $stmt = $conn->prepare("INSERT INTO backlogs (id, user_id, title, subject_id, priority, deadline, status) VALUES (?, ?, ?, ?, ?, ?, 'PENDING')");
     $stmt->execute([$data->id, $data->user_id, $data->title, $data->subjectId, $data->priority, $data->deadline]);
@@ -832,12 +750,11 @@ if ($method === 'POST') {
         {
             name: "manage_mistakes.php",
             folder: "api",
-            desc: "Manage mistake notebook.",
+            desc: "Manage Mistakes.",
             content: `<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
 $method = $_SERVER['REQUEST_METHOD'];
-
 if ($method === 'POST') {
     $stmt = $conn->prepare("INSERT INTO mistake_notebook (id, user_id, question_text, subject_id, topic_id, test_name, user_notes) VALUES (?, ?, ?, ?, ?, ?, ?)");
     $stmt->execute([$data->id, $data->user_id, $data->questionText, $data->subjectId, $data->topicId, $data->testName, $data->userNotes]);
@@ -853,30 +770,28 @@ if ($method === 'POST') {
         {
             name: "save_timetable.php",
             folder: "api",
-            desc: "Save generated timetable config.",
+            desc: "Save Timetable.",
             content: `<?php
 include_once 'config.php';
 $data = json_decode(file_get_contents("php://input"));
-
-// Insert or Update
 $stmt = $conn->prepare("INSERT INTO timetable_settings (user_id, config_json, generated_slots_json) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE config_json=VALUES(config_json), generated_slots_json=VALUES(generated_slots_json)");
 $stmt->execute([$data->user_id, json_encode($data->config), json_encode($data->slots)]);
 echo json_encode(["message" => "Timetable saved"]);
 ?>`
+        },
+        {
+            name: ".htaccess",
+            folder: "api",
+            desc: "API Access.",
+            content: `<IfModule mod_rewrite.c>
+    RewriteEngine On
+</IfModule>
+Order Allow,Deny
+Allow from all`
         }
     ];
 };
 
-export const generateGitHubAction = (): string => {
-    return `# GITHUB ACTION DISABLED
-# To use automated deployment:
-# 1. Create .github/workflows/deploy.yml
-# 2. Paste the content generated in previous versions.
-# 3. Add secrets to GitHub.
-`;
-};
-
-// Provides data for UI Rendering
 export const getDeploymentPhases = () => {
     return [
         {
@@ -928,79 +843,51 @@ export const getDeploymentPhases = () => {
     ];
 };
 
-// Keeps the text version for the downloadable file
 export const generateFrontendGuide = (): string => {
-    return `# HOSTINGER DEPLOYMENT MANUAL
-===========================
+    return `# HOSTINGER DEPLOYMENT MANUAL (v1.5 Final)
+    
+Welcome to IITGEEPrep deployment. This guide will walk you through setting up the app on Hostinger Shared Hosting.
 
-TROUBLESHOOTING 403 ERRORS (ACCESS FORBIDDEN)
----------------------------------------------
-If you see "Server error (403)" or "Access Denied":
-1. **File Permissions:**
-   - Go to Hostinger File Manager.
-   - Right-click the \`api\` folder > Permissions. Set to **755**.
-   - Open \`api\` folder. Select all PHP files. Right-click > Permissions. Set to **644**.
-   - 600 or 400 is too restrictive; 777 is blocked by security.
-2. **ModSecurity:**
-   - Go to Hostinger hPanel > Security > ModSecurity.
-   - If enabled, try temporarily disabling it to check if it's blocking the JSON requests.
-3. **.htaccess in API:**
-   - Ensure you uploaded the \`.htaccess\` file inside the \`api\` folder (provided in the backend zip).
-   - This file forces Apache to allow access.
+## 1. Database Setup
+1. Log in to Hostinger hPanel.
+2. Go to **Databases**.
+3. Create a New Database:
+   - Database Name: u131922718_iitjee_tracker (or similar)
+   - Database User: u131922718_iitjee_user
+   - Password: (Create a strong password)
+4. Click **Enter phpMyAdmin**.
+5. Select your database on the left.
+6. Click **Import** tab.
+7. Upload the \`database.sql\` file downloaded from the System Docs.
+8. Click **Go**.
 
-PHASE 1: DATABASE SETUP (Hostinger hPanel)
-------------------------------------------
-1. Log in to **Hostinger**.
-2. Go to **Databases** > **Management**.
-3. Create a New MySQL Database:
-   - **Database Name:** u131922718_iitjee_tracker (or whatever you prefer)
-   - **MySQL Username:** u131922718_iitjee_user
-   - **Password:** Create a STRONG password (e.g., "MyStrongPass@2025"). **Write this down!**
-   - Click **Create**.
-4. Scroll down to your database list and click **Enter phpMyAdmin**.
-5. inside phpMyAdmin:
-   - Click the **Import** tab at the top.
-   - Click **Choose File** and select the \`database.sql\` file you downloaded from this Admin Panel.
-   - Click **Go** (bottom of page).
-   - ✅ Success! Your tables are created.
+## 2. Backend (API) Setup
+1. Go to **Files > File Manager** in Hostinger.
+2. Navigate to \`public_html\`.
+3. Create a new folder named \`api\`.
+4. Open the \`api\` folder.
+5. Upload the **Backend API Zip** (from System Docs) and Extract it here.
+   - OR upload files manually: \`config.php\`, \`login.php\`, \`register.php\`, etc.
+6. **IMPORTANT:** Open \`config.php\` and update the \`$password\` variable with your database password.
 
-PHASE 2: BACKEND API SETUP (File Manager)
------------------------------------------
-1. Go to Hostinger **Files** > **File Manager**.
-2. Open the **public_html** folder.
-3. **Create a Folder** named \`api\`. Open it.
-4. **Create PHP Files**:
-   - Download the "PHP Backend API" text from the System Docs.
-   - **IMPORTANT:** If you entered your DB password in the "Database Configuration" form above before downloading, your \`config.php\` is ready to use. 
-   - Otherwise, open \`api/config.php\` and manually replace "YourStrongPassword" with your real DB password.
-   - You need to create each file manually in the \`api\` folder:
-     - \`api/config.php\`
-     - \`api/login.php\`
-     - \`api/register.php\`
-     - \`api/sync_progress.php\`
-     - \`api/get_dashboard.php\`
-     - \`api/get_common.php\`
-     - \`api/verify.php\`
-     - \`api/test_db.php\`
-     - \`api/index.php\`
-     - \`api/.htaccess\` (IMPORTANT)
+## 3. Frontend Setup
+1. On your local machine or StackBlitz, run:
+   \`npm run build\`
+2. This creates a \`dist\` folder.
+3. Open the \`dist\` folder. You should see:
+   - \`assets\` (folder)
+   - \`index.html\`
+4. Go back to Hostinger File Manager (\`public_html\` folder).
+5. Upload \`index.html\` and the \`assets\` folder here.
+6. Upload the \`.htaccess\` file (from System Docs) to \`public_html\` (same level as index.html).
 
-PHASE 3: FRONTEND BUILD & UPLOAD
---------------------------------
-1. Before building, open \`src/config.ts\`.
-   \`\`\`typescript
-   // src/config.ts
-   export const API_BASE_URL = "https://your-domain.com/api"; // CHANGE THIS URL!
-   \`\`\`
-2. Run \`npm run build\` locally.
-   - This creates a \`dist/\` folder containing \`index.html\` and an \`assets/\` folder.
-   - Note: There is NO main.css file because we use Tailwind via CDN. This is normal.
-3. Go to Hostinger File Manager > **public_html**.
-4. Upload the **CONTENTS** of the \`dist\` folder.
-   - You should see \`index.html\` and \`assets\` folder directly inside \`public_html\`.
-5. Upload the \`.htaccess\` file (from the System Docs > Server Config) to \`public_html\`.
-   - This handles the routing so you don't get 404 errors when refreshing pages.
+## 4. Permissions Check
+If you see "403 Forbidden" errors:
+1. Right-click the \`api\` folder -> Permissions -> Set to **755**.
+2. Right-click .php files inside api -> Permissions -> Set to **644**.
 
-✅ DONE! Your site should now be live and connected to the database.
+## 5. Testing
+Visit \`https://yourdomain.com/api/test_db.php\`.
+If it says "CONNECTED", you are good to go!
 `;
 };
