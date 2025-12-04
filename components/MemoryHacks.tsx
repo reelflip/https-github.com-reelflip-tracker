@@ -129,7 +129,7 @@ const MemoryHacks: React.FC<MemoryHacksProps> = ({ hacks }) => {
                                         </div>
 
                                         <div className="mt-4 pt-4 border-t border-slate-100 flex flex-wrap gap-1">
-                                            {(hack.tags as string[] || []).map((tag, idx) => (
+                                            {(hack.tags || []).map((tag, idx) => (
                                                 <span key={idx} className="text-[9px] bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded flex items-center">
                                                     <Hash className="w-2.5 h-2.5 mr-0.5 opacity-50" /> {tag}
                                                 </span>

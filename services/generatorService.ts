@@ -1,6 +1,3 @@
-
-
-
 import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS } from '../constants';
 import { Question } from '../types';
 
@@ -408,6 +405,32 @@ export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: s
     const dbName = dbConfig?.name || "u131922718_iitjee_tracker";
 
     return [
+        {
+            name: "README.txt",
+            folder: "api",
+            desc: "Instructions for Hostinger Deployment.",
+            content: `IIT JEE PREP - API DEPLOYMENT
+=============================
+
+1. CONFIGURATION
+   - Open 'config.php' in this folder.
+   - Verify the database credentials match your Hostinger Database exactly.
+   
+2. UPLOAD
+   - Ensure all these files are inside the 'public_html/api' folder.
+   - The .htaccess file should also be in 'public_html/api' to allow access.
+
+3. PERMISSIONS
+   - Right click the 'api' folder -> Permissions -> Set to 755.
+   - Select all .php files -> Permissions -> Set to 644.
+
+4. DATABASE
+   - Import the database.sql file into phpMyAdmin.
+
+5. TEST
+   - Visit https://your-domain.com/api/test_db.php to verify connection.
+`
+        },
         {
             name: "config.php",
             folder: "api",
@@ -882,38 +905,24 @@ export const getDeploymentPhases = () => {
         },
         {
             title: "Phase 3: Frontend Build",
-            subtitle: "StackBlitz Terminal",
+            subtitle: "StackBlitz / Local",
             color: "text-blue-600",
             bg: "bg-blue-50",
             steps: [
-                "In StackBlitz terminal, run: `npm run build`.",
-                "Wait for the 'dist' folder to appear.",
-                "Click the StackBlitz logo (top-left) -> Export Project.",
-                "Unzip the project on your computer."
+                "Run \`npm run build\` in your terminal.",
+                "This creates a 'dist' folder with index.html and assets.",
+                "If using StackBlitz: Click 'Export Project' to download and build locally if needed."
             ]
         },
         {
-            title: "Phase 4: Configuration",
-            subtitle: "Local Code",
+            title: "Phase 4: Upload",
+            subtitle: "File Manager",
             color: "text-orange-600",
             bg: "bg-orange-50",
             steps: [
-                "Open `src/config.ts` (or create it).",
-                "Set `API_BASE_URL` to 'https://your-domain.com/api'.",
-                "If you missed this before building, you might need to rebuild or edit the JS files."
-            ]
-        },
-        {
-            title: "Phase 5: Upload & Go Live",
-            subtitle: "Hostinger File Manager",
-            color: "text-indigo-600",
-            bg: "bg-indigo-50",
-            steps: [
-                "Go back to Hostinger File Manager > public_html.",
-                "OPEN your local 'dist' folder.",
-                "Select ALL files inside it (Usually just index.html and assets/ folder).",
-                "Drag & Drop them DIRECTLY into 'public_html'.",
-                "Ensure .htaccess is present to fix routing."
+                "Open \`public_html\` in Hostinger.",
+                "Upload the CONTENTS of the \`dist\` folder (index.html + assets folder).",
+                "Upload the \`.htaccess\` file to \`public_html\` to fix routing."
             ]
         }
     ];
@@ -921,10 +930,8 @@ export const getDeploymentPhases = () => {
 
 // Keeps the text version for the downloadable file
 export const generateFrontendGuide = (): string => {
-    return `# HOSTINGER DEPLOYMENT MANUAL (ZERO-TO-HERO GUIDE)
-======================================================
-
-This guide assumes you have a clean Hostinger Shared Hosting plan and a domain (e.g., iitjeeprep.com).
+    return `# HOSTINGER DEPLOYMENT MANUAL
+===========================
 
 TROUBLESHOOTING 403 ERRORS (ACCESS FORBIDDEN)
 ---------------------------------------------
@@ -978,66 +985,22 @@ PHASE 2: BACKEND API SETUP (File Manager)
      - \`api/index.php\`
      - \`api/.htaccess\` (IMPORTANT)
 
-PHASE 3: FRONTEND BUILD (StackBlitz)
-------------------------------------
-1. In the StackBlitz **Terminal** (bottom of screen), run:
-   \`\`\`bash
-   npm run build
-   \`\`\`
-   *(If it asks to install dependencies, let it).*
-2. Wait for it to finish. A \`dist\` folder will appear in the file tree.
-3. **Export Project**: Click the StackBlitz logo (top left) -> **Export Project**.
-4. Unzip the downloaded file on your computer.
-5. Find the \`dist\` folder inside the unzipped project.
-
-PHASE 4: FRONTEND CONFIGURATION
--------------------------------
-1. Before uploading, we need to tell the Frontend to talk to your live API.
-2. In your local unzipped code (or on StackBlitz before building), open \`src/config.ts\` (create if missing).
+PHASE 3: FRONTEND BUILD & UPLOAD
+--------------------------------
+1. Before building, open \`src/config.ts\`.
    \`\`\`typescript
    // src/config.ts
    export const API_BASE_URL = "https://your-domain.com/api"; // CHANGE THIS URL!
    \`\`\`
-3. If you changed this *after* building, you need to build again. 
-   *(Hack: You can also search-replace the localhost URL in the generated .js files in dist/assets, but rebuilding is safer).*
+2. Run \`npm run build\` locally.
+   - This creates a \`dist/\` folder containing \`index.html\` and an \`assets/\` folder.
+   - Note: There is NO main.css file because we use Tailwind via CDN. This is normal.
+3. Go to Hostinger File Manager > **public_html**.
+4. Upload the **CONTENTS** of the \`dist\` folder.
+   - You should see \`index.html\` and \`assets\` folder directly inside \`public_html\`.
+5. Upload the \`.htaccess\` file (from the System Docs > Server Config) to \`public_html\`.
+   - This handles the routing so you don't get 404 errors when refreshing pages.
 
-PHASE 5: UPLOAD & GO LIVE
--------------------------
-1. Go back to Hostinger **File Manager** > **public_html**.
-2. **Open the \`dist\` folder on your computer.**
-3. **Select ALL files** inside it.
-   - You should typically see:
-     - \`index.html\`
-     - \`assets/\` (This folder contains your compiled .js file)
-     - \`vite.svg\` (optional)
-   - **Note:** You will likely NOT see a large .css file because this app uses Tailwind via CDN. This is normal!
-4. **Drag and Drop them DIRECTLY into the \`public_html\` folder** on Hostinger.
-   - ⚠️ **CRITICAL:** Do NOT upload the \`dist\` folder itself. Upload its CONTENTS.
-   - Your \`public_html\` should look like:
-     - \`api/\` (folder)
-     - \`assets/\` (folder)
-     - \`index.html\`
-     - \`.htaccess\`
-     - ...other files
-5. **React Routing Fix**:
-   - Create a new file in \`public_html\` named \`.htaccess\`.
-   - Paste the following:
-     \`\`\`apache
-     <IfModule mod_rewrite.c>
-       RewriteEngine On
-       RewriteBase /
-       RewriteRule ^index\\.html$ - [L]
-       RewriteCond %{REQUEST_FILENAME} !-f
-       RewriteCond %{REQUEST_FILENAME} !-d
-       RewriteRule . /index.html [L]
-     </IfModule>
-     \`\`\`
-
-🎉 DONE!
---------
-Visit your domain. You should see the login screen.
-- Try logging in with: \`innfriend1@gmail.com\` / \`123456\`.
-- Try creating a new account (Email verification is disabled, you will be logged in immediately).
-- Use the 'Live Connection Tester' in Admin Panel to verify everything is working.
+✅ DONE! Your site should now be live and connected to the database.
 `;
 };
