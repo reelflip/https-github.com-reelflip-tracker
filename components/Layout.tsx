@@ -135,7 +135,10 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
       <aside className="hidden md:flex flex-col w-64 bg-slate-900 text-white h-screen fixed left-0 top-0 z-50 shadow-xl">
         <div className="p-6 border-b border-slate-800">
           <h1 className="text-2xl font-bold tracking-tight text-blue-400">IITGEEPrep</h1>
-          <p className="text-xs text-slate-400 mt-1">v1.4 (Live) • {currentUser.role}</p>
+          <p className="text-xs text-slate-400 mt-1">
+            {currentUser.role}
+            {currentUser.role === 'ADMIN' && <span className="ml-1 opacity-75">• v1.7</span>}
+          </p>
         </div>
         
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto no-scrollbar">
@@ -199,7 +202,8 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
         <footer className="bg-white border-t border-slate-200 py-6 px-4 md:px-8 mt-auto">
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
                 <div className="mb-4 md:mb-0">
-                    &copy; 2025 IITGEEPrep. All rights reserved.
+                    &copy; 2025 IITGEEPrep. All rights reserved. 
+                    {currentUser.role === 'ADMIN' && <span className="ml-2 px-1.5 py-0.5 bg-slate-100 rounded text-slate-400">v1.7</span>}
                 </div>
                 <div className="flex space-x-6 flex-wrap justify-center gap-y-2">
                     <button onClick={() => onTabChange('about')} className="hover:text-blue-600 transition-colors flex items-center">
@@ -276,7 +280,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
              </div>
              
              <div className="px-5 py-6 overflow-y-auto flex-1 custom-scrollbar">
-                <div className="grid grid-cols-2 gap-4 pb-20">
+                <div className="grid grid-cols-2 gap-4 pb-10">
                    {navItems.map((item, idx) => {
                       const isActive = activeTab === item.id;
                       const style = getMobileMenuStyles(item.id, isActive);
@@ -310,7 +314,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                    })}
                 </div>
                 
-                {/* Secondary Logout in Menu (Optional but good for completeness) */}
+                {/* Secondary Logout in Menu */}
                 <div className="mt-4 pt-4 border-t border-slate-200">
                     <button 
                         onClick={onLogout}
@@ -319,6 +323,9 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                         <LogOut size={20} />
                         <span>Sign Out</span>
                     </button>
+                    {currentUser.role === 'ADMIN' && (
+                        <p className="text-center text-[10px] text-slate-300 mt-4">App Version v1.7</p>
+                    )}
                 </div>
              </div>
           </div>

@@ -68,6 +68,25 @@ export const MOCK_USERS: User[] = [
       isVerified: true,
       studentId: 'u_student_demo',
       avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=vikas'
+  },
+  // --- LOCAL DEV ACCOUNTS (For testing connection flow) ---
+  {
+      id: 'student_local',
+      name: 'Dev Student',
+      email: 'student@dev.local',
+      role: 'STUDENT',
+      isVerified: true,
+      targetYear: 2025,
+      targetExam: 'JEE Main & Advanced',
+      institute: 'Dev Institute'
+  },
+  {
+      id: 'parent_local',
+      name: 'Dev Parent',
+      email: 'parent@dev.local',
+      role: 'PARENT',
+      isVerified: true,
+      // Intentionally disconnected to test flow
   }
 ];
 

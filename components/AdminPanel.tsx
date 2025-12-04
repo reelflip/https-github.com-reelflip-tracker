@@ -1,6 +1,6 @@
 
 import React, { useState, useEffect } from 'react';
-import { Database, Users, Radio, FileText, Plus, Check, Shield, Trash2 } from 'lucide-react';
+import { Database, Users, Radio, FileText, Plus, Check, Shield, Trash2, X, AlertOctagon, Save } from 'lucide-react';
 import { User, Question, Test, Notification, Quote } from '../types';
 import { JEE_SYLLABUS } from '../constants';
 
@@ -15,6 +15,8 @@ interface AdminPanelProps {
     onSendNotification: (n: Notification) => void;
     onAddQuote: (text: string, author: string) => void;
     onDeleteQuote: (id: string) => void;
+    onUpdateUser?: (user: Partial<User>) => void;
+    onDeleteUser?: (id: string) => void;
 }
 
 type TabView = 'BROADCAST' | 'QUESTION_BANK' | 'TEST_BUILDER' | 'USERS';
@@ -29,7 +31,9 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     onCreateTest, 
     onSendNotification,
     onAddQuote,
-    onDeleteQuote
+    onDeleteQuote,
+    onUpdateUser,
+    onDeleteUser
 }) => {
     const [view, setView] = useState<TabView>('BROADCAST');
     
@@ -38,12 +42,15 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         if (activeTab === 'users') {
             setView('USERS');
         } else if (activeTab === 'dashboard') {
-            // Only reset to broadcast if we are currently on a tab that implies a sidebar change
             if (view === 'USERS') {
                 setView('BROADCAST');
             }
         }
     }, [activeTab]);
+
+    // User Management State
+    const [editingUser, setEditingUser] = useState<User | null>(null);
+    const [editFormData, setEditFormData] = useState<Partial<User>>({});
 
     // Broadcast State
     const [notifTitle, setNotifTitle] = useState('');
@@ -68,7 +75,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
 
     const handleTabClick = (tabId: TabView) => {
         setView(tabId);
-        // Sync back to parent sidebar
         if (tabId === 'USERS') {
             onTabChange('users');
         } else {
@@ -109,7 +115,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             correctOptionIndex: qCorrect
         };
         onAddQuestion(newQ);
-        // Reset
         setQText('');
         setQOptions(['', '', '', '']);
         alert('Question Added to Bank!');
@@ -127,7 +132,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             difficulty: testDifficulty
         };
         onCreateTest(newTest);
-        // Reset
         setTestTitle('');
         setSelectedQIds([]);
         alert('Mock Test Published!');
@@ -147,7 +151,41 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         }
     };
 
-    // Helper to get topics for dropdown
+    const handleManageUser = (u: User) => {
+        setEditingUser(u);
+        setEditFormData({
+            name: u.name,
+            email: u.email,
+            role: u.role,
+            isVerified: u.isVerified,
+            targetExam: u.targetExam,
+            institute: u.institute
+        });
+    };
+
+    const saveUserChanges = () => {
+        if (onUpdateUser && editingUser) {
+            onUpdateUser({ ...editFormData, id: editingUser.id });
+            setEditingUser(null);
+        }
+    };
+
+    const blockUser = () => {
+        if (onUpdateUser && editingUser) {
+            onUpdateUser({ id: editingUser.id, isVerified: !editingUser.isVerified });
+            setEditingUser(null);
+        }
+    };
+
+    const deleteUser = () => {
+        if (onDeleteUser && editingUser) {
+            if (confirm("Are you sure you want to permanently delete this user?")) {
+                onDeleteUser(editingUser.id);
+                setEditingUser(null);
+            }
+        }
+    };
+
     const availableTopics = JEE_SYLLABUS.find(s => s.id === qSubject)?.chapters.flatMap(c => c.topics) || [];
 
     return (
@@ -163,7 +201,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                         <Shield className="w-10 h-10 text-white" />
                     </div>
                 </div>
-                {/* Decor */}
                 <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-blue-600/20 rounded-full blur-3xl"></div>
                 <div className="absolute top-0 right-1/3 w-32 h-32 bg-purple-500/10 rounded-full blur-2xl"></div>
             </div>
@@ -196,7 +233,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 {/* 1. BROADCASTS */}
                 {view === 'BROADCAST' && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8 animate-in fade-in">
-                        {/* Notifications */}
                         <div className="space-y-4">
                             <div className="flex items-center space-x-2 mb-2">
                                 <span className="bg-blue-100 p-2 rounded-lg text-blue-600"><Radio className="w-5 h-5"/></span>
@@ -220,7 +256,6 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                             </div>
                         </div>
 
-                        {/* Motivation Quotes Manager */}
                         <div className="space-y-4">
                             <div className="flex items-center space-x-2 mb-2">
                                 <span className="bg-purple-100 p-2 rounded-lg text-purple-600"><Shield className="w-5 h-5"/></span>
@@ -449,19 +484,22 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                                 <tr>
                                     <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">User Profile</th>
                                     <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Role</th>
-                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Email</th>
+                                    <th className="px-6 py-4 text-left text-xs font-bold text-slate-500 uppercase tracking-wider">Details</th>
                                     <th className="px-6 py-4 text-right">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="bg-white divide-y divide-slate-200">
                                 {users.map(u => (
-                                    <tr key={u.id} className="hover:bg-slate-50 transition-colors">
+                                    <tr key={u.id} className={`hover:bg-slate-50 transition-colors ${!u.isVerified ? 'bg-red-50/50' : ''}`}>
                                         <td className="px-6 py-4">
                                             <div className="flex items-center">
                                                 <div className="h-8 w-8 rounded-full bg-slate-200 flex items-center justify-center text-xs font-bold text-slate-600 mr-3">
                                                     {u.name.charAt(0)}
                                                 </div>
-                                                <div className="text-sm font-bold text-slate-900">{u.name}</div>
+                                                <div className="text-sm font-bold text-slate-900">
+                                                    {u.name}
+                                                    {!u.isVerified && <span className="ml-2 text-[10px] bg-red-100 text-red-600 px-1.5 py-0.5 rounded">BLOCKED</span>}
+                                                </div>
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 text-sm text-slate-500">
@@ -473,8 +511,18 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                                                 {u.role}
                                             </span>
                                         </td>
-                                        <td className="px-6 py-4 text-sm text-slate-500 font-mono">{u.email}</td>
-                                        <td className="px-6 py-4 text-right text-sm text-blue-600 hover:text-blue-800 font-bold cursor-pointer">Manage</td>
+                                        <td className="px-6 py-4 text-sm text-slate-500">
+                                            <div className="font-mono text-xs">{u.email}</div>
+                                            {u.targetExam && <div className="text-[10px] text-slate-400">{u.targetExam}</div>}
+                                        </td>
+                                        <td className="px-6 py-4 text-right text-sm">
+                                            <button 
+                                                onClick={() => handleManageUser(u)}
+                                                className="text-blue-600 hover:text-blue-800 font-bold px-3 py-1 rounded hover:bg-blue-50 transition-colors"
+                                            >
+                                                Manage
+                                            </button>
+                                        </td>
                                     </tr>
                                 ))}
                             </tbody>
@@ -482,6 +530,89 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     </div>
                 )}
             </div>
+
+            {/* Edit User Modal */}
+            {editingUser && (
+                <div className="fixed inset-0 bg-black/50 z-[60] flex items-center justify-center p-4 animate-in fade-in">
+                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden animate-in zoom-in-95">
+                        <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50">
+                            <h3 className="font-bold text-slate-800 text-lg">Manage User</h3>
+                            <button onClick={() => setEditingUser(null)} className="text-slate-400 hover:text-slate-600">
+                                <X className="w-5 h-5" />
+                            </button>
+                        </div>
+                        <div className="p-6 space-y-4">
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Full Name</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm"
+                                    value={editFormData.name || ''}
+                                    onChange={e => setEditFormData({...editFormData, name: e.target.value})}
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Email</label>
+                                <input 
+                                    type="text" 
+                                    className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-slate-50"
+                                    value={editFormData.email || ''}
+                                    disabled
+                                />
+                            </div>
+                            <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Target Exam</label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full p-2.5 border border-slate-200 rounded-lg text-sm"
+                                        value={editFormData.targetExam || ''}
+                                        onChange={e => setEditFormData({...editFormData, targetExam: e.target.value})}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Institute</label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full p-2.5 border border-slate-200 rounded-lg text-sm"
+                                        value={editFormData.institute || ''}
+                                        onChange={e => setEditFormData({...editFormData, institute: e.target.value})}
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="pt-4 border-t border-slate-100 flex flex-col gap-3">
+                                <button 
+                                    onClick={blockUser}
+                                    className={`w-full py-2.5 rounded-lg font-bold flex items-center justify-center border transition-colors ${
+                                        editingUser.isVerified 
+                                        ? 'border-red-200 text-red-600 hover:bg-red-50' 
+                                        : 'border-green-200 text-green-600 hover:bg-green-50'
+                                    }`}
+                                >
+                                    {editingUser.isVerified ? <AlertOctagon className="w-4 h-4 mr-2" /> : <Check className="w-4 h-4 mr-2" />}
+                                    {editingUser.isVerified ? 'Block Access' : 'Unblock Access'}
+                                </button>
+                                
+                                <div className="flex gap-3">
+                                    <button 
+                                        onClick={deleteUser}
+                                        className="flex-1 py-2.5 bg-slate-100 text-slate-500 rounded-lg font-bold hover:bg-red-600 hover:text-white transition-colors flex items-center justify-center"
+                                    >
+                                        <Trash2 className="w-4 h-4 mr-2" /> Delete User
+                                    </button>
+                                    <button 
+                                        onClick={saveUserChanges}
+                                        className="flex-1 py-2.5 bg-blue-600 text-white rounded-lg font-bold hover:bg-blue-700 shadow-md transition-colors flex items-center justify-center"
+                                    >
+                                        <Save className="w-4 h-4 mr-2" /> Save Changes
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

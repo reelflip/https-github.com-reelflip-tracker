@@ -104,7 +104,12 @@ const SystemDocs: React.FC = () => {
             <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
                 <div className="relative z-10 flex items-center justify-between">
                     <div>
-                        <h2 className="text-3xl font-bold mb-2">System Documentation</h2>
+                        <div className="flex items-center gap-3 mb-2">
+                            <h2 className="text-3xl font-bold">System Documentation</h2>
+                            <span className="px-2 py-1 rounded-md bg-slate-700 border border-slate-600 text-xs font-mono text-cyan-400 shadow-sm">
+                                v1.7 (Stable)
+                            </span>
+                        </div>
                         <p className="text-slate-400 text-lg max-w-xl">Deployment tools for Hostinger Shared Hosting.</p>
                     </div>
                     <div className="hidden md:block bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-md">

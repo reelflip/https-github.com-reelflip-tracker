@@ -54,7 +54,7 @@ function App() {
   const [flashcards, setFlashcards] = useState<Flashcard[]>(INITIAL_FLASHCARDS);
   const [backlogs, setBacklogs] = useState<BacklogItem[]>([]);
   const [hacks, setHacks] = useState<MemoryHack[]>(INITIAL_MEMORY_HACKS);
-  const [allUsers, setAllUsers] = useState<User[]>([]); // New state for admin user list
+  const [allUsers, setAllUsers] = useState<User[]>(MOCK_USERS); // Initialized with Mock Users for local dev
 
   // --- API: Fetch Data on Login ---
   useEffect(() => {
@@ -128,6 +128,22 @@ function App() {
                   status: b.status
               })));
           }
+          if (data.attempts) {
+              // Map DB attempts to Frontend structure
+              setAttempts(data.attempts.map((a: any) => ({
+                  id: a.id,
+                  testId: a.test_id,
+                  studentId: a.user_id,
+                  date: a.attempt_date,
+                  score: parseInt(a.score || 0),
+                  totalQuestions: parseInt(a.total_questions || 0),
+                  correctCount: parseInt(a.correct_count || 0),
+                  incorrectCount: parseInt(a.incorrect_count || 0),
+                  unattemptedCount: parseInt(a.total_questions || 0) - (parseInt(a.correct_count || 0) + parseInt(a.incorrect_count || 0)),
+                  accuracy_percent: parseFloat(a.accuracy_percent || 0),
+                  detailedResults: a.detailedResults || []
+              })));
+          }
       } catch (err) {
           console.error("Failed to fetch dashboard", err);
       }
@@ -181,6 +197,20 @@ function App() {
   }
 
   // --- Handlers ---
+
+  const handleLogin = (user: User) => {
+      // SMART LOGIN: Prioritize state from 'allUsers' (Mock DB) if available
+      // This ensures that when testing locally with Quick Login, we don't overwrite
+      // pending requests with a fresh user object.
+      const existingUser = allUsers.find(u => u.id === user.id);
+      
+      if (existingUser) {
+          // Merge to keep existing state (like pendingRequest) but allow new props
+          setCurrentUser({ ...existingUser, ...user });
+      } else {
+          setCurrentUser(user);
+      }
+  };
 
   const handleUpdateProgress = async (topicId: string, updates: Partial<TopicProgress>) => {
     // 1. Optimistic Update
@@ -249,6 +279,14 @@ function App() {
                 });
             });
         }
+        
+        // Save full attempt history
+        if(currentUser) {
+            fetch('/api/save_attempt.php', {
+                method: 'POST',
+                body: JSON.stringify({ ...attempt, user_id: currentUser.id })
+            });
+        }
     }
   };
 
@@ -269,6 +307,31 @@ function App() {
       setAdminQuote(newQ);
   };
   const handleDeleteQuote = (id: string) => setQuotes(quotes.filter(q => q.id !== id));
+
+  const handleAdminUpdateUser = async (user: Partial<User>) => {
+      try {
+          await fetch('/api/manage_users.php', {
+              method: 'PUT',
+              body: JSON.stringify(user)
+          });
+          // Refresh list
+          fetchAdminData();
+      } catch (err) {
+          console.error("Failed to update user", err);
+      }
+  };
+
+  const handleAdminDeleteUser = async (id: string) => {
+      try {
+          await fetch(`/api/manage_users.php?id=${id}`, {
+              method: 'DELETE'
+          });
+          // Refresh list
+          fetchAdminData();
+      } catch (err) {
+          console.error("Failed to delete user", err);
+      }
+  };
 
   // --- Goals & Backlogs ---
   const handleToggleGoal = (id: string) => {
@@ -325,15 +388,68 @@ function App() {
   };
 
   // --- Connection Handlers ---
-  const handleSendConnectionRequest = (studentId: string) => {
-      // In a real app, send to /api/send_request.php
-      // For now, assume success for UI feedback
-      console.log('Sending connection request to:', studentId);
+  const handleSendConnectionRequest = (studentIdentifier: string) => {
+      // 1. Update Mock State (for local dev)
+      setAllUsers(prevUsers => prevUsers.map(u => {
+          if (u.id === studentIdentifier || u.email === studentIdentifier) {
+              return { 
+                  ...u, 
+                  pendingRequest: { 
+                      fromId: currentUser?.id || 'parent_local', 
+                      fromName: currentUser?.name || 'Parent', 
+                      type: 'PARENT_LINK' 
+                  } 
+              };
+          }
+          return u;
+      }));
+
+      // 2. Call API (for production)
+      if (currentUser) {
+          fetch('/api/send_request.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  student_identifier: studentIdentifier,
+                  parent_id: currentUser.id,
+                  parent_name: currentUser.name
+              })
+          }).catch(err => console.error("Failed to send request", err));
+      }
   };
 
   const handleRespondConnectionRequest = (accept: boolean) => {
-      // In a real app, send to /api/respond_request.php
-      console.log('Responding to connection request:', accept);
+      if (currentUser && currentUser.pendingRequest) {
+          const parentId = currentUser.pendingRequest.fromId;
+          
+          // 1. Update Mock State
+          const updatedStudent = { ...currentUser, pendingRequest: undefined };
+          if (accept) {
+              updatedStudent.parentId = parentId;
+          }
+          setCurrentUser(updatedStudent);
+
+          setAllUsers(prevUsers => prevUsers.map(u => {
+              if (u.id === parentId) {
+                  return { ...u, studentId: accept ? currentUser.id : undefined };
+              }
+              if (u.id === currentUser.id) {
+                  return updatedStudent;
+              }
+              return u;
+          }));
+
+          // 2. Call API (for production)
+          fetch('/api/respond_request.php', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                  student_id: currentUser.id,
+                  parent_id: parentId, // Passed for redundancy check
+                  accept: accept
+              })
+          }).catch(err => console.error("Failed to respond to request", err));
+      }
   };
 
   // --- Render Logic ---
@@ -353,7 +469,7 @@ function App() {
         return <PublicLayout onNavigate={setActiveTab}><ExamGuide /></PublicLayout>;
       default:
         // Default to AuthScreen (Login/Register)
-        return <AuthScreen onLogin={setCurrentUser} onNavigate={setActiveTab} />;
+        return <AuthScreen onLogin={handleLogin} onNavigate={setActiveTab} />;
     }
   }
 
@@ -409,6 +525,8 @@ function App() {
                 onSendNotification={handleSendNotification}
                 onAddQuote={handleAddQuote}
                 onDeleteQuote={handleDeleteQuote}
+                onUpdateUser={handleAdminUpdateUser}
+                onDeleteUser={handleAdminDeleteUser}
             />
         );
       case 'system':
@@ -480,7 +598,7 @@ function App() {
           setProgress({});
           setGoals([]);
           setMistakes([]);
-          setAllUsers([]);
+          // DO NOT reset allUsers, to preserve local dev state
       }}
     >
       {renderContent()}

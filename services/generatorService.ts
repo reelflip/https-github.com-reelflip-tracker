@@ -3,7 +3,7 @@ import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_M
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v1.7 Final Production)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v1.8 Final Production)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
 -- Includes: 25+ Questions per Mock Test, Target Exams, and Rebranding.
@@ -402,9 +402,10 @@ export const generateHtaccess = (): string => {
 
 export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: string, name: string }) => {
     
+    // Default to User's provided Hostinger config
     const dbHost = dbConfig?.host || "82.25.121.80";
     const dbUser = dbConfig?.user || "u131922718_iitjee_user";
-    const dbPass = dbConfig?.pass || "YourStrongPassword";
+    const dbPass = dbConfig?.pass || ""; // User must provide this for security in UI
     const dbName = dbConfig?.name || "u131922718_iitjee_tracker";
 
     return [
@@ -412,13 +413,17 @@ export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: s
             name: "README.txt",
             folder: "api",
             desc: "Instructions for Hostinger Deployment.",
-            content: `IITGEEPrep (v1.7 Final Production) - API DEPLOYMENT
+            content: `IITGEEPrep (v1.8 Final Production) - API DEPLOYMENT
 ============================================
 Website: iitgeeprep.com
 
 QUICK SETUP GUIDE:
 1. UPLOAD: Extract and upload all .php files to public_html/api folder.
 2. CONFIG: Open config.php and verify your Hostinger database credentials.
+   - Host: ${dbHost}
+   - User: ${dbUser}
+   - DB: ${dbName}
+   - Pass: (Ensure you set your password!)
 3. PERMISSIONS: 
    - Right click 'api' folder -> Permissions -> 755
    - Right click all .php files -> Permissions -> 644
@@ -497,7 +502,8 @@ if(isset($data->email) && isset($data->password)) {
                 "course" => $row['course_name'],
                 "phone" => $row['phone'],
                 "studentId" => $row['student_id'],
-                "parentId" => $row['parent_id']
+                "parentId" => $row['parent_id'],
+                "pendingRequest" => $row['pending_request_json'] ? json_decode($row['pending_request_json']) : null
             ];
 
             if ($email === 'admin' && $password === 'Ishika@123') {
@@ -584,6 +590,88 @@ if(isset($data->email) && isset($data->password)) {
 ?>`
         },
         {
+            name: "send_request.php",
+            folder: "api",
+            desc: "Sends a parent-student link request.",
+            content: `<?php
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+
+if(isset($data->student_identifier) && isset($data->parent_id)) {
+    try {
+        // Find Student by Email or ID
+        $query = "SELECT id FROM users WHERE (email = ? OR id = ?) AND role = 'STUDENT' LIMIT 1";
+        $stmt = $conn->prepare($query);
+        $stmt->execute([$data->student_identifier, $data->student_identifier]);
+        
+        if($stmt->rowCount() > 0) {
+            $student = $stmt->fetch(PDO::FETCH_ASSOC);
+            $studentId = $student['id'];
+            
+            $requestJson = json_encode([
+                "fromId" => $data->parent_id,
+                "fromName" => $data->parent_name,
+                "type" => "PARENT_LINK"
+            ]);
+            
+            $update = $conn->prepare("UPDATE users SET pending_request_json = ? WHERE id = ?");
+            if($update->execute([$requestJson, $studentId])) {
+                echo json_encode(["message" => "Request Sent"]);
+            } else {
+                http_response_code(500);
+                echo json_encode(["message" => "Failed to update student"]);
+            }
+        } else {
+            http_response_code(404);
+            echo json_encode(["message" => "Student not found"]);
+        }
+    } catch(PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["message" => "Database error: " . $e->getMessage()]);
+    }
+}
+?>`
+        },
+        {
+            name: "respond_request.php",
+            folder: "api",
+            desc: "Accepts or Declines a request.",
+            content: `<?php
+include_once 'config.php';
+$data = json_decode(file_get_contents("php://input"));
+
+if(isset($data->student_id) && isset($data->accept)) {
+    try {
+        $conn->beginTransaction();
+        
+        // 1. Clear request in Student
+        $clear = $conn->prepare("UPDATE users SET pending_request_json = NULL WHERE id = ?");
+        $clear->execute([$data->student_id]);
+        
+        if ($data->accept && isset($data->parent_id)) {
+            // 2. Link Student -> Parent
+            $linkS = $conn->prepare("UPDATE users SET parent_id = ? WHERE id = ?");
+            $linkS->execute([$data->parent_id, $data->student_id]);
+            
+            // 3. Link Parent -> Student
+            $linkP = $conn->prepare("UPDATE users SET student_id = ? WHERE id = ?");
+            $linkP->execute([$data->student_id, $data->parent_id]);
+            
+            echo json_encode(["message" => "Connection Accepted"]);
+        } else {
+            echo json_encode(["message" => "Request Declined"]);
+        }
+        
+        $conn->commit();
+    } catch(Exception $e) {
+        $conn->rollBack();
+        http_response_code(500);
+        echo json_encode(["message" => "Database error: " . $e->getMessage()]);
+    }
+}
+?>`
+        },
+        {
             name: "index.php",
             folder: "api",
             desc: "Default file.",
@@ -625,16 +713,60 @@ echo json_encode($response);
             content: `<?php
 include_once 'config.php';
 try {
-    $stmt = $conn->query("SELECT id, full_name as name, email, role, is_verified, created_at FROM users ORDER BY created_at DESC");
+    $stmt = $conn->query("SELECT id, full_name as name, email, role, is_verified, created_at, target_exam, institute FROM users ORDER BY created_at DESC");
     $users = $stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach($users as &$user) {
         $user['avatarUrl'] = "https://api.dicebear.com/7.x/avataaars/svg?seed=" . $user['email'];
         $user['isVerified'] = ($user['is_verified'] == 1);
+        $user['targetExam'] = $user['target_exam'];
     }
     echo json_encode($users);
 } catch(PDOException $e) {
     http_response_code(500);
     echo json_encode(["error" => $e->getMessage()]);
+}
+?>`
+        },
+        {
+            name: "manage_users.php",
+            folder: "api",
+            desc: "Admin API to manage (Edit/Block/Delete) users.",
+            content: `<?php
+include_once 'config.php';
+$method = $_SERVER['REQUEST_METHOD'];
+$data = json_decode(file_get_contents("php://input"));
+
+if ($method === 'PUT' && isset($data->id)) {
+    // Update User or Toggle Block
+    try {
+        if (isset($data->isVerified)) {
+            // Block/Unblock
+            $stmt = $conn->prepare("UPDATE users SET is_verified = ? WHERE id = ?");
+            $stmt->execute([$data->isVerified ? 1 : 0, $data->id]);
+            echo json_encode(["message" => "User status updated"]);
+        } else {
+            // Edit Details
+            $stmt = $conn->prepare("UPDATE users SET full_name = ?, email = ?, role = ?, target_exam = ?, institute = ? WHERE id = ?");
+            $stmt->execute([$data->name, $data->email, $data->role, $data->targetExam, $data->institute, $data->id]);
+            echo json_encode(["message" => "User updated"]);
+        }
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["error" => $e->getMessage()]);
+    }
+} elseif ($method === 'DELETE' && isset($_GET['id'])) {
+    // Delete User
+    try {
+        $stmt = $conn->prepare("DELETE FROM users WHERE id = ?");
+        $stmt->execute([$_GET['id']]);
+        echo json_encode(["message" => "User deleted"]);
+    } catch (PDOException $e) {
+        http_response_code(500);
+        echo json_encode(["error" => $e->getMessage()]);
+    }
+} else {
+    http_response_code(405);
+    echo json_encode(["error" => "Method not allowed"]);
 }
 ?>`
         },
@@ -901,7 +1033,7 @@ export const getDeploymentPhases = () => {
 };
 
 export const generateFrontendGuide = (): string => {
-    return `# HOSTINGER DEPLOYMENT MANUAL (v1.7 Final Production)
+    return `# HOSTINGER DEPLOYMENT MANUAL (v1.8 Final Production)
     
 Welcome to IITGEEPrep deployment. This guide will walk you through setting up the app on Hostinger Shared Hosting.
 
