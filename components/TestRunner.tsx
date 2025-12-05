@@ -23,6 +23,10 @@ const TestRunner: React.FC = () => {
 
         const text = await res.text();
         try {
+            // Check for empty response
+            if (!text.trim()) {
+                throw new Error(`Empty response from ${url}`);
+            }
             const data = JSON.parse(text);
             if (!res.ok) {
                 throw new Error(data.message || data.error || `Server Error (${res.status})`);
@@ -30,7 +34,7 @@ const TestRunner: React.FC = () => {
             return data;
         } catch (jsonErr) {
             console.error("Raw Response:", text);
-            // Show preview of raw text to help debug PHP errors
+            // Show preview of raw text to help debug PHP errors (warnings/notices)
             throw new Error(`Invalid JSON response from ${url}. Raw Output: "${text.substring(0, 100)}..."`);
         }
     };

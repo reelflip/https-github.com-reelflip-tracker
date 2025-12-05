@@ -3,10 +3,9 @@ import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_M
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v2.4 Testing & Analytics Release)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v2.5 Production Release)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
--- Includes: Attempt Details for Analytics, Blog Fixes
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+05:30";
@@ -613,26 +612,32 @@ Sitemap: https://iitgeeprep.com/sitemap.xml`;
             name: "README.txt",
             folder: "api",
             desc: "Instructions for Hostinger Deployment.",
-            content: `IITGEEPrep (v2.4 Testing & Analytics Release) - API DEPLOYMENT
+            content: `IITGEEPrep (v2.5 Testing & Analytics Release) - API DEPLOYMENT
 ============================================
 Website: iitgeeprep.com
 
 QUICK SETUP GUIDE:
 1. UPLOAD: Extract and upload all .php files to public_html/api folder.
+   NOTE: Ensure they are in public_html/api, not public_html/api/api.
+   URL Check: iitgeeprep.com/api/index.php should return JSON.
+
 2. CONFIG: Open config.php and verify your Hostinger database credentials.
    - Host: ${dbHost}
    - User: ${dbUser}
    - DB: ${dbName}
    - Pass: (Ensure you set your password!)
+
 3. PERMISSIONS: 
    - Right click 'api' folder -> Permissions -> 755
    - Right click all .php files -> Permissions -> 644
+
 4. DATABASE: Import the latest database.sql file via phpMyAdmin.
+
 5. TEST: Visit iitgeeprep.com/api/test_db.php to verify connection.
-6. SEO: Upload sitemap.xml and robots.txt to public_html root.
 
 TROUBLESHOOTING:
-- 403 Forbidden: Check permissions or delete .htaccess in api folder temporarily.
+- JSON Errors: This zip has 'error_reporting(0)' enabled to prevent PHP warnings.
+- 403 Forbidden: Check permissions.
 - 500 Error: Check config.php for typo in password.
 `
         },
@@ -653,6 +658,8 @@ TROUBLESHOOTING:
             folder: "api",
             desc: "Database connection & settings.",
             content: `<?php
+error_reporting(0);
+ini_set('display_errors', '0');
 header("Access-Control-Allow-Origin: *");
 header("Content-Type: application/json; charset=UTF-8");
 header("Access-Control-Allow-Methods: POST, GET, OPTIONS, DELETE, PUT");
@@ -1054,7 +1061,6 @@ echo json_encode(["status" => "active", "message" => "IITGEEPrep API is running"
             folder: "api",
             desc: "Diagnostic tool.",
             content: `<?php
-error_reporting(0);
 include_once 'config.php';
 $response = [];
 try {
