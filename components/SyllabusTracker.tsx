@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { Subject, TopicProgress, TopicStatus, Topic, User } from '../types';
 import { 
@@ -20,6 +21,7 @@ interface SyllabusTrackerProps {
   subjects: Subject[];
   progress: Record<string, TopicProgress>;
   onUpdateProgress: (topicId: string, updates: Partial<TopicProgress>) => void;
+  readOnly?: boolean;
 }
 
 const statusColors: Record<TopicStatus, string> = {
@@ -36,17 +38,21 @@ const statusLabels: Record<TopicStatus, string> = {
   'REVISE': 'Revise',
 };
 
-const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progress, onUpdateProgress }) => {
+const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progress, onUpdateProgress, readOnly = false }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubjectFilter, setActiveSubjectFilter] = useState<string>('ALL');
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [showSaveToast, setShowSaveToast] = useState(false);
 
   const handleSave = () => {
+      if (readOnly) return;
       setIsSaving(true);
-      // Simulate network request/DB sync
+      // Simulate network request/DB sync verification
       setTimeout(() => {
           setIsSaving(false);
+          setShowSaveToast(true);
+          setTimeout(() => setShowSaveToast(false), 2000);
       }, 800);
   };
 
@@ -101,7 +107,7 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
   };
 
   return (
-    <div className="space-y-8 font-inter animate-in fade-in slide-in-from-bottom-4">
+    <div className="space-y-8 font-inter animate-in fade-in slide-in-from-bottom-4 relative">
       {/* Header Banner */}
       <div className="bg-gradient-to-r from-blue-600 to-cyan-600 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
           <div className="relative z-10">
@@ -134,7 +140,7 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
                <span className="text-[10px] font-bold uppercase tracking-wider">Time Remaining</span>
              </div>
              <div className="text-xl font-bold text-slate-800">{stats.timeRemaining}</div>
-             <div className="text-[10px] text-slate-400">Target: IIT JEE {user.targetYear || 2025}</div>
+             <div className="text-[10px] text-slate-400">Target: {user.targetExam || 'IIT JEE'} {user.targetYear || 2025}</div>
            </div>
         </div>
 
@@ -157,8 +163,8 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
         </div>
       </div>
 
-      {/* --- Controls: Search & Filter & Save --- */}
-      <div className="flex flex-col md:flex-row gap-4 items-center justify-between bg-white p-2 rounded-xl border border-slate-200 shadow-sm">
+      {/* --- Controls: Search & Filter & Save (Sticky) --- */}
+      <div className="sticky top-0 md:top-4 z-30 flex flex-col md:flex-row gap-4 items-center justify-between bg-white/95 backdrop-blur-sm p-3 rounded-xl border border-slate-200 shadow-md">
         <div className="relative w-full md:w-96">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-slate-400 w-4 h-4" />
           <input 
@@ -182,7 +188,7 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
                     className={`px-4 py-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap ${
                     activeSubjectFilter === filter 
                         ? 'bg-slate-800 text-white shadow-md' 
-                        : 'bg-white text-slate-500 hover:bg-slate-50'
+                        : 'bg-white text-slate-500 hover:bg-slate-50 border border-slate-100'
                     }`}
                 >
                     {labels[filter]}
@@ -191,15 +197,17 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
             })}
             </div>
             
-            {/* Main Save Button */}
-            <button
-                onClick={handleSave}
-                disabled={isSaving}
-                className="flex items-center justify-center space-x-2 px-6 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 active:scale-95 transition-all shadow-md shadow-green-200 disabled:opacity-70 disabled:cursor-not-allowed min-w-[120px]"
-            >
-                {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                <span>{isSaving ? 'Saving...' : 'Save Progress'}</span>
-            </button>
+            {/* Main Save Button (Desktop) */}
+            {!readOnly && (
+                <button
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="hidden md:flex items-center justify-center space-x-2 px-6 py-1.5 bg-green-600 text-white rounded-lg text-xs font-bold hover:bg-green-700 active:scale-95 transition-all shadow-md shadow-green-200 disabled:opacity-70 disabled:cursor-not-allowed min-w-[120px]"
+                >
+                    {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                    <span>{isSaving ? 'Saving...' : 'Save Progress'}</span>
+                </button>
+            )}
         </div>
       </div>
 
@@ -257,8 +265,9 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
                                     <select 
                                       value={topicData.status}
                                       onChange={(e) => onUpdateProgress(topic.id, { status: e.target.value as TopicStatus })}
-                                      className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border outline-none cursor-pointer transition-colors ${statusColors[topicData.status]}`}
+                                      className={`appearance-none pl-3 pr-8 py-1.5 rounded-lg text-xs font-bold border outline-none cursor-pointer transition-colors ${statusColors[topicData.status]} ${readOnly ? 'opacity-70 pointer-events-none' : ''}`}
                                       aria-label={`Status for ${topic.name}`}
+                                      disabled={readOnly}
                                     >
                                       {Object.entries(statusLabels).map(([key, label]) => (
                                         <option key={key} value={key}>{label}</option>
@@ -300,6 +309,7 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
                                                   onChange={(e) => onUpdateProgress(topic.id, { [solvedKey]: parseInt(e.target.value) || 0 })}
                                                   className="w-full text-xs p-1 rounded border border-slate-200 focus:border-blue-400 focus:ring-0 outline-none text-center font-medium text-slate-700"
                                                   aria-label={`Exercise ${num} Solved for ${topic.name}`}
+                                                  disabled={readOnly}
                                                 />
                                                 <span className="text-slate-300">/</span>
                                                 <input 
@@ -308,22 +318,25 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
                                                   onChange={(e) => onUpdateProgress(topic.id, { [totalKey]: parseInt(e.target.value) || 0 })}
                                                   className="w-full text-xs p-1 rounded border border-slate-200 focus:border-blue-400 focus:ring-0 outline-none text-center font-medium text-slate-500 bg-slate-100"
                                                   aria-label={`Exercise ${num} Total for ${topic.name}`}
+                                                  disabled={readOnly}
                                                 />
                                             </div>
                                         </div>
                                       );
                                    })}
                                 </div>
-                                <div className="flex justify-end mt-4">
-                                     <button 
-                                        onClick={handleSave}
-                                        disabled={isSaving}
-                                        className="text-xs font-bold text-green-600 hover:text-green-700 flex items-center bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 hover:bg-green-100 transition-colors"
-                                     >
-                                         {isSaving ? <Loader2 className="w-3 h-3 mr-1 animate-spin"/> : <CheckCircle2 className="w-3 h-3 mr-1" />}
-                                         {isSaving ? 'Saving' : 'Save'}
-                                     </button>
-                                </div>
+                                {!readOnly && (
+                                    <div className="flex justify-end mt-4">
+                                        <button 
+                                            onClick={handleSave}
+                                            disabled={isSaving}
+                                            className="text-xs font-bold text-green-600 hover:text-green-700 flex items-center bg-green-50 px-3 py-1.5 rounded-lg border border-green-200 hover:bg-green-100 transition-colors"
+                                        >
+                                            {isSaving ? <Loader2 className="w-3 h-3 mr-1 animate-spin"/> : <CheckCircle2 className="w-3 h-3 mr-1" />}
+                                            {isSaving ? 'Saving' : 'Save'}
+                                        </button>
+                                    </div>
+                                )}
                              </div>
                            )}
                         </div>
@@ -343,6 +356,28 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
             </div>
         )}
       </div>
+
+      {/* Save Success Toast */}
+      {showSaveToast && (
+          <div className="fixed bottom-24 md:bottom-10 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-6 py-3 rounded-full shadow-xl flex items-center space-x-2 animate-in fade-in slide-in-from-bottom-2 z-50">
+              <CheckCircle2 className="w-5 h-5 text-green-400" />
+              <span className="font-bold text-sm">Progress Saved!</span>
+          </div>
+      )}
+
+      {/* Floating Save Button (Mobile) */}
+      {!readOnly && (
+          <div className="fixed bottom-20 right-6 md:hidden z-40">
+            <button
+                onClick={handleSave}
+                disabled={isSaving}
+                className="flex items-center justify-center p-4 bg-green-600 text-white rounded-full shadow-xl shadow-green-900/30 hover:bg-green-700 active:scale-95 transition-all"
+                aria-label="Save Progress"
+            >
+                {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
+            </button>
+          </div>
+      )}
     </div>
   );
 };
