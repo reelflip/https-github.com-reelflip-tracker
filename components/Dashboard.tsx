@@ -39,12 +39,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   const [newGoalText, setNewGoalText] = useState('');
 
   useEffect(() => {
-    // Cycle quotes every 10 seconds
     const timer = setInterval(() => {
         setCurrentQuoteIndex((prev) => (prev + 1) % (quotes.length || 1));
     }, 10000);
     
-    // Calculate days to exam (Mock date: June 15, 2025)
     const target = new Date('2025-06-15');
     const now = new Date();
     const diff = target.getTime() - now.getTime();
@@ -55,7 +53,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const currentQuote = quotes.length > 0 ? quotes[currentQuoteIndex] : { text: "Loading motivation...", author: "" };
 
-  const totalTopics = Object.keys(progress).length || 1; // Avoid divide by zero
+  const totalTopics = Object.keys(progress).length || 1; 
   const completedTopics = Object.values(progress).filter((p: TopicProgress) => p.status === 'COMPLETED').length;
   const completionRate = Math.round((completedTopics / totalTopics) * 100);
 
@@ -84,15 +82,12 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const completedGoals = goals.filter(g => g.completed).length;
   
-  // Get latest attempt
   const latestAttempt = attempts.length > 0 ? attempts[0] : null;
   const latestTestTitle = latestAttempt ? (tests.find(t => t.id === latestAttempt.testId)?.title || 'Unknown Test') : '';
 
-  // --- ADMIN OVERVIEW ---
   if (user.role === 'ADMIN') {
       return (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
-              {/* Header */}
               <div className="bg-gradient-to-r from-slate-800 to-slate-900 rounded-2xl p-8 text-white shadow-xl relative overflow-hidden">
                   <div className="relative z-10">
                       <h2 className="text-3xl font-bold mb-2">Admin Command Center</h2>
@@ -103,9 +98,7 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </div>
               </div>
 
-              {/* Stats Grid */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {/* User Stats */}
                   <div 
                     onClick={() => onChangeTab('users')}
                     className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
@@ -120,7 +113,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                       <p className="text-xs text-slate-500">Registered Students & Parents</p>
                   </div>
 
-                  {/* Inbox Stats */}
                   <div 
                     onClick={() => onChangeTab('content_admin')} 
                     className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
@@ -133,14 +125,8 @@ const Dashboard: React.FC<DashboardProps> = ({
                       </div>
                       <div className="text-3xl font-bold text-slate-800 mb-1">{contactMessages.length}</div>
                       <p className="text-xs text-slate-500">Contact Form Inquiries</p>
-                      {contactMessages.length > 0 && (
-                          <div className="mt-3 text-xs font-bold text-purple-600 flex items-center">
-                              View Inbox <ArrowRight className="w-3 h-3 ml-1" />
-                          </div>
-                      )}
                   </div>
 
-                  {/* Content Stats */}
                   <div 
                     onClick={() => onChangeTab('tests_admin')}
                     className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
@@ -156,7 +142,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                   </div>
               </div>
 
-              {/* Quick Actions */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="bg-slate-50 border border-slate-200 rounded-xl p-6">
                       <h3 className="font-bold text-slate-800 mb-4 flex items-center">
@@ -177,7 +162,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       );
   }
 
-  // --- PARENT ONBOARDING VIEW (If not connected) ---
   if (user.role === 'PARENT' && !user.studentId) {
       return (
           <div className="flex flex-col items-center justify-center min-h-[60vh] text-center space-y-6 animate-in fade-in slide-in-from-bottom-4">
@@ -201,7 +185,6 @@ const Dashboard: React.FC<DashboardProps> = ({
       );
   }
 
-  // --- STUDENT DASHBOARD (Default) ---
   return (
     <div className="space-y-6 animate-in fade-in">
       {/* Welcome & Motivation */}
@@ -225,7 +208,6 @@ const Dashboard: React.FC<DashboardProps> = ({
                     </span>
                  )}
             </div>
-            {/* Pagination Dots */}
             <div className="flex space-x-1.5 mt-4">
                 {quotes.map((_, idx) => (
                     <div 
@@ -243,9 +225,9 @@ const Dashboard: React.FC<DashboardProps> = ({
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         
-        {/* Revision Alert (Shows only if overdue > 0) */}
+        {/* Revision Alert - Explicit check */}
         {overdueCount > 0 && (
-            <div className="bg-amber-50 p-6 rounded-xl border border-amber-100 shadow-sm flex items-center justify-between">
+            <div className="bg-amber-50 p-6 rounded-xl border border-amber-100 shadow-sm flex items-center justify-between animate-in zoom-in-95">
                 <div>
                     <div className="flex items-center space-x-2 text-amber-700 mb-2">
                         <RotateCw className="w-5 h-5 animate-spin-slow" />
@@ -263,7 +245,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
         )}
 
-        {/* Countdown */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
           <div className="flex items-center space-x-3 text-slate-500 mb-4">
             <Calendar className="w-5 h-5" />
@@ -278,7 +259,6 @@ const Dashboard: React.FC<DashboardProps> = ({
           </div>
         </div>
 
-        {/* Syllabus Progress */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex items-center justify-between">
             <div className="flex flex-col">
               <div className="flex items-center space-x-2 text-slate-500 mb-2">
@@ -313,7 +293,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
         </div>
 
-        {/* Recent Test Performance (NEW) */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
             <div className="flex items-center space-x-2 text-slate-500 mb-2">
                 <Trophy className="w-5 h-5 text-yellow-500" />
@@ -349,7 +328,6 @@ const Dashboard: React.FC<DashboardProps> = ({
             )}
         </div>
 
-        {/* Daily Micro Goals */}
         <div className="md:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
            <div className="flex items-center justify-between text-slate-500 mb-4">
              <div className="flex items-center space-x-2">
@@ -396,7 +374,6 @@ const Dashboard: React.FC<DashboardProps> = ({
         </div>
       </div>
 
-      {/* Notice Board */}
       <div className="bg-amber-50 border border-amber-100 rounded-xl p-6">
         <h3 className="font-bold text-amber-800 mb-4 flex items-center">
             <Bell className="w-4 h-4 mr-2" /> Student Notice Board

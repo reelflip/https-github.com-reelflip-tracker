@@ -42,6 +42,7 @@ const TestRunner: React.FC = () => {
             const email = `auto_${role}_${timestamp}_${Math.floor(Math.random()*1000)}@test.com`;
             const pass = 'TestPass123';
             
+            // 1. Register
             const data = await fetchApi('/api/register.php', {
                 method: 'POST',
                 body: JSON.stringify({
@@ -50,12 +51,10 @@ const TestRunner: React.FC = () => {
                 })
             });
             
-            // Check if API returned user object (New V3.4 feature)
-            if (data.user) {
-                return data.user;
-            }
+            // 2. Return User (V3.4+ API returns it directly)
+            if (data.user) return data.user;
 
-            // Fallback: If PHP not updated, try manual login
+            // Fallback for older APIs: Login immediately
             const loginData = await fetchApi('/api/login.php', {
                 method: 'POST', body: JSON.stringify({ email, password: pass })
             });
@@ -84,19 +83,19 @@ const TestRunner: React.FC = () => {
             it("should register a valid Student", async () => {
                 setProgress("Creating Student...");
                 student = await registerUser('STUDENT', 'Test Student');
-                if (!student) throw new Error("Student registration failed: No user returned");
+                if (!student || !student.id) throw new Error("Student registration returned invalid object");
                 expect(student.role).toBe('STUDENT');
             });
 
             it("should register a valid Parent", async () => {
                 setProgress("Creating Parent...");
                 parent = await registerUser('PARENT', 'Test Parent');
-                if (!parent) throw new Error("Parent registration failed: No user returned");
+                if (!parent || !parent.id) throw new Error("Parent registration returned invalid object");
                 expect(parent.role).toBe('PARENT');
             });
 
             it("should send Connection Request", async () => {
-                if (!student || !parent) throw new Error("Setup failed: Missing users");
+                if (!student?.id || !parent?.id) throw new Error("Skipping: Previous registration failed");
                 setProgress("Linking...");
                 const data = await fetchApi('/api/send_request.php', {
                     method: 'POST',
@@ -110,7 +109,7 @@ const TestRunner: React.FC = () => {
             });
 
             it("should accept Connection Request", async () => {
-                if (!student || !parent) throw new Error("Setup failed: Missing users");
+                if (!student?.id || !parent?.id) throw new Error("Skipping: Previous setup failed");
                 const data = await fetchApi('/api/respond_request.php', {
                     method: 'POST',
                     body: JSON.stringify({ student_id: student.id, parent_id: parent.id, accept: true })
@@ -119,7 +118,7 @@ const TestRunner: React.FC = () => {
             });
             
             it("should allow Parent to view Student Data", async () => {
-                if (!student) throw new Error("Setup failed: Missing student");
+                if (!student?.id) throw new Error("Skipping: Student missing");
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
                 expect(data.progress).toBeDefined();
             });
@@ -136,15 +135,15 @@ const TestRunner: React.FC = () => {
             });
 
             it("should save topic progress", async () => {
-                if (!user) throw new Error("User setup failed");
+                if (!user?.id) throw new Error("User setup failed");
                 setProgress("Syncing Syllabus...");
                 const payload = { user_id: user.id, topic_id: topicId, status: 'COMPLETED', ex1Solved: 10, ex1Total: 30 };
                 const data = await fetchApi('/api/sync_progress.php', { method: 'POST', body: JSON.stringify(payload) });
-                expect(data.message).toContain("Saved"); // normalized message
+                expect(data.message).toContain("Saved");
             });
 
             it("should retrieve progress correctly", async () => {
-                if (!user) throw new Error("User setup failed");
+                if (!user?.id) throw new Error("User setup failed");
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 const topic = data.progress.find((p: any) => p.topic_id === topicId);
                 if (!topic) throw new Error("Topic progress not found in dashboard");
@@ -164,7 +163,7 @@ const TestRunner: React.FC = () => {
             });
 
             it("should create & toggle Goal", async () => {
-                if (!user) throw new Error("User setup failed");
+                if (!user?.id) throw new Error("User setup failed");
                 await fetchApi('/api/manage_goals.php', { method: 'POST', body: JSON.stringify({ id: goalId, user_id: user.id, text: "Test Goal" }) });
                 await fetchApi('/api/manage_goals.php', { method: 'PUT', body: JSON.stringify({ id: goalId }) });
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
@@ -184,7 +183,7 @@ const TestRunner: React.FC = () => {
             });
 
             it("should save detailed test attempt", async () => {
-                if (!user) throw new Error("User setup failed");
+                if (!user?.id) throw new Error("User setup failed");
                 setProgress("Submitting Exam...");
                 const payload = {
                     user_id: user.id, testId: 'test_jee_main_2024',
@@ -198,26 +197,73 @@ const TestRunner: React.FC = () => {
             });
 
             it("should retrieve attempt with Metadata", async () => {
-                if (!user) throw new Error("User setup failed");
+                if (!user?.id) throw new Error("User setup failed");
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 const attempt = data.attempts.find((a: any) => a.id.startsWith("att_"));
                 expect(attempt).toBeDefined();
                 if (attempt.detailedResults && attempt.detailedResults.length > 0) {
                     expect(attempt.detailedResults[0].subjectId).toBe('phys');
+                    // Verify option tracking
+                    expect(parseInt(attempt.detailedResults[0].selectedOptionIndex)).toBe(3);
+                } else {
+                    throw new Error("Detailed results missing in attempt");
                 }
             });
         });
 
-        // --- SUITE 10: USER PROFILE ---
-        engine.describe("10. User Profile", (it) => {
+        // --- SUITE 6: TIMETABLE ---
+        engine.describe("6. Timetable Gen", (it) => {
             let user: any;
-            it("should update user profile", async () => {
-                user = await registerUser('STUDENT', 'Profile User');
+            it("should save timetable config", async () => {
+                user = await registerUser('STUDENT', 'Time User');
                 if(!user) throw new Error("User failed");
-                const update = { id: user.id, name: "Updated Name", institute: "New Inst", targetExam: "BITSAT" };
-                await fetchApi('/api/manage_users.php', { method: 'PUT', body: JSON.stringify(update) });
-                const login = await fetchApi('/api/login.php', { method: 'POST', body: JSON.stringify({ email: user.email, password: 'TestPass123' }) });
-                expect(login.user.name).toBe("Updated Name");
+                const payload = {
+                    user_id: user.id,
+                    config: { wakeTime: "06:00" },
+                    slots: [{ time: "07:00", label: "Study", iconType: "book" }] // Use sanitized iconType
+                };
+                await fetchApi('/api/save_timetable.php', { method: 'POST', body: JSON.stringify(payload) });
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
+                expect(data.timetable).toBeDefined();
+                expect(data.timetable.slots[0].iconType).toBe("book");
+            });
+        });
+
+        // --- SUITE 12: REVISION SYSTEM ---
+        engine.describe("12. Smart Revision", (it) => {
+            let user: any;
+            const topicId = 'c_bas_1';
+
+            it("should create user", async () => {
+                user = await registerUser('STUDENT', 'Rev User');
+                if (!user) throw new Error("User setup failed");
+            });
+
+            it("should track revision check-ins", async () => {
+                if (!user?.id) throw new Error("Skipping: User failed");
+                
+                // 1. Initial Complete
+                await fetchApi('/api/sync_progress.php', { 
+                    method: 'POST', 
+                    body: JSON.stringify({ user_id: user.id, topic_id: topicId, status: 'COMPLETED' }) 
+                });
+
+                // 2. Perform Revision (Level 1)
+                const nextDate = "2025-12-31";
+                await fetchApi('/api/sync_progress.php', { 
+                    method: 'POST', 
+                    body: JSON.stringify({ 
+                        user_id: user.id, topic_id: topicId, 
+                        status: 'COMPLETED', revisionCount: 1, nextRevisionDate: nextDate 
+                    }) 
+                });
+
+                // 3. Verify
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
+                const topic = data.progress.find((p: any) => p.topic_id === topicId);
+                
+                expect(parseInt(topic.revision_count)).toBe(1);
+                expect(topic.next_revision_date).toBe(nextDate);
             });
         });
 

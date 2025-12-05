@@ -26,8 +26,29 @@ const FlashcardDeck: React.FC<FlashcardDeckProps> = ({ cards }) => {
     const currentCard = subjectCards[currentCardIndex];
 
     const playFlipSound = () => {
-        // Simple click sound using Audio API if desired, or just silent UI
-        // Keeping it silent for broad compatibility, relying on visuals
+        // Implement real sound via AudioContext
+        try {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            if (!AudioContext) return;
+            
+            const ctx = new AudioContext();
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            
+            osc.frequency.value = 400;
+            osc.type = 'sine';
+            
+            gain.gain.setValueAtTime(0.1, ctx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+            
+            osc.start();
+            osc.stop(ctx.currentTime + 0.1);
+        } catch(e) {
+            console.error("Audio failed", e);
+        }
     };
 
     const handleNext = () => {

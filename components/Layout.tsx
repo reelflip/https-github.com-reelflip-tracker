@@ -55,7 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
         { id: 'syllabus', label: 'Syllabus', icon: BookOpen },
         { id: 'tests', label: 'Tests', icon: Target },
         { id: 'analytics', label: 'Analytics', icon: BarChart2 },
-        { id: 'revision', label: 'Smart Revision', icon: RotateCw }, // Restored
+        { id: 'revision', label: 'Smart Revision', icon: RotateCw }, 
         { id: 'backlogs', label: 'Backlogs', icon: ListTodo },
         { id: 'mistakes', label: 'Mistakes', icon: BookX },
         { id: 'flashcards', label: 'Flashcards', icon: Layers },
@@ -169,7 +169,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
           <h1 className="text-2xl font-bold tracking-tight text-blue-400">IITGEEPrep</h1>
           <p className="text-xs text-slate-400 mt-1">
             {currentUser.role}
-            {currentUser.role === 'ADMIN' && <span className="ml-1 opacity-75">• v3.3</span>}
+            {currentUser.role === 'ADMIN' && <span className="ml-1 opacity-75">• v3.5 (GitHub Ready)</span>}
           </p>
         </div>
         
@@ -246,7 +246,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
                 <div className="mb-4 md:mb-0">
                     &copy; 2025 IITGEEPrep. All rights reserved. 
-                    {currentUser.role === 'ADMIN' && <span className="ml-2 px-1.5 py-0.5 bg-slate-100 rounded text-slate-400">v3.3</span>}
+                    {currentUser.role === 'ADMIN' && <span className="ml-2 px-1.5 py-0.5 bg-slate-100 rounded text-slate-400">v3.5</span>}
                 </div>
                 <div className="flex space-x-6 flex-wrap justify-center gap-y-2">
                     <button onClick={() => onTabChange('about')} className="hover:text-blue-600 transition-colors flex items-center">
@@ -271,7 +271,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 w-full bg-white border-t border-slate-200 z-50 flex justify-around items-center px-2 py-2 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] safe-area-pb">
-        {/* Render first 3 items directly to allow space for More and Exit */}
         {navItems.slice(0, 3).map((item) => (
           <button
             key={item.id}
@@ -293,7 +292,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
           </button>
         ))}
         
-        {/* More/Menu Button - Only if there are more than 3 items */}
         {navItems.length > 3 && (
             <button
                 onClick={() => setIsMobileMenuOpen(true)}
@@ -301,7 +299,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
             >
             <div className="relative">
                 <Menu size={20} />
-                {/* Show dot on More if any hidden item has notification */}
                 {navItems.slice(3).some(i => hasNotification(i.id)) && (
                     <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500 animate-pulse"></span>
                 )}
@@ -310,7 +307,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
             </button>
         )}
 
-        {/* Exit Button - Always Visible */}
         <button
             onClick={onLogout}
             className="flex flex-col items-center justify-center w-full py-2 space-y-1 text-red-400 hover:text-red-500"
@@ -362,7 +358,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                             </div>
                             <span className="font-bold text-xs tracking-wide text-center">{item.label}</span>
                             
-                            {/* Decorative shiny effect for active items */}
                             {isActive && (
                                 <div className="absolute inset-0 bg-gradient-to-tr from-white/0 via-white/10 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
                             )}
@@ -371,7 +366,6 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                    })}
                 </div>
                 
-                {/* Secondary Logout in Menu */}
                 <div className="mt-4 pt-4 border-t border-slate-200">
                     <button 
                         onClick={onLogout}
@@ -381,7 +375,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                         <span>Sign Out</span>
                     </button>
                     {currentUser.role === 'ADMIN' && (
-                        <p className="text-center text-[10px] text-slate-300 mt-4">App Version v3.3</p>
+                        <p className="text-center text-[10px] text-slate-300 mt-4">App Version v3.5</p>
                     )}
                 </div>
              </div>
