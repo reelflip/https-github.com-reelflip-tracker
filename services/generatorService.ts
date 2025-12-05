@@ -1,11 +1,10 @@
-
 // ... existing imports ...
 import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS, BLOG_POSTS } from '../constants';
 import { Question } from '../types';
 
-// ... generateSQLSchema function (unchanged from previous v3.5 version) ...
+// ... (Keep generateSQLSchema, generateHtaccess, getDeploymentPhases, generateFrontendGuide as is) ...
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.5 Final Production)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.6 Final Production)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
 
@@ -123,7 +122,7 @@ UPDATE users SET parent_id = 749201 WHERE id = 582910;
   return sql;
 };
 
-// ... existing helper functions (generateHtaccess, getDeploymentPhases) ...
+// ... existing helper functions ...
 export const generateHtaccess = (): string => {
     return `<IfModule mod_rewrite.c>
   RewriteEngine On
@@ -183,7 +182,7 @@ try {
     exit();
 }`
         },
-        { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v3.5"]);` },
+        { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v3.6"]);` },
         { 
             name: "test_db.php", 
             folder: "api", 
@@ -219,14 +218,28 @@ try {
         // --- 4. USER FEATURES ---
         { name: "sync_progress.php", folder: "api", desc: "Sync Syllabus", content: `<?php require 'config.php'; header('Content-Type: application/json'); $data=json_decode(file_get_contents("php://input")); try{ $check=$conn->prepare("SELECT id FROM topic_progress WHERE user_id=:u AND topic_id=:t"); $check->execute([':u'=>$data->user_id,':t'=>$data->topic_id]); if($check->rowCount()>0){ $sql="UPDATE topic_progress SET status=:s, ex1_solved=:e1, ex1_total=:t1, revision_count=:rc, next_revision_date=:nr WHERE user_id=:u AND topic_id=:t"; }else{ $sql="INSERT INTO topic_progress (user_id,topic_id,status,ex1_solved,ex1_total,revision_count,next_revision_date) VALUES (:u,:t,:s,:e1,:t1,:rc,:nr)"; } $stmt=$conn->prepare($sql); $stmt->execute([':u'=>$data->user_id,':t'=>$data->topic_id,':s'=>$data->status,':e1'=>$data->ex1Solved,':t1'=>$data->ex1Total,':rc'=>isset($data->revisionCount)?$data->revisionCount:0,':nr'=>isset($data->nextRevisionDate)?$data->nextRevisionDate:null]); echo json_encode(["message"=>"Saved"]); }catch(Exception $e){echo json_encode(["error"=>$e->getMessage()]);} ` },
         { name: "get_dashboard.php", folder: "api", desc: "User Dashboard", content: `<?php require 'config.php'; header('Content-Type: application/json'); $uid=$_GET['user_id']; $res=[]; $u=$conn->query("SELECT * FROM users WHERE id=$uid")->fetch(PDO::FETCH_ASSOC); if($u){ $res['userProfileSync']=['pendingRequest'=>json_decode($u['pending_request_json']),'parentId'=>$u['parent_id'],'studentId'=>$u['student_id']]; } $res['progress']=$conn->query("SELECT * FROM topic_progress WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $res['goals']=$conn->query("SELECT * FROM daily_goals WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $res['backlogs']=$conn->query("SELECT * FROM backlogs WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $res['mistakes']=$conn->query("SELECT * FROM mistake_notebook WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $tt=$conn->query("SELECT * FROM timetable_settings WHERE user_id=$uid")->fetch(PDO::FETCH_ASSOC); if($tt){ $res['timetable']=['config'=>json_decode($tt['config_json']),'slots'=>json_decode($tt['generated_slots_json'])]; } $atts=$conn->query("SELECT * FROM test_attempts WHERE user_id=$uid ORDER BY attempt_date DESC")->fetchAll(PDO::FETCH_ASSOC); foreach($atts as &$a){ $d=$conn->query("SELECT ad.*, q.subject_id, q.topic_id FROM attempt_details ad LEFT JOIN questions q ON ad.question_id=q.id WHERE ad.attempt_id='{$a['id']}'")->fetchAll(PDO::FETCH_ASSOC); $a['detailedResults']=array_map(function($r){ return ['questionId'=>$r['question_id'],'status'=>$r['status'],'subjectId'=>$r['subject_id'],'topicId'=>$r['topic_id'],'selectedOptionIndex'=>(int)$r['selected_option']]; },$d); } $res['attempts']=$atts; echo json_encode($res);` },
-        { name: "save_attempt.php", folder: "api", desc: "Save Attempt", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); try { $conn->beginTransaction(); $aid="att_".time()."_".mt_rand(100,999); $conn->prepare("INSERT INTO test_attempts (id,user_id,test_id,score,total_questions,correct_count,incorrect_count,accuracy_percent) VALUES (?,?,?,?,?,?,?,?)")->execute([$aid, $d->user_id, $d->testId, $d->score, $d->totalQuestions, $d->correctCount, $d->incorrectCount, $d->accuracy_percent]); if(isset($d->detailedResults)){ $stmt=$conn->prepare("INSERT INTO attempt_details (attempt_id,question_id,status,selected_option) VALUES (?,?,?,?)"); foreach($d->detailedResults as $r){ $stmt->execute([$aid, $r->questionId, $r->status, $r->selectedOptionIndex]); } } $conn->commit(); echo json_encode(["message"=>"Saved", "attemptId"=>$aid]); } catch(Exception $e){ $conn->rollBack(); echo json_encode(["error"=>$e->getMessage()]); }` },
+        { name: "save_attempt.php", folder: "api", desc: "Save Attempt", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); try { $conn->beginTransaction(); $aid="att_".time()."_".mt_rand(100,999); $conn->prepare("INSERT INTO test_attempts (id,user_id,test_id,score,total_questions,correct_count,incorrect_count,accuracy_percent) VALUES (?,?,?,?,?,?,?,?)")->execute([$aid, $d->user_id, $d->testId, $d->score, $d->totalQuestions, $d->correctCount, $d->incorrectCount, $d->accuracy_percent]); if(isset($d->detailedResults)){ $stmt=$conn->prepare("INSERT INTO attempt_details (attempt_id,question_id,status,selected_option) VALUES (?,?,?,?)"); foreach($d->detailedResults as $r){ $optIdx = isset($r->selectedOptionIndex) ? $r->selectedOptionIndex : null; $stmt->execute([$aid, $r->questionId, $r->status, $optIdx]); } } $conn->commit(); echo json_encode(["message"=>"Saved", "attemptId"=>$aid]); } catch(Exception $e){ $conn->rollBack(); echo json_encode(["error"=>$e->getMessage()]); }` },
         { name: "save_timetable.php", folder: "api", desc: "Save Timetable", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); $uid=$d->user_id; $conf=json_encode($d->config); $slots=json_encode($d->slots); $conn->query("DELETE FROM timetable_settings WHERE user_id=$uid"); $conn->prepare("INSERT INTO timetable_settings (user_id, config_json, generated_slots_json) VALUES (?,?,?)")->execute([$uid, $conf, $slots]); echo json_encode(["message"=>"Saved"]);` },
         { name: "manage_goals.php", folder: "api", desc: "Manage Goals", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST'){ $conn->prepare("INSERT INTO daily_goals (id,user_id,goal_text) VALUES (?,?,?)")->execute([$d->id, $d->user_id, $d->text]); } if($m=='PUT'){ $conn->query("UPDATE daily_goals SET is_completed = NOT is_completed WHERE id='{$d->id}'"); } echo json_encode(["message"=>"OK"]);` },
         { name: "manage_backlogs.php", folder: "api", desc: "Manage Backlogs", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST'){ $conn->prepare("INSERT INTO backlogs (id,user_id,title,subject_id,priority,deadline,status) VALUES (?,?,?,?,?,?,?)")->execute([$d->id, $d->user_id, $d->title, $d->subjectId, $d->priority, $d->deadline, $d->status]); } if($m=='PUT'){ $conn->query("UPDATE backlogs SET status = IF(status='PENDING','CLEARED','PENDING') WHERE id='{$d->id}'"); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM backlogs WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
         { name: "manage_mistakes.php", folder: "api", desc: "Manage Mistakes", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST'){ $tags=json_encode($d->tags); $conn->prepare("INSERT INTO mistake_notebook (id,user_id,question_text,subject_id,topic_id,test_name,tags_json) VALUES (?,?,?,?,?,?,?)")->execute([$d->id, $d->user_id, $d->questionText, $d->subjectId, $d->topicId, $d->testName, $tags]); } if($m=='PUT'){ $tags=json_encode($d->tags); $conn->prepare("UPDATE mistake_notebook SET user_notes=?, tags_json=? WHERE id=?")->execute([$d->userNotes, $tags, $d->id]); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM mistake_notebook WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
         
         // --- 5. CONNECTIONS ---
-        { name: "send_request.php", folder: "api", desc: "Send Request", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); $sid=$d->student_identifier; if(strpos($sid,'@')){ $u=$conn->query("SELECT id FROM users WHERE email='$sid'")->fetch(); $sid=$u?$u['id']:null; } if($sid){ $req=json_encode(['fromId'=>$d->parent_id, 'fromName'=>$d->parent_name]); $conn->prepare("UPDATE users SET pending_request_json=? WHERE id=?")->execute([$req, $sid]); echo json_encode(["message"=>"Success"]); }else{ echo json_encode(["message"=>"User not found"]); }` },
+        { name: "send_request.php", folder: "api", desc: "Send Request", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); 
+        if(isset($d->action) && $d->action == 'search') {
+            $q = $d->query;
+            $stmt = $conn->prepare("SELECT id, full_name as name, email FROM users WHERE role='STUDENT' AND (email LIKE ? OR full_name LIKE ? OR id LIKE ?) LIMIT 5");
+            $stmt->execute(["%$q%", "%$q%", "%$q%"]);
+            echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
+            exit();
+        }
+        $sid=$d->student_identifier; 
+        if(strpos($sid,'@')){ $u=$conn->query("SELECT id FROM users WHERE email='$sid'")->fetch(); $sid=$u?$u['id']:null; } 
+        if($sid){ 
+            $req=json_encode(['fromId'=>$d->parent_id, 'fromName'=>$d->parent_name]); 
+            $conn->prepare("UPDATE users SET pending_request_json=? WHERE id=?")->execute([$req, $sid]); 
+            echo json_encode(["message"=>"Success"]); 
+        }else{ echo json_encode(["message"=>"User not found"]); }` },
         { name: "respond_request.php", folder: "api", desc: "Resp Request", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); if($d->accept){ $conn->query("UPDATE users SET parent_id={$d->parent_id} WHERE id={$d->student_id}"); $conn->query("UPDATE users SET student_id={$d->student_id} WHERE id={$d->parent_id}"); } $conn->query("UPDATE users SET pending_request_json=NULL WHERE id={$d->student_id}"); echo json_encode(["message"=>"Processed"]);` },
 
         // --- 6. ADMIN TOOLS ---

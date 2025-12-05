@@ -84,6 +84,22 @@ const TestRunner: React.FC = () => {
                 expect(id).toBeGreaterThan(99999); // Min 100000
                 expect(id).toBeLessThan(1000000);  // Max 999999
             });
+            
+            it("should search student by name (Parent Feature)", async () => {
+                // Register a unique student to find
+                const uniqueName = `FindMe_${timestamp}`;
+                await registerUser('STUDENT', uniqueName);
+                
+                // Search for them
+                const matches = await fetchApi('/api/send_request.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ action: 'search', query: uniqueName })
+                });
+                
+                expect(Array.isArray(matches)).toBe(true);
+                expect(matches.length).toBeGreaterThan(0);
+                expect(matches[0].name).toBe(uniqueName);
+            });
         });
 
         // --- SUITE 3: SYLLABUS ---
@@ -180,13 +196,16 @@ const TestRunner: React.FC = () => {
             it("should retrieve analytics with subject metadata", async () => {
                 if(!user) throw new Error("Setup failed");
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
-                const attempt = data.attempts[0];
                 
+                if(!data.attempts || data.attempts.length === 0) {
+                    throw new Error("No attempts found. Save API likely failed (Check SQL schema for 'selected_option' column).");
+                }
+
+                const attempt = data.attempts[0];
                 expect(attempt).toBeDefined();
                 expect(parseInt(attempt.score)).toBe(100);
                 
                 // Verify JOIN works (subjectId should be present)
-                // This is critical for the Analytics chart to work
                 const detail = attempt.detailedResults.find((d: any) => d.questionId === 'p_1');
                 expect(detail).toBeDefined();
                 expect(detail.subjectId).toBe('phys'); // Must come from JOIN questions table
@@ -382,7 +401,7 @@ const TestRunner: React.FC = () => {
 
                 expectedTables.forEach(table => {
                     if (!tables.includes(table)) {
-                        throw new Error(`Missing Table: ${table}. Import SQL schema v3.5 again.`);
+                        throw new Error(`Missing Table: ${table}. Import SQL schema v3.6 again.`);
                     }
                 });
             });
