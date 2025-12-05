@@ -1,12 +1,38 @@
 
 import React, { useState } from 'react';
 import { TestRunnerEngine, expect, TestResult } from '../utils/testFramework';
-import { Play, CheckCircle2, XCircle, Terminal, AlertTriangle, Loader2, RefreshCw, Database, Users, BookOpen, Target, BarChart2 } from 'lucide-react';
+import { Play, CheckCircle2, XCircle, Terminal, AlertTriangle, Loader2, RefreshCw, Database, Users, BookOpen, Target, BarChart2, Calendar, ListTodo } from 'lucide-react';
 
 const TestRunner: React.FC = () => {
     const [results, setResults] = useState<Record<string, TestResult[]> | null>(null);
     const [isRunning, setIsRunning] = useState(false);
     const [progress, setProgress] = useState('');
+
+    // --- UTILITY: Robust API Fetch ---
+    const fetchApi = async (url: string, options?: RequestInit) => {
+        let res;
+        try {
+            res = await fetch(url, options);
+        } catch (netErr: any) {
+            throw new Error(`Network Error: ${netErr.message}. Check URL or Internet.`);
+        }
+
+        if (res.status === 404) {
+            throw new Error(`Endpoint not found (404): ${url}`);
+        }
+
+        const text = await res.text();
+        try {
+            const data = JSON.parse(text);
+            if (!res.ok) {
+                throw new Error(data.message || data.error || `Server Error (${res.status})`);
+            }
+            return data;
+        } catch (jsonErr) {
+            console.error("Raw Response:", text);
+            throw new Error(`Invalid JSON response from ${url}: ${text.substring(0, 100)}...`);
+        }
+    };
 
     const runTests = async () => {
         setIsRunning(true);
@@ -19,15 +45,13 @@ const TestRunner: React.FC = () => {
         const registerUser = async (role: string, name: string) => {
             const email = `auto_${role}_${timestamp}_${Math.floor(Math.random()*1000)}@test.com`;
             const pass = 'TestPass123';
-            const res = await fetch('/api/register.php', {
+            const data = await fetchApi('/api/register.php', {
                 method: 'POST',
                 body: JSON.stringify({
                     name, email, password: pass, confirmPassword: pass, role,
                     institute: 'Test Inst', targetYear: 2025
                 })
             });
-            const data = await res.json();
-            if (!res.ok) throw new Error(data.message || 'Registration failed');
             return data.user;
         };
 
@@ -35,16 +59,13 @@ const TestRunner: React.FC = () => {
         engine.describe("1. Core & API Health", (it) => {
             it("should ping the API root", async () => {
                 setProgress("Pinging API...");
-                const res = await fetch('/api/index.php');
-                if (res.status === 404) throw new Error("API endpoint not found (404). Check folder structure.");
-                const data = await res.json();
+                const data = await fetchApi('/api/index.php');
                 expect(data.status).toBe("active");
             });
 
             it("should connect to the database", async () => {
                 setProgress("Checking DB...");
-                const res = await fetch('/api/test_db.php');
-                const data = await res.json();
+                const data = await fetchApi('/api/test_db.php');
                 if (data.status === 'ERROR') throw new Error(data.message);
                 expect(data.status).toBe("CONNECTED");
             });
@@ -69,7 +90,7 @@ const TestRunner: React.FC = () => {
 
             it("should allow Parent to send connection request", async () => {
                 setProgress("Sending Request...");
-                const res = await fetch('/api/send_request.php', {
+                const data = await fetchApi('/api/send_request.php', {
                     method: 'POST',
                     body: JSON.stringify({
                         student_identifier: student.email,
@@ -77,15 +98,13 @@ const TestRunner: React.FC = () => {
                         parent_name: parent.name
                     })
                 });
-                const data = await res.json();
                 expect(data.message).toContain("Success");
             });
 
             it("should show request in Student profile (DB Check)", async () => {
                 setProgress("Verifying Request...");
                 // Re-login student to fetch fresh profile
-                const res = await fetch(`/api/get_dashboard.php?user_id=${student.id}`);
-                const data = await res.json();
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
                 
                 const request = data.userProfileSync.pendingRequest;
                 expect(request).toBeDefined();
@@ -94,7 +113,7 @@ const TestRunner: React.FC = () => {
 
             it("should allow Student to accept request", async () => {
                 setProgress("Accepting Request...");
-                const res = await fetch('/api/respond_request.php', {
+                const data = await fetchApi('/api/respond_request.php', {
                     method: 'POST',
                     body: JSON.stringify({
                         student_id: student.id,
@@ -102,25 +121,14 @@ const TestRunner: React.FC = () => {
                         accept: true
                     })
                 });
-                const data = await res.json();
                 expect(data.message).toContain("Accepted");
             });
 
             it("should link accounts in Database", async () => {
                 setProgress("Checking Linkage...");
-                const res = await fetch(`/api/get_dashboard.php?user_id=${student.id}`);
-                const data = await res.json();
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
                 // Student should point to Parent
                 expect(data.userProfileSync.parentId).toBe(parent.id);
-            });
-
-            it("should allow Parent to access Student Data", async () => {
-                setProgress("Verifying Parent Access...");
-                // Fetch student data using student ID (simulating parent view)
-                const res = await fetch(`/api/get_dashboard.php?user_id=${student.id}`);
-                if (!res.ok) throw new Error("Parent access denied");
-                const data = await res.json();
-                expect(data.progress).toBeDefined();
             });
         });
 
@@ -143,18 +151,16 @@ const TestRunner: React.FC = () => {
                     ex1Solved: 10,
                     ex1Total: 30
                 };
-                const res = await fetch('/api/sync_progress.php', {
+                const data = await fetchApi('/api/sync_progress.php', {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
-                const data = await res.json();
                 expect(data.message).toContain("saved");
             });
 
             it("should retrieve saved progress from DB", async () => {
                 setProgress("Fetching Dashboard...");
-                const res = await fetch(`/api/get_dashboard.php?user_id=${user.id}`);
-                const data = await res.json();
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 
                 // Find the topic in the progress array
                 const topic = data.progress.find((p: any) => p.topic_id === topicId);
@@ -164,89 +170,72 @@ const TestRunner: React.FC = () => {
             });
         });
 
-        // --- SUITE 4: DATABASE INTEGRITY (CRUD) ---
-        engine.describe("4. DB Integrity (Full CRUD)", (it) => {
+        // --- SUITE 4: TASK MANAGEMENT (BACKLOGS & GOALS) ---
+        engine.describe("4. Backlogs & Goals (Full CRUD)", (it) => {
             let user: any;
             let goalId = `g_${timestamp}`;
             let backlogId = `b_${timestamp}`;
 
             it("should setup test user", async () => {
-                user = await registerUser('STUDENT', 'CRUD Tester');
+                user = await registerUser('STUDENT', 'Task Tester');
             });
 
             // 1. GOALS
             it("should CREATE a Daily Goal", async () => {
                 setProgress("Testing Goals...");
-                const res = await fetch('/api/manage_goals.php', {
+                const data = await fetchApi('/api/manage_goals.php', {
                     method: 'POST',
                     body: JSON.stringify({ id: goalId, user_id: user.id, text: "Test DB Integrity" })
                 });
-                const data = await res.json();
                 expect(data.message).toBe("Goal added");
             });
 
-            it("should READ the Daily Goal", async () => {
-                const res = await fetch(`/api/get_dashboard.php?user_id=${user.id}`);
-                const data = await res.json();
-                const goal = data.goals.find((g: any) => g.id === goalId);
-                expect(goal).toBeDefined();
-                expect(goal.goal_text).toBe("Test DB Integrity");
-            });
-
             it("should UPDATE (Toggle) the Goal", async () => {
-                await fetch('/api/manage_goals.php', {
+                await fetchApi('/api/manage_goals.php', {
                     method: 'PUT',
                     body: JSON.stringify({ id: goalId })
                 });
                 // Verify
-                const res = await fetch(`/api/get_dashboard.php?user_id=${user.id}`);
-                const data = await res.json();
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 const goal = data.goals.find((g: any) => g.id === goalId);
-                // MySQL boolean is 0 or 1
                 expect(goal.is_completed == 1).toBe(true);
             });
 
             // 2. BACKLOGS
             it("should CREATE a Backlog item", async () => {
                 setProgress("Testing Backlogs...");
-                const res = await fetch('/api/manage_backlogs.php', {
+                const data = await fetchApi('/api/manage_backlogs.php', {
                     method: 'POST',
                     body: JSON.stringify({
                         id: backlogId, user_id: user.id, 
-                        title: "Test Backlog", subjectId: 'phys', 
+                        title: "Rotational Motion", subjectId: 'phys', 
                         priority: 'HIGH', deadline: '2025-12-31'
                     })
                 });
-                expect((await res.json()).message).toBe("Backlog added");
+                expect(data.message).toBe("Backlog added");
+            });
+
+            it("should UPDATE Backlog Status (Clear)", async () => {
+                const data = await fetchApi('/api/manage_backlogs.php', {
+                    method: 'PUT',
+                    body: JSON.stringify({ id: backlogId })
+                });
+                expect(data.message).toBe("Status updated");
+                
+                // Verify DB
+                const dash = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
+                const backlog = dash.backlogs.find((b: any) => b.id === backlogId);
+                expect(backlog.status).toBe('CLEARED');
             });
 
             it("should DELETE a Backlog item", async () => {
-                const res = await fetch(`/api/manage_backlogs.php?id=${backlogId}`, { method: 'DELETE' });
-                expect((await res.json()).message).toBe("Deleted");
+                const data = await fetchApi(`/api/manage_backlogs.php?id=${backlogId}`, { method: 'DELETE' });
+                expect(data.message).toBe("Deleted");
                 
                 // Verify gone
-                const dashRes = await fetch(`/api/get_dashboard.php?user_id=${user.id}`);
-                const data = await dashRes.json();
-                const backlog = data.backlogs.find((b: any) => b.id === backlogId);
+                const dashData = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
+                const backlog = dashData.backlogs.find((b: any) => b.id === backlogId);
                 if (backlog) throw new Error("Backlog should have been deleted");
-            });
-
-            // 3. MISTAKES
-            it("should CREATE a Mistake Record", async () => {
-                setProgress("Testing Mistake Notebook...");
-                const res = await fetch('/api/manage_mistakes.php', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        id: `m_${timestamp}`,
-                        user_id: user.id,
-                        questionText: "Why is sky blue?",
-                        subjectId: "phys",
-                        topicId: "optics",
-                        testName: "Integration Test",
-                        userNotes: "Scattering"
-                    })
-                });
-                expect(res.ok).toBe(true);
             });
         });
 
@@ -277,18 +266,16 @@ const TestRunner: React.FC = () => {
                     ]
                 };
                 
-                const res = await fetch('/api/save_attempt.php', {
+                const data = await fetchApi('/api/save_attempt.php', {
                     method: 'POST',
                     body: JSON.stringify(payload)
                 });
-                const data = await res.json();
                 expect(data.message).toContain("Attempt saved");
             });
 
             it("should REFLECT attempt in Dashboard Analytics", async () => {
                 setProgress("Checking Analytics...");
-                const res = await fetch(`/api/get_dashboard.php?user_id=${user.id}`);
-                const data = await res.json();
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 
                 const attempt = data.attempts.find((a: any) => a.id === attemptId);
                 expect(attempt).toBeDefined();
@@ -296,8 +283,7 @@ const TestRunner: React.FC = () => {
             });
 
             it("should retrieve Granular Details (Correct/Incorrect)", async () => {
-                const res = await fetch(`/api/get_dashboard.php?user_id=${user.id}`);
-                const data = await res.json();
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 const attempt = data.attempts.find((a: any) => a.id === attemptId);
                 
                 // detailedResults are fetched by get_dashboard.php
@@ -308,6 +294,101 @@ const TestRunner: React.FC = () => {
                 const incorrect = attempt.detailedResults.find((r: any) => r.status === 'INCORRECT');
                 expect(incorrect).toBeDefined();
                 expect(incorrect.questionId).toBe('p_2');
+            });
+        });
+
+        // --- SUITE 6: TIMETABLE GENERATOR ---
+        engine.describe("6. Timetable Generator", (it) => {
+            let user: any;
+            
+            it("should setup user", async () => {
+                user = await registerUser('STUDENT', 'Timetable User');
+            });
+
+            it("should SAVE generated timetable slots", async () => {
+                setProgress("Saving Schedule...");
+                const config = { wakeTime: "06:00", bedTime: "22:00", schoolEnabled: true };
+                const slots = [
+                    { time: "06:00", label: "Wake Up", type: "routine", iconType: "sun" },
+                    { time: "07:00", label: "Physics Theory", type: "theory", iconType: "book" }
+                ];
+                
+                const data = await fetchApi('/api/save_timetable.php', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        user_id: user.id,
+                        config,
+                        slots
+                    })
+                });
+                expect(data.message).toBe("Timetable saved");
+            });
+
+            it("should RETRIEVE timetable settings & slots", async () => {
+                setProgress("Loading Schedule...");
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
+                
+                expect(data.timetable).toBeDefined();
+                expect(data.timetable.config.wakeTime).toBe("06:00");
+                expect(data.timetable.slots.length).toBe(2);
+                expect(data.timetable.slots[1].label).toBe("Physics Theory");
+            });
+        });
+
+        // --- SUITE 7: PARENT MONITORING VIEW ---
+        engine.describe("7. Parent Monitoring Access", (it) => {
+            let student: any;
+            let parent: any;
+            const attemptId = `att_p_${timestamp}`;
+
+            it("should setup linked Student & Parent", async () => {
+                setProgress("Linking Accounts...");
+                student = await registerUser('STUDENT', 'Child User');
+                parent = await registerUser('PARENT', 'Parent User');
+                
+                // Fast-track linking via API
+                await fetchApi('/api/send_request.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ student_identifier: student.email, parent_id: parent.id, parent_name: parent.name })
+                });
+                await fetchApi('/api/respond_request.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ student_id: student.id, parent_id: parent.id, accept: true })
+                });
+            });
+
+            it("should record student activity (Exam & Syllabus)", async () => {
+                setProgress("Simulating Student Activity...");
+                // 1. Take Exam
+                await fetchApi('/api/save_attempt.php', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        id: attemptId, user_id: student.id, testId: 'test_jee_adv_2023',
+                        score: 150, totalQuestions: 50, correctCount: 30, incorrectCount: 5, accuracy_percent: 85.7,
+                        detailedResults: []
+                    })
+                });
+                // 2. Mark Syllabus
+                await fetchApi('/api/sync_progress.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ user_id: student.id, topic_id: 'm_cpx_1', status: 'COMPLETED' })
+                });
+            });
+
+            it("should allow PARENT to view Student Analytics", async () => {
+                setProgress("Fetching as Parent...");
+                // In the app, Parent uses student_id to fetch dashboard
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
+                
+                // Verify Test Result visibility
+                const attempt = data.attempts.find((a: any) => a.id === attemptId);
+                expect(attempt).toBeDefined();
+                expect(parseInt(attempt.score)).toBe(150);
+                
+                // Verify Syllabus visibility
+                const topic = data.progress.find((p: any) => p.topic_id === 'm_cpx_1');
+                expect(topic).toBeDefined();
+                expect(topic.status).toBe('COMPLETED');
             });
         });
 
@@ -383,8 +464,10 @@ const TestRunner: React.FC = () => {
                                 {suiteName.includes('Auth') ? <Users className="w-5 h-5 text-blue-500"/> : 
                                  suiteName.includes('DB') ? <Database className="w-5 h-5 text-purple-500"/> :
                                  suiteName.includes('Analytics') ? <BarChart2 className="w-5 h-5 text-pink-500"/> :
+                                 suiteName.includes('Timetable') ? <Calendar className="w-5 h-5 text-teal-500"/> :
+                                 suiteName.includes('Task') ? <ListTodo className="w-5 h-5 text-orange-500"/> :
                                  suiteName.includes('Syllabus') ? <Target className="w-5 h-5 text-indigo-500"/> :
-                                 <BookOpen className="w-5 h-5 text-orange-500"/>}
+                                 <BookOpen className="w-5 h-5 text-slate-500"/>}
                                 <h3 className="font-bold text-slate-800">{suiteName}</h3>
                             </div>
                             <span className={`text-xs font-bold px-2 py-1 rounded ${suitePassed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>

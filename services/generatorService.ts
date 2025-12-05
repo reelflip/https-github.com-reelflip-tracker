@@ -3,10 +3,10 @@ import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_M
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v2.2 Final Release)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v2.4 Testing & Analytics Release)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
--- Includes: Blog Date Fix, 90+ Qs Question Bank, Parent Connect
+-- Includes: Attempt Details for Analytics, Blog Fixes
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+05:30";
@@ -613,7 +613,7 @@ Sitemap: https://iitgeeprep.com/sitemap.xml`;
             name: "README.txt",
             folder: "api",
             desc: "Instructions for Hostinger Deployment.",
-            content: `IITGEEPrep (v2.2 Final Release) - API DEPLOYMENT
+            content: `IITGEEPrep (v2.4 Testing & Analytics Release) - API DEPLOYMENT
 ============================================
 Website: iitgeeprep.com
 
@@ -677,10 +677,8 @@ try {
     http_response_code(500);
     echo json_encode(["message" => "Connection error: " . $exception->getMessage()]);
     exit();
-}
-?>`
+}`
         },
-        // ... Other PHP Files ...
         {
             name: "login.php",
             folder: "api",
@@ -740,8 +738,7 @@ if(isset($data->email) && isset($data->password)) {
         http_response_code(500);
         echo json_encode(["message" => "Database error: " . $e->getMessage()]);
     }
-}
-?>`
+}`
         },
         {
             name: "register.php",
@@ -807,8 +804,7 @@ if(isset($data->email) && isset($data->password)) {
         http_response_code(500);
         echo json_encode(["message" => "Database error: " . $e->getMessage()]);
     }
-}
-?>`
+}`
         },
         {
             name: "manage_blog.php",
@@ -842,8 +838,7 @@ if ($method === 'POST') {
         $stmt->execute([$_GET['id']]);
         echo json_encode(["message" => "Blog post deleted"]);
     } catch (Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }
-}
-?>`
+}`
         },
         {
             name: "get_common.php",
@@ -890,8 +885,7 @@ try {
 } catch(Exception $e) {
     http_response_code(500);
     echo json_encode(["error" => $e->getMessage()]);
-}
-?>`
+}`
         },
         {
             name: "manage_users.php",
@@ -920,8 +914,7 @@ if ($method === 'PUT' && isset($data->id)) {
         $stmt->execute([$_GET['id']]);
         echo json_encode(["message" => "User deleted"]);
     } catch (PDOException $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }
-} else { http_response_code(405); echo json_encode(["error" => "Method not allowed"]); }
-?>`
+} else { http_response_code(405); echo json_encode(["error" => "Method not allowed"]); }`
         },
         {
             name: "manage_tests.php",
@@ -954,8 +947,7 @@ if (isset($data->action) && $data->action === 'create_test') {
         $conn->commit();
         echo json_encode(["message" => "Test created"]);
     } catch (Exception $e) { $conn->rollBack(); http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }
-}
-?>`
+}`
         },
         {
             name: "manage_broadcasts.php",
@@ -987,8 +979,7 @@ if ($method === 'POST') {
         $stmt->execute([$_GET['id']]);
         echo json_encode(["message" => "Quote deleted"]);
     } catch (Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }
-}
-?>`
+}`
         },
         {
             name: "send_request.php",
@@ -1001,9 +992,12 @@ $data = json_decode(file_get_contents("php://input"));
 if(isset($data->student_identifier) && isset($data->parent_id)) {
     try {
         $identifier = trim($data->student_identifier);
-        $query = "SELECT id, email FROM users WHERE (email = :id OR id = :id) AND role = 'STUDENT' LIMIT 1";
+        // Case-insensitive search for Email, ID, or Full Name
+        $query = "SELECT id, email FROM users WHERE (email = :id OR id = :id OR full_name LIKE :name) AND role = 'STUDENT' LIMIT 1";
         $stmt = $conn->prepare($query);
         $stmt->bindParam(":id", $identifier);
+        $nameSearch = "%" . $identifier . "%";
+        $stmt->bindParam(":name", $nameSearch);
         $stmt->execute();
         
         if($stmt->rowCount() > 0) {
@@ -1023,8 +1017,7 @@ if(isset($data->student_identifier) && isset($data->parent_id)) {
             } else { http_response_code(500); echo json_encode(["message" => "Failed to update student record"]); }
         } else { http_response_code(404); echo json_encode(["message" => "Student account not found with this ID/Email"]); }
     } catch(PDOException $e) { http_response_code(500); echo json_encode(["message" => "Database error: " . $e->getMessage()]); }
-} else { http_response_code(400); echo json_encode(["message" => "Missing required fields"]); }
-?>`
+} else { http_response_code(400); echo json_encode(["message" => "Missing required fields"]); }`
         },
         {
             name: "respond_request.php",
@@ -1050,8 +1043,7 @@ if(isset($data->student_id) && isset($data->accept)) {
         
         $conn->commit();
     } catch(Exception $e) { $conn->rollBack(); http_response_code(500); echo json_encode(["message" => "Database error: " . $e->getMessage()]); }
-}
-?>`
+}`
         },
         {
             name: "index.php",
@@ -1059,8 +1051,7 @@ if(isset($data->student_id) && isset($data->accept)) {
             desc: "Default file.",
             content: `<?php
 include_once 'config.php';
-echo json_encode(["status" => "active", "message" => "IITGEEPrep API is running"]);
-?>`
+echo json_encode(["status" => "active", "message" => "IITGEEPrep API is running"]);`
         },
         {
             name: "test_db.php",
@@ -1085,8 +1076,7 @@ try {
     $response['status'] = 'ERROR';
     $response['message'] = $e->getMessage();
 }
-echo json_encode($response);
-?>`
+echo json_encode($response);`
         },
         {
             name: "get_users.php",
@@ -1103,8 +1093,7 @@ try {
         $user['targetExam'] = $user['target_exam'];
     }
     echo json_encode($users);
-} catch(PDOException $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }
-?>`
+} catch(PDOException $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }`
         },
         {
             name: "get_dashboard.php",
@@ -1165,8 +1154,7 @@ try {
         "timetable" => $timetable,
         "attempts" => $attempts
     ]);
-} catch(Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }
-?>`
+} catch(Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }`
         },
         {
             name: "sync_progress.php",
@@ -1192,16 +1180,15 @@ if(isset($data->user_id) && isset($data->topic_id)) {
         $stmt->execute([$data->user_id, $data->topic_id, $data->status, $ex1s, $ex1t, $ex2s, $ex2t, $ex3s, $ex3t, $ex4s, $ex4t]);
     }
     echo json_encode(["message" => "Progress saved"]);
-}
-?>`
+}`
         },
-        { name: "manage_goals.php", folder: "api", desc: "Manage Goals.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); $method = $_SERVER['REQUEST_METHOD']; if ($method === 'POST') { $stmt = $conn->prepare("INSERT INTO daily_goals (id, user_id, goal_text, is_completed) VALUES (?, ?, ?, 0)"); $stmt->execute([$data->id, $data->user_id, $data->text]); echo json_encode(["message" => "Goal added"]); } elseif ($method === 'PUT') { $stmt = $conn->prepare("UPDATE daily_goals SET is_completed = NOT is_completed WHERE id = ?"); $stmt->execute([$data->id]); echo json_encode(["message" => "Goal toggled"]); } ?>` },
-        { name: "manage_backlogs.php", folder: "api", desc: "Manage Backlogs.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); $method = $_SERVER['REQUEST_METHOD']; if ($method === 'POST') { $stmt = $conn->prepare("INSERT INTO backlogs (id, user_id, title, subject_id, priority, deadline, status) VALUES (?, ?, ?, ?, ?, ?, 'PENDING')"); $stmt->execute([$data->id, $data->user_id, $data->title, $data->subjectId, $data->priority, $data->deadline]); echo json_encode(["message" => "Backlog added"]); } elseif ($method === 'PUT') { $stmt = $conn->prepare("UPDATE backlogs SET status = IF(status='PENDING','CLEARED','PENDING') WHERE id = ?"); $stmt->execute([$data->id]); echo json_encode(["message" => "Status updated"]); } elseif ($method === 'DELETE') { $stmt = $conn->prepare("DELETE FROM backlogs WHERE id = ?"); $stmt->execute([$_GET['id']]); echo json_encode(["message" => "Deleted"]); } ?>` },
-        { name: "manage_mistakes.php", folder: "api", desc: "Manage Mistakes.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); $method = $_SERVER['REQUEST_METHOD']; if ($method === 'POST') { $stmt = $conn->prepare("INSERT INTO mistake_notebook (id, user_id, question_text, subject_id, topic_id, test_name, user_notes) VALUES (?, ?, ?, ?, ?, ?, ?)"); $stmt->execute([$data->id, $data->user_id, $data->questionText, $data->subjectId, $data->topicId, $data->testName, $data->userNotes]); } elseif ($method === 'PUT') { $stmt = $conn->prepare("UPDATE mistake_notebook SET user_notes = ?, tags_json = ? WHERE id = ?"); $stmt->execute([$data->userNotes, json_encode($data->tags), $data->id]); } elseif ($method === 'DELETE') { $stmt = $conn->prepare("DELETE FROM mistake_notebook WHERE id = ?"); $stmt->execute([$_GET['id']]); } ?>` },
-        { name: "save_timetable.php", folder: "api", desc: "Save Timetable.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); $stmt = $conn->prepare("INSERT INTO timetable_settings (user_id, config_json, generated_slots_json) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE config_json=VALUES(config_json), generated_slots_json=VALUES(generated_slots_json)"); $stmt->execute([$data->user_id, json_encode($data->config), json_encode($data->slots)]); echo json_encode(["message" => "Timetable saved"]); ?>` },
-        { name: "save_attempt.php", folder: "api", desc: "Save Test Attempt.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); try { $conn->beginTransaction(); $stmt = $conn->prepare("INSERT INTO test_attempts (id, user_id, test_id, score, total_questions, correct_count, incorrect_count, accuracy_percent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"); $stmt->execute([$data->id, $data->user_id, $data->testId, $data->score, $data->totalQuestions, $data->correctCount, $data->incorrectCount, $data->accuracy_percent]); if (!empty($data->detailedResults)) { $stmtDetail = $conn->prepare("INSERT INTO attempt_details (attempt_id, question_id, status) VALUES (?, ?, ?)"); foreach($data->detailedResults as $res) { $stmtDetail->execute([$data->id, $res->questionId, $res->status]); } } $conn->commit(); echo json_encode(["message" => "Attempt saved"]); } catch (Exception $e) { $conn->rollBack(); http_response_code(500); echo json_encode(["error" => $e->getMessage()]); } ?>` },
-        { name: "contact.php", folder: "api", desc: "Contact.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); if (isset($data->name) && isset($data->email) && isset($data->message)) { try { $stmt = $conn->prepare("INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)"); $stmt->execute([$data->name, $data->email, $data->subject, $data->message]); echo json_encode(["message" => "Message sent successfully"]); } catch (Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); } } ?>` },
-        { name: "manage_contact.php", folder: "api", desc: "Manage Contact.", content: `<?php include_once 'config.php'; $method = $_SERVER['REQUEST_METHOD']; if ($method === 'GET') { try { $stmt = $conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC"); $messages = $stmt->fetchAll(PDO::FETCH_ASSOC); echo json_encode($messages); } catch (Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); } } elseif ($method === 'DELETE' && isset($_GET['id'])) { try { $stmt = $conn->prepare("DELETE FROM contact_messages WHERE id = ?"); $stmt->execute([$_GET['id']]); echo json_encode(["message" => "Message deleted"]); } catch (Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); } } ?>` },
+        { name: "manage_goals.php", folder: "api", desc: "Manage Goals.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); $method = $_SERVER['REQUEST_METHOD']; if ($method === 'POST') { $stmt = $conn->prepare("INSERT INTO daily_goals (id, user_id, goal_text, is_completed) VALUES (?, ?, ?, 0)"); $stmt->execute([$data->id, $data->user_id, $data->text]); echo json_encode(["message" => "Goal added"]); } elseif ($method === 'PUT') { $stmt = $conn->prepare("UPDATE daily_goals SET is_completed = NOT is_completed WHERE id = ?"); $stmt->execute([$data->id]); echo json_encode(["message" => "Goal toggled"]); }` },
+        { name: "manage_backlogs.php", folder: "api", desc: "Manage Backlogs.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); $method = $_SERVER['REQUEST_METHOD']; if ($method === 'POST') { $stmt = $conn->prepare("INSERT INTO backlogs (id, user_id, title, subject_id, priority, deadline, status) VALUES (?, ?, ?, ?, ?, ?, 'PENDING')"); $stmt->execute([$data->id, $data->user_id, $data->title, $data->subjectId, $data->priority, $data->deadline]); echo json_encode(["message" => "Backlog added"]); } elseif ($method === 'PUT') { $stmt = $conn->prepare("UPDATE backlogs SET status = IF(status='PENDING','CLEARED','PENDING') WHERE id = ?"); $stmt->execute([$data->id]); echo json_encode(["message" => "Status updated"]); } elseif ($method === 'DELETE') { $stmt = $conn->prepare("DELETE FROM backlogs WHERE id = ?"); $stmt->execute([$_GET['id']]); echo json_encode(["message" => "Deleted"]); }` },
+        { name: "manage_mistakes.php", folder: "api", desc: "Manage Mistakes.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); $method = $_SERVER['REQUEST_METHOD']; if ($method === 'POST') { $stmt = $conn->prepare("INSERT INTO mistake_notebook (id, user_id, question_text, subject_id, topic_id, test_name, user_notes) VALUES (?, ?, ?, ?, ?, ?, ?)"); $stmt->execute([$data->id, $data->user_id, $data->questionText, $data->subjectId, $data->topicId, $data->testName, $data->userNotes]); } elseif ($method === 'PUT') { $stmt = $conn->prepare("UPDATE mistake_notebook SET user_notes = ?, tags_json = ? WHERE id = ?"); $stmt->execute([$data->userNotes, json_encode($data->tags), $data->id]); } elseif ($method === 'DELETE') { $stmt = $conn->prepare("DELETE FROM mistake_notebook WHERE id = ?"); $stmt->execute([$_GET['id']]); }` },
+        { name: "save_timetable.php", folder: "api", desc: "Save Timetable.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); $stmt = $conn->prepare("INSERT INTO timetable_settings (user_id, config_json, generated_slots_json) VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE config_json=VALUES(config_json), generated_slots_json=VALUES(generated_slots_json)"); $stmt->execute([$data->user_id, json_encode($data->config), json_encode($data->slots)]); echo json_encode(["message" => "Timetable saved"]);` },
+        { name: "save_attempt.php", folder: "api", desc: "Save Test Attempt.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); try { $conn->beginTransaction(); $stmt = $conn->prepare("INSERT INTO test_attempts (id, user_id, test_id, score, total_questions, correct_count, incorrect_count, accuracy_percent) VALUES (?, ?, ?, ?, ?, ?, ?, ?)"); $stmt->execute([$data->id, $data->user_id, $data->testId, $data->score, $data->totalQuestions, $data->correctCount, $data->incorrectCount, $data->accuracy_percent]); if (!empty($data->detailedResults)) { $stmtDetail = $conn->prepare("INSERT INTO attempt_details (attempt_id, question_id, status) VALUES (?, ?, ?)"); foreach($data->detailedResults as $res) { $stmtDetail->execute([$data->id, $res->questionId, $res->status]); } } $conn->commit(); echo json_encode(["message" => "Attempt saved"]); } catch (Exception $e) { $conn->rollBack(); http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }` },
+        { name: "contact.php", folder: "api", desc: "Contact.", content: `<?php include_once 'config.php'; $data = json_decode(file_get_contents("php://input")); if (isset($data->name) && isset($data->email) && isset($data->message)) { try { $stmt = $conn->prepare("INSERT INTO contact_messages (name, email, subject, message) VALUES (?, ?, ?, ?)"); $stmt->execute([$data->name, $data->email, $data->subject, $data->message]); echo json_encode(["message" => "Message sent successfully"]); } catch (Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); } }` },
+        { name: "manage_contact.php", folder: "api", desc: "Manage Contact.", content: `<?php include_once 'config.php'; $method = $_SERVER['REQUEST_METHOD']; if ($method === 'GET') { try { $stmt = $conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC"); $messages = $stmt->fetchAll(PDO::FETCH_ASSOC); echo json_encode($messages); } catch (Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); } } elseif ($method === 'DELETE' && isset($_GET['id'])) { try { $stmt = $conn->prepare("DELETE FROM contact_messages WHERE id = ?"); $stmt->execute([$_GET['id']]); echo json_encode(["message" => "Message deleted"]); } catch (Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); } }` },
         {
             name: ".htaccess",
             folder: "api",
