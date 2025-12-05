@@ -25,7 +25,7 @@ import ContactUs from './components/ContactUs';
 import Blog from './components/Blog';
 import ExamGuide from './components/ExamGuide';
 import TestRunner from './components/TestRunner';
-import RevisionManager from './components/RevisionManager'; // Restored
+import RevisionManager from './components/RevisionManager'; 
 import { API_BASE_URL } from './config'; 
 
 // Initial global questions combined from constants
@@ -70,7 +70,7 @@ function App() {
             fetchAdminData();
         }
     }
-  }, [currentUser?.id, currentUser?.role]);
+  }, [currentUser?.id, currentUser?.role, currentUser?.studentId]); // Added studentId dependency to refresh when parent connects
 
   const fetchDashboardData = async () => {
       if (!currentUser) return;
@@ -86,6 +86,7 @@ function App() {
           const data = await res.json();
           
           // --- PROFILE SYNC (Critical for Connection Requests) ---
+          // We check the CURRENT user's profile to see if requests/links have changed
           if (data.userProfileSync && currentUser.id === targetUserId) {
               const synced = data.userProfileSync;
               // Check if any connection data changed
@@ -271,13 +272,9 @@ function App() {
   // --- Handlers ---
 
   const handleLogin = (user: User) => {
-      // SMART LOGIN: Prioritize state from 'allUsers' (Mock DB) if available
-      // This ensures that when testing locally with Quick Login, we don't overwrite
-      // pending requests with a fresh user object.
       const existingUser = allUsers.find(u => u.id === user.id);
       
       if (existingUser && window.IITJEE_CONFIG?.enableDevTools) {
-          // Merge to keep existing state (like pendingRequest) but allow new props
           setCurrentUser({ ...existingUser, ...user });
       } else {
           setCurrentUser(user);
@@ -373,7 +370,7 @@ function App() {
       }
   };
 
-  // --- Admin Handlers (With DB Persistence) ---
+  // --- Admin Handlers ---
   const handleAddQuestion = async (q: Question) => {
       setQuestions([...questions, q]);
       try {
@@ -419,7 +416,7 @@ function App() {
   const handleDeleteQuote = async (id: string) => {
       setQuotes(quotes.filter(q => q.id !== id));
       try {
-          await fetch(`${API_BASE_URL}/manage_broadcasts.php?action=delete_quote&id=${id}`, { method: 'GET' }); // Or POST/DELETE
+          await fetch(`${API_BASE_URL}/manage_broadcasts.php?action=delete_quote&id=${id}`, { method: 'GET' });
       } catch (e) { console.error(e); }
   };
 
@@ -429,7 +426,6 @@ function App() {
               method: 'PUT',
               body: JSON.stringify(user)
           });
-          // Refresh list
           fetchAdminData();
       } catch (err) {
           console.error("Failed to update user", err);
@@ -441,7 +437,6 @@ function App() {
           await fetch(`${API_BASE_URL}/manage_users.php?id=${id}`, {
               method: 'DELETE'
           });
-          // Refresh list
           fetchAdminData();
       } catch (err) {
           console.error("Failed to delete user", err);
@@ -512,7 +507,6 @@ function App() {
 
   const handleMistakeUpdate = (id: string, updates: Partial<MistakeRecord>) => {
       setMistakes(mistakes.map(m => m.id === id ? { ...m, ...updates } : m));
-      // Sync update (specifically for notes/tags)
       if(currentUser) {
           const mistake = mistakes.find(m => m.id === id);
           if(mistake) {
@@ -532,7 +526,6 @@ function App() {
 
   // --- Connection Handlers ---
   const handleSendConnectionRequest = (studentIdentifier: string) => {
-      // 2. Call API (for production)
       if (currentUser) {
           fetch(`${API_BASE_URL}/send_request.php`, {
               method: 'POST',
@@ -546,7 +539,7 @@ function App() {
           .then(res => res.json())
           .then(data => {
               if (data.message === "Request Sent Successfully") {
-                  // Success
+                  // Success UI handled by component state
               } else {
                   console.error(data.message);
               }
@@ -566,13 +559,13 @@ function App() {
           }
           setCurrentUser(updatedStudent);
 
-          // 2. Call API (for production)
+          // 2. Call API
           fetch(`${API_BASE_URL}/respond_request.php`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                   student_id: currentUser.id,
-                  parent_id: parentId, // Passed for redundancy check
+                  parent_id: parentId,
                   accept: accept
               })
           }).catch(err => console.error("Failed to respond to request", err));
@@ -582,21 +575,13 @@ function App() {
   // --- Render Logic ---
 
   if (!currentUser) {
-    // If not logged in, check if user wants to see public pages
     switch (activeTab) {
-      case 'about':
-        return <PublicLayout onNavigate={setActiveTab}><AboutUs /></PublicLayout>;
-      case 'privacy':
-        return <PublicLayout onNavigate={setActiveTab}><PrivacyPolicy /></PublicLayout>;
-      case 'contact':
-        return <PublicLayout onNavigate={setActiveTab}><ContactUs /></PublicLayout>;
-      case 'blog':
-        return <PublicLayout onNavigate={setActiveTab}><Blog posts={blogPosts} /></PublicLayout>;
-      case 'exams':
-        return <PublicLayout onNavigate={setActiveTab}><ExamGuide /></PublicLayout>;
-      default:
-        // Default to AuthScreen (Login/Register)
-        return <AuthScreen onLogin={handleLogin} onNavigate={setActiveTab} />;
+      case 'about': return <PublicLayout onNavigate={setActiveTab}><AboutUs /></PublicLayout>;
+      case 'privacy': return <PublicLayout onNavigate={setActiveTab}><PrivacyPolicy /></PublicLayout>;
+      case 'contact': return <PublicLayout onNavigate={setActiveTab}><ContactUs /></PublicLayout>;
+      case 'blog': return <PublicLayout onNavigate={setActiveTab}><Blog posts={blogPosts} /></PublicLayout>;
+      case 'exams': return <PublicLayout onNavigate={setActiveTab}><ExamGuide /></PublicLayout>;
+      default: return <AuthScreen onLogin={handleLogin} onNavigate={setActiveTab} />;
     }
   }
 
@@ -637,14 +622,10 @@ function App() {
             user={currentUser}
           />
         );
-      case 'focus':
-        return <FocusZone />;
-      case 'analytics':
-        return <Analytics attempts={attempts} tests={tests} syllabus={JEE_SYLLABUS} />;
-      case 'timetable':
-        return <TimetableGenerator user={currentUser} savedData={timetableData} onUpdate={handleTimetableUpdate} progress={progress} />;
-      case 'revision': // New
-        return <RevisionManager subjects={JEE_SYLLABUS} progress={progress} onUpdateProgress={handleUpdateProgress} />;
+      case 'focus': return <FocusZone />;
+      case 'analytics': return <Analytics attempts={attempts} tests={tests} syllabus={JEE_SYLLABUS} />;
+      case 'timetable': return <TimetableGenerator user={currentUser} savedData={timetableData} onUpdate={handleTimetableUpdate} progress={progress} />;
+      case 'revision': return <RevisionManager subjects={JEE_SYLLABUS} progress={progress} onUpdateProgress={handleUpdateProgress} />;
       case 'users':
         return (
             <AdminPanel 
@@ -714,10 +695,8 @@ function App() {
                 onDeleteBlogPost={handleDeleteBlogPost}
             />
         );
-      case 'test_runner':
-        return <TestRunner />;
-      case 'system':
-        return <SystemDocs />;
+      case 'test_runner': return <TestRunner />;
+      case 'system': return <SystemDocs />;
       case 'profile':
         return (
             <ProfileSettings 
@@ -727,49 +706,36 @@ function App() {
                 onRespondRequest={handleRespondConnectionRequest}
             />
         );
-      case 'mistakes':
-        return <MistakeNotebook mistakes={mistakes} onUpdateMistake={handleMistakeUpdate} onDeleteMistake={handleMistakeDelete} />;
-      case 'wellness':
-        return <WellnessCorner />;
-      case 'flashcards':
-        return <FlashcardDeck cards={flashcards} />;
-      case 'backlogs':
-        return <BacklogManager backlogs={backlogs} onAddBacklog={handleAddBacklog} onToggleStatus={handleToggleBacklog} onDeleteBacklog={handleDeleteBacklog} />;
-      case 'hacks':
-        return <MemoryHacks hacks={hacks} />;
-      // Also render public pages inside logged-in layout if desired
-      case 'about':
-        return <AboutUs />;
-      case 'privacy':
-        return <PrivacyPolicy />;
-      case 'contact':
-        return <ContactUs />;
-      case 'blog':
-        return <Blog posts={blogPosts} />;
-      case 'exams':
-        return <ExamGuide />;
+      case 'mistakes': return <MistakeNotebook mistakes={mistakes} onUpdateMistake={handleMistakeUpdate} onDeleteMistake={handleMistakeDelete} />;
+      case 'wellness': return <WellnessCorner />;
+      case 'flashcards': return <FlashcardDeck cards={flashcards} />;
+      case 'backlogs': return <BacklogManager backlogs={backlogs} onAddBacklog={handleAddBacklog} onToggleStatus={handleToggleBacklog} onDeleteBacklog={handleDeleteBacklog} />;
+      case 'hacks': return <MemoryHacks hacks={hacks} />;
+      case 'about': return <AboutUs />;
+      case 'privacy': return <PrivacyPolicy />;
+      case 'contact': return <ContactUs />;
+      case 'blog': return <Blog posts={blogPosts} />;
+      case 'exams': return <ExamGuide />;
       case 'parent_view':
-        // Reuse Dashboard for Parent but read-only conceptually (handled by fetching logic)
         return (
             <Dashboard 
                 user={currentUser} 
                 progress={progress} 
-                onChangeTab={() => {}} // Parent cannot nav
+                onChangeTab={() => {}} 
                 notifications={notifications}
                 quotes={quotes}
-                goals={goals} // Viewing student's goals
-                onToggleGoal={() => {}} // Read only
+                goals={goals} 
+                onToggleGoal={() => {}} 
                 onAddGoal={() => {}}
                 attempts={attempts}
                 tests={tests}
             />
         );
       default:
-        // Default Fallback to avoid blank screen
         return (
             <div className="flex flex-col items-center justify-center h-full text-slate-400 p-10 text-center">
                 <p className="text-lg font-bold mb-2">Page Not Found</p>
-                <p className="text-sm">The requested tab "{activeTab}" does not exist or you do not have permission to view it.</p>
+                <p className="text-sm">The requested tab "{activeTab}" does not exist.</p>
                 <button onClick={() => setActiveTab('dashboard')} className="mt-4 text-blue-600 hover:underline">Return to Dashboard</button>
             </div>
         );
@@ -783,12 +749,11 @@ function App() {
       onTabChange={setActiveTab}
       onLogout={() => {
           setCurrentUser(null);
-          setActiveTab('dashboard'); // Reset to login screen
+          setActiveTab('dashboard'); 
           setProgress({});
           setGoals([]);
           setMistakes([]);
           setTimetableData(null);
-          // DO NOT reset allUsers, to preserve local dev state
       }}
     >
       {renderContent()}
