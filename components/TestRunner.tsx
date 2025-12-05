@@ -432,6 +432,75 @@ const TestRunner: React.FC = () => {
             });
         });
 
+        // --- SUITE 14: STUDENT PROFILE INTEGRITY (Real DB Lifecycle) ---
+        engine.describe("14. Student Profile Lifecycle", (it) => {
+            let user: any;
+            it("should create student", async () => {
+                user = await registerUser('STUDENT', 'Lifecycle User');
+                if(!user) throw new Error("Register failed");
+            });
+
+            it("should update personal details in DB", async () => {
+                if(!user) throw new Error("No user");
+                // Update via API
+                await fetchApi('/api/manage_users.php', {
+                    method: 'PUT',
+                    body: JSON.stringify({
+                        id: user.id,
+                        phone: '9876543210',
+                        dob: '2005-05-05',
+                        gender: 'MALE',
+                        targetExam: 'VITEEE'
+                    })
+                });
+            });
+
+            it("should persist changes across sessions", async () => {
+                if(!user) throw new Error("No user");
+                // Simulate fresh login/admin view fetch
+                const users = await fetchApi('/api/get_users.php');
+                const fetchedUser = users.find((u: any) => u.id == user.id);
+                
+                expect(fetchedUser).toBeDefined();
+                expect(fetchedUser.targetExam).toBe('VITEEE');
+                // Note: get_users.php might not return phone/dob for list view, 
+                // but targetExam proves DB update worked.
+            });
+        });
+
+        // --- SUITE 15: SECURITY & ACCESS CONTROL (Real DB Constraints) ---
+        engine.describe("15. Security & Access", (it) => {
+            let targetUser: any;
+            it("should create target user", async () => {
+                targetUser = await registerUser('STUDENT', 'Block Target');
+                if(!targetUser) throw new Error("Register failed");
+            });
+
+            it("should block user access (DB Update)", async () => {
+                // Admin blocks user
+                await fetchApi('/api/manage_users.php', {
+                    method: 'PUT',
+                    body: JSON.stringify({ id: targetUser.id, isVerified: false })
+                });
+            });
+
+            it("should verify blocked status in DB", async () => {
+                const users = await fetchApi('/api/get_users.php');
+                const u = users.find((u: any) => u.id == targetUser.id);
+                // PHP returns isVerified as 0 or 1
+                expect(Number(u.isVerified)).toBe(0);
+            });
+
+            it("should permanently delete user from DB", async () => {
+                await fetchApi(`/api/manage_users.php?id=${targetUser.id}`, { method: 'DELETE' });
+                
+                // Verify gone
+                const users = await fetchApi('/api/get_users.php');
+                const u = users.find((u: any) => u.id == targetUser.id);
+                if (u) throw new Error("User still exists in DB after delete!");
+            });
+        });
+
         const finalResults = await engine.runAll();
         setResults(finalResults);
         setIsRunning(false);
@@ -444,7 +513,8 @@ const TestRunner: React.FC = () => {
             metadata: { 
                 timestamp: new Date().toISOString(),
                 userAgent: navigator.userAgent,
-                url: window.location.href
+                url: window.location.href,
+                appVersion: 'v3.6'
             },
             summary: { passed: passedTests, failed: failedTests },
             fullResults: results
@@ -464,14 +534,14 @@ const TestRunner: React.FC = () => {
     const failedTests = allTests.length - passedTests;
 
     return (
-        <div className="max-w-5xl mx-auto p-6 space-y-6 animate-in fade-in">
+        <div className="max-w-6xl mx-auto p-6 space-y-6 animate-in fade-in">
             <div className="bg-slate-900 text-white rounded-2xl p-8 shadow-xl flex flex-col md:flex-row justify-between items-center gap-4">
                 <div>
                     <h1 className="text-3xl font-bold flex items-center mb-2">
                         <Terminal className="w-8 h-8 mr-3 text-green-400" />
                         System Diagnostics
                     </h1>
-                    <p className="text-slate-400">Run end-to-end tests on your live Hostinger deployment.</p>
+                    <p className="text-slate-400">Run end-to-end tests on your live Hostinger deployment. All tests use REAL database transactions.</p>
                 </div>
                 <div className="flex gap-3">
                     {results && (

@@ -1,10 +1,11 @@
+
 // ... existing imports ...
 import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS, BLOG_POSTS } from '../constants';
 import { Question } from '../types';
 
 // ... (Keep generateSQLSchema, generateHtaccess, getDeploymentPhases, generateFrontendGuide as is) ...
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.6 Final Production)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.6 Force Update)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
 
