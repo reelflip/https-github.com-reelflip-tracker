@@ -30,7 +30,8 @@ const TestRunner: React.FC = () => {
             return data;
         } catch (jsonErr) {
             console.error("Raw Response:", text);
-            throw new Error(`Invalid JSON response from ${url}: ${text.substring(0, 100)}...`);
+            // Show preview of raw text to help debug PHP errors
+            throw new Error(`Invalid JSON response from ${url}. Raw Output: "${text.substring(0, 100)}..."`);
         }
     };
 

@@ -816,7 +816,6 @@ $data = json_decode(file_get_contents("php://input"));
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'POST') {
-    // Create Blog Post
     try {
         $stmt = $conn->prepare("INSERT INTO blog_posts (id, title, excerpt, content, author, category, image_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([
@@ -832,7 +831,6 @@ if ($method === 'POST') {
         echo json_encode(["message" => "Blog post created"]);
     } catch (Exception $e) { http_response_code(500); echo json_encode(["error" => $e->getMessage()]); }
 } elseif ($method === 'DELETE' && isset($_GET['id'])) {
-    // Delete Blog Post
     try {
         $stmt = $conn->prepare("DELETE FROM blog_posts WHERE id = ?");
         $stmt->execute([$_GET['id']]);
@@ -854,7 +852,6 @@ try {
     $notifs = $conn->query("SELECT * FROM notifications ORDER BY created_at DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
     $posts = $conn->query("SELECT id, title, excerpt, content, author, category, image_url as imageUrl, created_at as date FROM blog_posts ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
     
-    // Fetch Tests
     $tests = $conn->query("SELECT * FROM tests")->fetchAll(PDO::FETCH_ASSOC);
     
     foreach($tests as &$test) {
@@ -992,7 +989,6 @@ $data = json_decode(file_get_contents("php://input"));
 if(isset($data->student_identifier) && isset($data->parent_id)) {
     try {
         $identifier = trim($data->student_identifier);
-        // Case-insensitive search for Email, ID, or Full Name
         $query = "SELECT id, email FROM users WHERE (email = :id OR id = :id OR full_name LIKE :name) AND role = 'STUDENT' LIMIT 1";
         $stmt = $conn->prepare($query);
         $stmt->bindParam(":id", $identifier);
