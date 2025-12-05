@@ -5,8 +5,7 @@ import { Question } from '../types';
 
 // ... existing SQL Generation ...
 export const generateSQLSchema = (): string => {
-  // ... (Keep existing massive SQL String)
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.3 UI Polish & Analytics Final)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.4 Complete System)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
 
@@ -747,7 +746,7 @@ try {
             name: "sitemap.xml", folder: "root", desc: "SEO Sitemap", content: `<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"><url><loc>https://iitgeeprep.com/</loc><priority>1.0</priority></url><url><loc>https://iitgeeprep.com/about</loc><priority>0.8</priority></url><url><loc>https://iitgeeprep.com/blog</loc><priority>0.8</priority></url><url><loc>https://iitgeeprep.com/exams</loc><priority>0.8</priority></url></urlset>`
         },
         {
-            name: "README.txt", folder: "root", desc: "Instructions", content: `IITGEEPrep Backend Installation (v3.3 Final)\n==============================================\n\n1. API FOLDER\n   - Ensure all .php files are inside a folder named 'api' in public_html.\n   - public_html/api/config.php\n   - public_html/api/login.php\n   ...etc\n\n2. CONFIGURATION\n   - Edit api/config.php\n   - Set your Database Host, Name, User, and Password.\n\n3. PERMISSIONS\n   - Set folder 'api' permissions to 755.\n   - Set file permissions (login.php, etc) to 644.\n\n4. DATABASE\n   - Import the database.sql file into phpMyAdmin.\n\n5. TESTING\n   - Visit https://yourdomain.com/api/test_db.php to verify connection.`
+            name: "README.txt", folder: "root", desc: "Instructions", content: `IITGEEPrep Backend Installation (v3.4 Final)\n==============================================\n\n1. API FOLDER\n   - Ensure all .php files are inside a folder named 'api' in public_html.\n   - public_html/api/config.php\n   - public_html/api/login.php\n   ...etc\n\n2. CONFIGURATION\n   - Edit api/config.php\n   - Set your Database Host, Name, User, and Password.\n\n3. PERMISSIONS\n   - Set folder 'api' permissions to 755.\n   - Set file permissions (login.php, etc) to 644.\n\n4. DATABASE\n   - Import the database.sql file into phpMyAdmin.\n\n5. TESTING\n   - Visit https://yourdomain.com/api/test_db.php to verify connection.`
         },
         // Placeholders for other management scripts to complete the bundle
         { name: "save_timetable.php", folder: "api", desc: "Save Timetable", content: `<?php require 'config.php'; header('Content-Type: application/json'); $data = json_decode(file_get_contents("php://input")); if (!isset($data->user_id) || !isset($data->config)) { http_response_code(400); echo json_encode(["message" => "Missing data"]); exit(); } try { $stmt = $conn->prepare("INSERT INTO timetable_settings (user_id, config_json, generated_slots_json) VALUES (:uid, :config, :slots) ON DUPLICATE KEY UPDATE config_json=:config, generated_slots_json=:slots"); $stmt->execute([':uid' => $data->user_id, ':config' => json_encode($data->config), ':slots' => json_encode($data->slots)]); echo json_encode(["message" => "Timetable saved"]); } catch(PDOException $e) { http_response_code(500); echo json_encode(["error" => "Save failed", "message" => $e->getMessage()]); }` },

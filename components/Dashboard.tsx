@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
 import { User, TopicProgress, Notification, DailyGoal, Quote, ContactMessage, TestAttempt, Test } from '../types';
-import { Calendar, CheckCircle2, Trophy, ArrowRight, Bell, Flame, Plus, Square, CheckSquare, Target, UserPlus, Link as LinkIcon, Users, Inbox, Database, PenTool, Activity, TrendingUp } from 'lucide-react';
+import { Calendar, CheckCircle2, Trophy, ArrowRight, Bell, Flame, Plus, Square, CheckSquare, Target, UserPlus, Link as LinkIcon, Users, Inbox, Database, PenTool, Activity, RotateCw } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 interface DashboardProps {
@@ -58,6 +58,15 @@ const Dashboard: React.FC<DashboardProps> = ({
   const totalTopics = Object.keys(progress).length || 1; // Avoid divide by zero
   const completedTopics = Object.values(progress).filter((p: TopicProgress) => p.status === 'COMPLETED').length;
   const completionRate = Math.round((completedTopics / totalTopics) * 100);
+
+  // Calculate Overdue Revisions
+  const overdueCount = Object.values(progress).filter((p: TopicProgress) => {
+      if (p.status !== 'COMPLETED' || !p.nextRevisionDate) return false;
+      const dueDate = new Date(p.nextRevisionDate);
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      return dueDate < today;
+  }).length;
 
   const chartData = [
     { name: 'Completed', value: completedTopics },
@@ -233,6 +242,27 @@ const Dashboard: React.FC<DashboardProps> = ({
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        {/* Revision Alert (Shows only if overdue > 0) */}
+        {overdueCount > 0 && (
+            <div className="bg-amber-50 p-6 rounded-xl border border-amber-100 shadow-sm flex items-center justify-between">
+                <div>
+                    <div className="flex items-center space-x-2 text-amber-700 mb-2">
+                        <RotateCw className="w-5 h-5 animate-spin-slow" />
+                        <span className="font-bold text-sm uppercase">Revision Alert</span>
+                    </div>
+                    <p className="text-3xl font-black text-amber-800">{overdueCount}</p>
+                    <p className="text-xs text-amber-700/70 mt-1">Topics Overdue</p>
+                </div>
+                <button 
+                    onClick={() => onChangeTab('revision')}
+                    className="bg-white text-amber-700 px-4 py-2 rounded-lg text-xs font-bold shadow-sm hover:bg-amber-100 transition-colors"
+                >
+                    Review Now
+                </button>
+            </div>
+        )}
+
         {/* Countdown */}
         <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
           <div className="flex items-center space-x-3 text-slate-500 mb-4">

@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { TestRunnerEngine, expect, TestResult } from '../utils/testFramework';
-import { Play, CheckCircle2, XCircle, Terminal, AlertTriangle, Loader2, RefreshCw, Database, Users, BookOpen, Target, BarChart2, Calendar, ListTodo, Shield, Mail, Layers, UserCog } from 'lucide-react';
+import { Play, CheckCircle2, XCircle, Terminal, AlertTriangle, Loader2, RefreshCw, Database, Users, BookOpen, Target, BarChart2, Calendar, ListTodo, Shield, Mail, Layers, UserCog, RotateCw } from 'lucide-react';
 
 const TestRunner: React.FC = () => {
     const [results, setResults] = useState<Record<string, TestResult[]> | null>(null);
@@ -122,7 +122,13 @@ const TestRunner: React.FC = () => {
                         accept: true
                     })
                 });
-                expect(data.message).toContain("Accepted");
+                expect(data.message).toContain("Processed");
+            });
+            
+            it("should allow Parent to view Student Data", async () => {
+                setProgress("Verifying Access...");
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
+                expect(data.progress).toBeDefined();
             });
         });
 
@@ -159,6 +165,7 @@ const TestRunner: React.FC = () => {
         engine.describe("4. Task Management", (it) => {
             let user: any;
             let goalId = `g_${timestamp}`;
+            let backlogId = `b_${timestamp}`;
 
             it("should create user", async () => {
                 user = await registerUser('STUDENT', 'Task User');
@@ -175,6 +182,21 @@ const TestRunner: React.FC = () => {
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 const goal = data.goals.find((g: any) => g.id === goalId);
                 expect(goal.is_completed == 1).toBe(true);
+            });
+
+            it("should create & delete Backlog", async () => {
+                setProgress("Testing Backlogs...");
+                await fetchApi('/api/manage_backlogs.php', {
+                    method: 'POST', body: JSON.stringify({
+                        id: backlogId, user_id: user.id, title: "Test Backlog", 
+                        subjectId: 'phys', priority: 'HIGH', deadline: '2025-01-01', status: 'PENDING'
+                    })
+                });
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
+                const item = data.backlogs.find((b: any) => b.id === backlogId);
+                expect(item).toBeDefined();
+
+                await fetchApi(`/api/manage_backlogs.php?id=${backlogId}`, { method: 'DELETE' });
             });
         });
 
@@ -224,17 +246,19 @@ const TestRunner: React.FC = () => {
             it("should save complex timetable slots", async () => {
                 setProgress("Saving Timetable...");
                 const slots = [
-                    { time: "06:00", label: "Wake Up", iconType: "sun" }
+                    { time: "06:00", label: "Wake Up", iconType: "sun", endTime: "06:30", type: "routine" }
                 ];
+                const config = { wakeTime: "06:00" };
                 await fetchApi('/api/save_timetable.php', {
                     method: 'POST',
-                    body: JSON.stringify({ user_id: user.id, config: {}, slots })
+                    body: JSON.stringify({ user_id: user.id, config, slots })
                 });
             });
 
             it("should retrieve valid slots", async () => {
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 expect(data.timetable.slots[0].iconType).toBe("sun");
+                expect(data.timetable.slots[0].endTime).toBe("06:30");
             });
         });
 
@@ -267,10 +291,75 @@ const TestRunner: React.FC = () => {
                 const common = await fetchApi('/api/get_common.php');
                 const post = common.blogPosts.find((b: any) => b.id === blogId);
                 expect(post).toBeDefined();
-                expect(post.date).toBe(today); // Verify format didn't break DB
+                expect(post.date).toBe(today); 
                 
                 // Cleanup
                 await fetchApi(`/api/manage_blog.php?id=${blogId}`, { method: 'DELETE' });
+            });
+        });
+
+        // --- SUITE 9: STUDY TOOLS ---
+        engine.describe("9. Study Tools Integrity", (it) => {
+            it("should return valid Flashcards", async () => {
+                const data = await fetchApi('/api/get_common.php');
+                expect(data.flashcards.length).toBeGreaterThan(0);
+                expect(data.flashcards[0].front).toBeDefined();
+            });
+            it("should return valid Memory Hacks", async () => {
+                const data = await fetchApi('/api/get_common.php');
+                expect(data.hacks.length).toBeGreaterThan(0);
+                expect(data.hacks[0].trick).toBeDefined();
+            });
+        });
+
+        // --- SUITE 10: USER PROFILE ---
+        engine.describe("10. User Profile & Settings", (it) => {
+            let user: any;
+            it("should update user profile fields", async () => {
+                user = await registerUser('STUDENT', 'Profile User');
+                const update = { id: user.id, name: "Updated Name", institute: "New Inst", targetExam: "BITSAT", isVerified: true };
+                await fetchApi('/api/manage_users.php', {
+                    method: 'PUT', body: JSON.stringify(update)
+                });
+                // Re-login to check
+                const login = await fetchApi('/api/login.php', {
+                    method: 'POST', body: JSON.stringify({ email: user.email, password: 'TestPass123' })
+                });
+                expect(login.user.name).toBe("Updated Name");
+                expect(login.user.targetExam).toBe("BITSAT");
+            });
+        });
+
+        // --- SUITE 12: SMART REVISION ---
+        engine.describe("12. Smart Revision Logic", (it) => {
+            let user: any;
+            const topicId = 'chem_1';
+
+            it("should create user", async () => {
+                user = await registerUser('STUDENT', 'Revision User');
+            });
+
+            it("should set Revision Date on check-in", async () => {
+                setProgress("Checking in Revision...");
+                // Simulate marking topic as Revised (Level 1)
+                const nextDate = '2025-12-31';
+                const payload = {
+                    user_id: user.id, 
+                    topic_id: topicId, 
+                    status: 'COMPLETED',
+                    revisionCount: 1,
+                    nextRevisionDate: nextDate
+                };
+                
+                await fetchApi('/api/sync_progress.php', {
+                    method: 'POST', body: JSON.stringify(payload)
+                });
+
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
+                const topic = data.progress.find((p: any) => p.topic_id === topicId);
+                
+                expect(topic.revision_count).toBe("1"); // PHP returns string for numbers usually
+                expect(topic.next_revision_date).toBe(nextDate);
             });
         });
 
@@ -343,16 +432,7 @@ const TestRunner: React.FC = () => {
                     <div key={suiteName} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
                         <div className={`px-6 py-4 border-b border-slate-100 flex justify-between items-center ${suitePassed ? 'bg-slate-50' : 'bg-red-50'}`}>
                             <div className="flex items-center gap-3">
-                                {suiteName.includes('Auth') ? <Users className="w-5 h-5 text-blue-500"/> : 
-                                 suiteName.includes('DB') ? <Database className="w-5 h-5 text-purple-500"/> :
-                                 suiteName.includes('Analytics') ? <BarChart2 className="w-5 h-5 text-pink-500"/> :
-                                 suiteName.includes('Timetable') ? <Calendar className="w-5 h-5 text-teal-500"/> :
-                                 suiteName.includes('Task') ? <ListTodo className="w-5 h-5 text-orange-500"/> :
-                                 suiteName.includes('Admin') ? <Shield className="w-5 h-5 text-red-600"/> :
-                                 suiteName.includes('Study') ? <Layers className="w-5 h-5 text-yellow-500"/> :
-                                 suiteName.includes('Syllabus') ? <Target className="w-5 h-5 text-indigo-500"/> :
-                                 suiteName.includes('User') ? <UserCog className="w-5 h-5 text-cyan-600"/> :
-                                 <BookOpen className="w-5 h-5 text-slate-500"/>}
+                                <Shield className="w-5 h-5 text-slate-500"/>
                                 <h3 className="font-bold text-slate-800">{suiteName}</h3>
                             </div>
                             <span className={`text-xs font-bold px-2 py-1 rounded ${suitePassed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
