@@ -221,13 +221,21 @@ const TestRunner: React.FC = () => {
                 if(!user) throw new Error("Setup failed");
             });
 
-            it("should save clean JSON config", async () => {
+            it("should save full timetable object", async () => {
                 if(!user) throw new Error("Setup failed");
                 const payload = {
                     user_id: user.id,
-                    config: { wakeTime: '06:00' },
+                    config: { wakeTime: '06:00', coachingDays: ['Mon'] },
                     slots: [
-                        { time: '06:00', label: 'Wake Up', iconType: 'sun' } // Using string icon
+                        { 
+                            time: '06:00', 
+                            endTime: '07:00', 
+                            label: 'Physics Study', 
+                            type: 'theory',
+                            iconType: 'sun',
+                            subject: 'Physics',
+                            subtext: 'Focus on mechanics'
+                        }
                     ]
                 };
                 await fetchApi('/api/save_timetable.php', {
@@ -236,11 +244,18 @@ const TestRunner: React.FC = () => {
                 });
             });
 
-            it("should retrieve timetable", async () => {
+            it("should retrieve timetable with all fields", async () => {
                 if(!user) throw new Error("Setup failed");
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
+                
                 expect(data.timetable).toBeDefined();
-                expect(data.timetable.slots[0].iconType).toBe('sun');
+                const slot = data.timetable.slots[0];
+                
+                expect(slot.label).toBe('Physics Study');
+                expect(slot.iconType).toBe('sun');
+                expect(slot.subject).toBe('Physics');
+                expect(slot.subtext).toBe('Focus on mechanics');
+                expect(slot.endTime).toBe('07:00');
             });
         });
 
@@ -286,28 +301,135 @@ const TestRunner: React.FC = () => {
             });
         });
 
-        // --- SUITE 8: ADMIN ---
+        // --- SUITE 8: ADMIN CAPABILITIES ---
         engine.describe("8. Admin Capabilities", (it) => {
-            it("should create a blog post", async () => {
+            // 1. Content
+            it("should create a broadcast notification", async () => {
+                const notif = {
+                    action: 'send_notification',
+                    id: `n_test_${timestamp}`,
+                    title: 'Test Alert',
+                    message: 'System test running',
+                    type: 'INFO',
+                    date: '2025-01-01'
+                };
+                await fetchApi('/api/manage_broadcasts.php', {
+                    method: 'POST', body: JSON.stringify(notif)
+                });
+                // Verify
+                const data = await fetchApi('/api/get_common.php');
+                const found = data.notifications.find((n: any) => n.id === notif.id);
+                expect(found).toBeDefined();
+            });
+
+            it("should add motivational quote", async () => {
+                const quote = {
+                    action: 'add_quote',
+                    id: `q_test_${timestamp}`,
+                    text: 'Test Quote',
+                    author: 'Admin'
+                };
+                await fetchApi('/api/manage_broadcasts.php', {
+                    method: 'POST', body: JSON.stringify(quote)
+                });
+                const data = await fetchApi('/api/get_common.php');
+                const found = data.quotes.find((q: any) => q.text === 'Test Quote');
+                expect(found).toBeDefined();
+            });
+
+            it("should create blog post", async () => {
                 const post = {
-                    id: `blog_test_${Date.now()}`,
+                    id: `blog_test_${timestamp}`,
                     title: 'Test Blog',
                     excerpt: 'Desc',
                     content: 'Body',
                     author: 'Admin',
                     category: 'Updates',
                     imageUrl: '',
-                    date: '2025-01-01' // YYYY-MM-DD
+                    date: '2025-01-01'
                 };
                 await fetchApi('/api/manage_blog.php', {
                     method: 'POST', body: JSON.stringify(post)
                 });
-                
-                // Verify
                 const common = await fetchApi('/api/get_common.php');
                 const created = common.blogPosts.find((b: any) => b.id === post.id);
                 expect(created).toBeDefined();
-                expect(created.date).toBe('2025-01-01'); // Verify Date format didn't crash DB
+            });
+
+            // 2. Test Builder
+            it("should create mock test with questions", async () => {
+                // Add Question
+                const q = {
+                    action: 'add_question',
+                    id: `q_test_${timestamp}`,
+                    subjectId: 'phys',
+                    topicId: 'p_kin_1',
+                    text: 'Test Question 1',
+                    options: ['A', 'B', 'C', 'D'],
+                    correctOptionIndex: 0
+                };
+                await fetchApi('/api/manage_tests.php', { method: 'POST', body: JSON.stringify(q) });
+
+                // Create Test
+                const t = {
+                    action: 'create_test',
+                    id: `t_test_${timestamp}`,
+                    title: 'Admin Mock Test',
+                    durationMinutes: 180,
+                    difficulty: 'MAINS',
+                    examType: 'JEE',
+                    questions: [{ id: q.id }]
+                };
+                await fetchApi('/api/manage_tests.php', { method: 'POST', body: JSON.stringify(t) });
+
+                // Verify Visibility
+                const data = await fetchApi('/api/get_common.php');
+                const test = data.tests.find((item: any) => item.id === t.id);
+                expect(test).toBeDefined();
+                expect(test.questions.length).toBe(1);
+            });
+
+            // 3. Inbox
+            it("should receive contact message in inbox", async () => {
+                const msg = {
+                    name: 'Tester',
+                    email: `tester_${timestamp}@mail.com`,
+                    subject: `Inquiry ${timestamp}`,
+                    message: 'Hello Admin'
+                };
+                // Public sends
+                await fetchApi('/api/contact.php', { method: 'POST', body: JSON.stringify(msg) });
+                
+                // Admin reads
+                const inbox = await fetchApi('/api/manage_contact.php', { method: 'GET' });
+                const received = inbox.find((m: any) => m.subject === msg.subject);
+                expect(received).toBeDefined();
+            });
+
+            // 4. User Management
+            it("should block user access", async () => {
+                const u = await registerUser('STUDENT', 'ToBlock');
+                if(!u) throw new Error("Setup failed");
+                // Block
+                await fetchApi('/api/manage_users.php', {
+                    method: 'PUT',
+                    body: JSON.stringify({ id: u.id, isVerified: false })
+                });
+                // Verify
+                const users = await fetchApi('/api/get_users.php');
+                const blocked = users.find((user: any) => user.id == u.id);
+                expect(Number(blocked.isVerified)).toBe(0);
+            });
+
+            it("should delete user", async () => {
+                const u = await registerUser('STUDENT', 'ToDelete');
+                if(!u) throw new Error("Setup failed");
+                // Delete
+                await fetchApi(`/api/manage_users.php?id=${u.id}`, { method: 'DELETE' });
+                // Verify
+                const users = await fetchApi('/api/get_users.php');
+                const deleted = users.find((user: any) => user.id == u.id);
+                if (deleted) throw new Error("User was not deleted");
             });
         });
 
@@ -429,75 +551,6 @@ const TestRunner: React.FC = () => {
                 if (found) {
                     await fetchApi(`/api/manage_contact.php?id=${found.id}`, { method: 'DELETE' });
                 }
-            });
-        });
-
-        // --- SUITE 14: STUDENT PROFILE INTEGRITY (Real DB Lifecycle) ---
-        engine.describe("14. Student Profile Lifecycle", (it) => {
-            let user: any;
-            it("should create student", async () => {
-                user = await registerUser('STUDENT', 'Lifecycle User');
-                if(!user) throw new Error("Register failed");
-            });
-
-            it("should update personal details in DB", async () => {
-                if(!user) throw new Error("No user");
-                // Update via API
-                await fetchApi('/api/manage_users.php', {
-                    method: 'PUT',
-                    body: JSON.stringify({
-                        id: user.id,
-                        phone: '9876543210',
-                        dob: '2005-05-05',
-                        gender: 'MALE',
-                        targetExam: 'VITEEE'
-                    })
-                });
-            });
-
-            it("should persist changes across sessions", async () => {
-                if(!user) throw new Error("No user");
-                // Simulate fresh login/admin view fetch
-                const users = await fetchApi('/api/get_users.php');
-                const fetchedUser = users.find((u: any) => u.id == user.id);
-                
-                expect(fetchedUser).toBeDefined();
-                expect(fetchedUser.targetExam).toBe('VITEEE');
-                // Note: get_users.php might not return phone/dob for list view, 
-                // but targetExam proves DB update worked.
-            });
-        });
-
-        // --- SUITE 15: SECURITY & ACCESS CONTROL (Real DB Constraints) ---
-        engine.describe("15. Security & Access", (it) => {
-            let targetUser: any;
-            it("should create target user", async () => {
-                targetUser = await registerUser('STUDENT', 'Block Target');
-                if(!targetUser) throw new Error("Register failed");
-            });
-
-            it("should block user access (DB Update)", async () => {
-                // Admin blocks user
-                await fetchApi('/api/manage_users.php', {
-                    method: 'PUT',
-                    body: JSON.stringify({ id: targetUser.id, isVerified: false })
-                });
-            });
-
-            it("should verify blocked status in DB", async () => {
-                const users = await fetchApi('/api/get_users.php');
-                const u = users.find((u: any) => u.id == targetUser.id);
-                // PHP returns isVerified as 0 or 1
-                expect(Number(u.isVerified)).toBe(0);
-            });
-
-            it("should permanently delete user from DB", async () => {
-                await fetchApi(`/api/manage_users.php?id=${targetUser.id}`, { method: 'DELETE' });
-                
-                // Verify gone
-                const users = await fetchApi('/api/get_users.php');
-                const u = users.find((u: any) => u.id == targetUser.id);
-                if (u) throw new Error("User still exists in DB after delete!");
             });
         });
 

@@ -3,9 +3,8 @@
 import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS, BLOG_POSTS } from '../constants';
 import { Question } from '../types';
 
-// ... (Keep generateSQLSchema, generateHtaccess, getDeploymentPhases, generateFrontendGuide as is) ...
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.6 Force Update)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.6.1 Final Polish)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
 
@@ -145,7 +144,57 @@ export const getDeploymentPhases = () => {
   ];
 };
 
-export const generateFrontendGuide = () => { return "See PDF"; };
+export const generateFrontendGuide = () => {
+    return `# IITGEEPrep Hostinger Deployment Manual
+
+## Phase 1: Preparation (Local)
+1. **Build Project**: Run \`npm run build\` in your terminal. This creates a \`dist\` folder.
+2. **Zip Frontend**: Zip the **contents** of the \`dist\` folder (index.html, assets/). Name it \`frontend.zip\`.
+3. **Download Backend**: From the Admin Panel > System Docs, click "Download All (.zip)". This contains all PHP files.
+
+## Phase 2: Database Setup (Hostinger)
+1. Log in to Hostinger hPanel.
+2. Go to **Databases > Management**.
+3. Create a New Database:
+   - Name: \`u123_iitjee_tracker\` (Example)
+   - User: \`u123_iitjee_user\`
+   - Password: (Strong Password)
+4. Click **Enter phpMyAdmin**.
+5. Select your database on the left.
+6. Click **Import** tab.
+7. Choose the \`database.sql\` file (downloaded from Admin Panel).
+8. Click **Go**.
+
+## Phase 3: File Upload (Hostinger)
+1. Go to **Files > File Manager**.
+2. Open \`public_html\`.
+3. **Upload Frontend**: Upload \`frontend.zip\` and extract it here. You should see \`index.html\` directly in \`public_html\`.
+4. **Create API Folder**: Create a new folder named \`api\`.
+5. **Upload Backend**: Open \`api/\` folder. Upload \`hostinger_backend_bundle.zip\` and extract it.
+6. **Configure Database**:
+   - Open \`api/config.php\`.
+   - Update \`$host\`, \`$db_name\`, \`$username\`, \`$password\` with the values from Phase 2.
+   - Save & Close.
+
+## Phase 4: Permissions Fix (Critical)
+1. Right-click \`api\` folder -> **Permissions**. Set to **755**.
+2. Inside \`api\`, select all PHP files -> **Permissions**. Set to **644**.
+3. Go back to \`public_html\`. Ensure \`.htaccess\` is present (if not, upload it from the bundle).
+
+## Phase 5: Verification
+1. Open your website (e.g., iitgeeprep.com). You should see the login screen.
+2. Go to \`iitgeeprep.com/api/index.php\`. You should see \`{"status": "active"}\`.
+3. Log in with the default admin:
+   - Email: \`admin\`
+   - Password: \`Ishika@123\`
+4. Go to **Admin > System Tests** and run the scan.
+
+## Troubleshooting
+- **404 on API**: Ensure \`api\` folder exists in \`public_html\` and contains \`index.php\`.
+- **403 Forbidden**: Check permissions (Folders 755, Files 644). Check if ModSecurity is blocking requests in Hostinger.
+- **JSON Error**: Ensure no closing \`?>\` tags in PHP files.
+    `;
+};
 
 export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: string, name: string }) => {
     const dbHost = dbConfig?.host || "82.25.121.80";
@@ -183,7 +232,7 @@ try {
     exit();
 }`
         },
-        { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v3.6"]);` },
+        { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v3.6.1"]);` },
         { 
             name: "test_db.php", 
             folder: "api", 
