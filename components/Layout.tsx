@@ -24,7 +24,9 @@ import {
   FileText,
   Award,
   Users as UsersIcon,
-  PenTool
+  PenTool,
+  Radio,
+  Terminal
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -64,8 +66,10 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
     } else if (currentUser.role === 'ADMIN') {
       return [
         ...common,
-        { id: 'users', label: 'Users', icon: UsersIcon },
-        { id: 'content', label: 'Content & Tests', icon: PenTool },
+        { id: 'users', label: 'User Management', icon: UsersIcon },
+        { id: 'tests_admin', label: 'Test Management', icon: PenTool },
+        { id: 'content_admin', label: 'Content Management', icon: Radio },
+        { id: 'test_runner', label: 'System Tests', icon: Terminal },
         { id: 'system', label: 'System Docs', icon: Database },
       ];
     } else {
@@ -100,6 +104,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                   ? "bg-gradient-to-br from-indigo-500 to-indigo-600 text-white border-indigo-600 shadow-indigo-200"
                   : "bg-white text-indigo-600 border-indigo-100 hover:border-indigo-300";
           case 'tests':
+          case 'tests_admin':
               return isActive
                   ? "bg-gradient-to-br from-violet-500 to-violet-600 text-white border-violet-600 shadow-violet-200"
                   : "bg-white text-violet-600 border-violet-100 hover:border-violet-300";
@@ -135,10 +140,14 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
               return isActive 
                   ? "bg-gradient-to-br from-cyan-500 to-cyan-600 text-white border-cyan-600 shadow-cyan-200"
                   : "bg-white text-cyan-600 border-cyan-100 hover:border-cyan-300";
-          case 'content':
+          case 'content_admin':
               return isActive 
                   ? "bg-gradient-to-br from-fuchsia-500 to-fuchsia-600 text-white border-fuchsia-600 shadow-fuchsia-200"
                   : "bg-white text-fuchsia-600 border-fuchsia-100 hover:border-fuchsia-300";
+          case 'test_runner':
+              return isActive 
+                  ? "bg-gradient-to-br from-lime-500 to-lime-600 text-white border-lime-600 shadow-lime-200"
+                  : "bg-white text-lime-600 border-lime-100 hover:border-lime-300";
           default:
               return isActive
                   ? "bg-slate-800 text-white border-slate-900 shadow-slate-300"
@@ -171,7 +180,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
             >
               <div className="flex items-center space-x-3">
                   <item.icon size={20} />
-                  <span className="font-medium">{item.label}</span>
+                  <span className="font-medium text-sm">{item.label}</span>
               </div>
               {hasNotification(item.id) && (
                   <span className="h-2.5 w-2.5 rounded-full bg-red-500 border border-slate-900 animate-pulse"></span>
@@ -345,7 +354,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                                     <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-red-500 border-2 border-white animate-pulse"></span>
                                 )}
                             </div>
-                            <span className="font-bold text-xs tracking-wide">{item.label}</span>
+                            <span className="font-bold text-xs tracking-wide text-center">{item.label}</span>
                             
                             {/* Decorative shiny effect for active items */}
                             {isActive && (

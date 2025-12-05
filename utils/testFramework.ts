@@ -72,11 +72,29 @@ export const expect = (actual: any) => ({
         }
     },
     toContain: (item: any) => {
-        if (!Array.isArray(actual) && typeof actual !== 'string') {
+        if (Array.isArray(actual)) {
+            const found = actual.some(i => 
+                typeof item === 'object' 
+                ? JSON.stringify(i).includes(JSON.stringify(item).replace(/^{|}$/g, '')) // Partial match for objects roughly
+                : i === item
+            );
+            // Simple include check for strings/primitives or strict object ref
+            if (!actual.includes(item) && !found) {
+                 // Fallback for object matching in array
+                 let match = false;
+                 if (typeof item === 'object') {
+                     match = actual.some(actItem => {
+                         return Object.keys(item).every(key => actItem[key] === item[key]);
+                     });
+                 }
+                 if (!match) throw new Error(`Expected collection to contain '${JSON.stringify(item)}'`);
+            }
+        } else if (typeof actual === 'string') {
+            if (!actual.includes(item)) {
+                throw new Error(`Expected string to contain '${item}'`);
+            }
+        } else {
              throw new Error(`Expected array or string, got ${typeof actual}`);
-        }
-        if (!actual.includes(item)) {
-            throw new Error(`Expected collection to contain '${item}'`);
         }
     },
     toMatchObject: (subset: any) => {

@@ -590,12 +590,6 @@ function App() {
         return <PublicLayout onNavigate={setActiveTab}><Blog posts={blogPosts} /></PublicLayout>;
       case 'exams':
         return <PublicLayout onNavigate={setActiveTab}><ExamGuide /></PublicLayout>;
-      case 'test_runner':
-        // Only allow if dev tools enabled
-        if (window.IITJEE_CONFIG?.enableDevTools) {
-            return <PublicLayout onNavigate={setActiveTab}><TestRunner /></PublicLayout>;
-        }
-        return <AuthScreen onLogin={handleLogin} onNavigate={setActiveTab} />;
       default:
         // Default to AuthScreen (Login/Register)
         return <AuthScreen onLogin={handleLogin} onNavigate={setActiveTab} />;
@@ -666,7 +660,30 @@ function App() {
                 onDeleteBlogPost={handleDeleteBlogPost}
             />
         );
-      case 'content':
+      case 'tests_admin':
+        return (
+            <AdminPanel 
+                section="tests"
+                users={allUsers.length > 0 ? allUsers : MOCK_USERS} 
+                questionBank={questions} 
+                quotes={quotes}
+                activeTab={activeTab}
+                onTabChange={setActiveTab}
+                onAddQuestion={handleAddQuestion}
+                onCreateTest={handleCreateTest}
+                onSendNotification={handleSendNotification}
+                onAddQuote={handleAddQuote}
+                onDeleteQuote={handleDeleteQuote}
+                onUpdateUser={handleAdminUpdateUser}
+                onDeleteUser={handleAdminDeleteUser}
+                contactMessages={contactMessages}
+                onDeleteContact={handleDeleteContact}
+                blogPosts={blogPosts}
+                onAddBlogPost={handleAddBlogPost}
+                onDeleteBlogPost={handleDeleteBlogPost}
+            />
+        );
+      case 'content_admin':
         return (
             <AdminPanel 
                 section="content"
@@ -689,6 +706,8 @@ function App() {
                 onDeleteBlogPost={handleDeleteBlogPost}
             />
         );
+      case 'test_runner':
+        return <TestRunner />;
       case 'system':
         return <SystemDocs />;
       case 'profile':

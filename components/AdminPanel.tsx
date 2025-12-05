@@ -5,7 +5,7 @@ import { User, Question, Test, Notification, Quote, ContactMessage, BlogPost } f
 import { JEE_SYLLABUS } from '../constants';
 
 interface AdminPanelProps {
-    section: 'users' | 'content';
+    section: 'users' | 'content' | 'tests';
     users: User[];
     questionBank: Question[];
     quotes: Quote[];
@@ -47,12 +47,13 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     onAddBlogPost,
     onDeleteBlogPost
 }) => {
-    const [view, setView] = useState<TabView>(section === 'users' ? 'USERS' : 'BROADCAST');
+    const [view, setView] = useState<TabView>('BROADCAST');
     
     // Reset view when section changes
     useEffect(() => {
         if (section === 'users') setView('USERS');
         if (section === 'content') setView('BROADCAST');
+        if (section === 'tests') setView('QUESTION_BANK');
     }, [section]);
 
     // User Management State
@@ -242,31 +243,59 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     // --- Tab Definitions ---
     const contentTabs = [
         { id: 'BROADCAST', label: 'Broadcasts', icon: Radio },
-        { id: 'QUESTION_BANK', label: 'Question Bank', icon: Database },
-        { id: 'TEST_BUILDER', label: 'Test Builder', icon: FileText },
         { id: 'INBOX', label: 'Inbox', icon: Inbox },
         { id: 'BLOG_EDITOR', label: 'Blog Editor', icon: PenTool },
     ];
 
+    const testTabs = [
+        { id: 'QUESTION_BANK', label: 'Question Bank', icon: Database },
+        { id: 'TEST_BUILDER', label: 'Test Builder', icon: FileText },
+    ];
+
+    const renderHeader = () => {
+        if (section === 'users') {
+            return {
+                title: 'User Management',
+                desc: 'Manage students, parents, and access controls.',
+                icon: <Users className="w-10 h-10 text-white" />,
+                gradient: 'from-cyan-700 to-blue-800'
+            };
+        } else if (section === 'tests') {
+            return {
+                title: 'Test Management',
+                desc: 'Add questions to the bank and create new mock tests.',
+                icon: <FileText className="w-10 h-10 text-white" />,
+                gradient: 'from-violet-700 to-purple-800'
+            };
+        } else {
+            return {
+                title: 'Content & Broadcasts',
+                desc: 'Manage announcements, motivational quotes, and blog posts.',
+                icon: <Radio className="w-10 h-10 text-white" />,
+                gradient: 'from-fuchsia-700 to-pink-800'
+            };
+        }
+    };
+
+    const header = renderHeader();
+
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4">
             {/* Header Banner */}
-            <div className={`rounded-2xl p-8 text-white shadow-xl relative overflow-hidden bg-gradient-to-r ${section === 'users' ? 'from-cyan-700 to-blue-800' : 'from-fuchsia-700 to-purple-800'}`}>
+            <div className={`rounded-2xl p-8 text-white shadow-xl relative overflow-hidden bg-gradient-to-r ${header.gradient}`}>
                 <div className="relative z-10 flex items-center justify-between">
                     <div>
-                        <h2 className="text-3xl font-bold mb-2">{section === 'users' ? 'User Management' : 'Content & Exam Tools'}</h2>
-                        <p className="text-white/80 text-lg max-w-xl">
-                            {section === 'users' ? 'Manage students, parents, and access controls.' : 'Create tests, questions, and send announcements.'}
-                        </p>
+                        <h2 className="text-3xl font-bold mb-2">{header.title}</h2>
+                        <p className="text-white/80 text-lg max-w-xl">{header.desc}</p>
                     </div>
                     <div className="hidden md:block bg-white/10 p-4 rounded-2xl border border-white/10 backdrop-blur-md">
-                        {section === 'users' ? <Users className="w-10 h-10 text-white" /> : <Database className="w-10 h-10 text-white" />}
+                        {header.icon}
                     </div>
                 </div>
                 <div className="absolute -bottom-10 -right-10 w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
             </div>
             
-            {/* Nav Tabs (Only for Content Section) */}
+            {/* Nav Tabs */}
             {section === 'content' && (
                 <div className="flex p-1.5 space-x-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto no-scrollbar">
                     {contentTabs.map(tab => (
@@ -277,6 +306,24 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                                 view === tab.id 
                                 ? 'bg-fuchsia-600 text-white shadow-md' 
                                 : 'text-slate-500 hover:bg-fuchsia-50 hover:text-fuchsia-700'
+                            }`}
+                        >
+                            <tab.icon className="w-4 h-4 mr-2" /> {tab.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {section === 'tests' && (
+                <div className="flex p-1.5 space-x-2 bg-white rounded-xl border border-slate-200 shadow-sm overflow-x-auto no-scrollbar">
+                    {testTabs.map(tab => (
+                        <button 
+                            key={tab.id}
+                            onClick={() => setView(tab.id as TabView)}
+                            className={`flex items-center px-4 py-2.5 rounded-lg text-sm font-bold transition-all whitespace-nowrap ${
+                                view === tab.id 
+                                ? 'bg-violet-600 text-white shadow-md' 
+                                : 'text-slate-500 hover:bg-violet-50 hover:text-violet-700'
                             }`}
                         >
                             <tab.icon className="w-4 h-4 mr-2" /> {tab.label}
@@ -361,7 +408,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 )}
 
                 {/* 2. QUESTION BANK */}
-                {view === 'QUESTION_BANK' && section === 'content' && (
+                {view === 'QUESTION_BANK' && section === 'tests' && (
                     <div className="space-y-6 animate-in fade-in">
                         <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
                             <h3 className="font-bold text-slate-800 mb-4 flex items-center"><Database className="w-4 h-4 mr-2"/> Add New Question</h3>
@@ -456,7 +503,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 )}
 
                 {/* 3. TEST BUILDER */}
-                {view === 'TEST_BUILDER' && section === 'content' && (
+                {view === 'TEST_BUILDER' && section === 'tests' && (
                     <div className="space-y-6 animate-in fade-in">
                         <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                              <h3 className="font-bold text-slate-800 mb-4 flex items-center"><FileText className="w-4 h-4 mr-2"/> Create New Mock Test</h3>
@@ -699,7 +746,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     </div>
                 )}
 
-                {/* 5. USER MANAGEMENT */}
+                {/* 7. USER MANAGEMENT (Only in Users Section) */}
                 {view === 'USERS' && section === 'users' && (
                     <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in">
                         <table className="min-w-full divide-y divide-slate-200">

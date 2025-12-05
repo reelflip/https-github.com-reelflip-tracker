@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { TestRunnerEngine, expect, TestResult } from '../utils/testFramework';
-import { Play, CheckCircle2, XCircle, Terminal, AlertTriangle, Loader2, RefreshCw, Database, Users, BookOpen, Target, BarChart2, Calendar, ListTodo } from 'lucide-react';
+import { Play, CheckCircle2, XCircle, Terminal, AlertTriangle, Loader2, RefreshCw, Database, Users, BookOpen, Target, BarChart2, Calendar, ListTodo, Shield, Mail, Layers } from 'lucide-react';
 
 const TestRunner: React.FC = () => {
     const [results, setResults] = useState<Record<string, TestResult[]> | null>(null);
@@ -247,27 +247,28 @@ const TestRunner: React.FC = () => {
         // --- SUITE 5: EXAM ENGINE & ANALYTICS ---
         engine.describe("5. Exam Engine & Analytics", (it) => {
             let user: any;
-            let attemptId = `att_${timestamp}`;
+            let attemptId = `att_analy_${timestamp}`;
             let testId = 'test_jee_main_2024';
 
             it("should setup test user", async () => {
-                user = await registerUser('STUDENT', 'Exam Tester');
+                user = await registerUser('STUDENT', 'Analytics Tester');
             });
 
             it("should SAVE a Test Attempt with Results", async () => {
                 setProgress("Submitting Test...");
+                // Scenario: 1 Correct (+4), 1 Incorrect (-1) = 3 Score
                 const payload = {
                     id: attemptId,
                     user_id: user.id,
                     testId: testId,
-                    score: 100,
-                    totalQuestions: 25,
-                    correctCount: 25,
-                    incorrectCount: 0,
-                    accuracy_percent: 100.0,
+                    score: 3,
+                    totalQuestions: 2,
+                    correctCount: 1,
+                    incorrectCount: 1,
+                    accuracy_percent: 50.0,
                     detailedResults: [
-                        { questionId: 'p_1', status: 'CORRECT' }, // Mock correct
-                        { questionId: 'p_2', status: 'INCORRECT' } // Mock incorrect to test analytics
+                        { questionId: 'p_1', status: 'CORRECT', subjectId: 'phys', topicId: 'p_kin_1' },
+                        { questionId: 'p_2', status: 'INCORRECT', subjectId: 'phys', topicId: 'p_kin_2' } 
                     ]
                 };
                 
@@ -278,27 +279,43 @@ const TestRunner: React.FC = () => {
                 expect(data.message).toContain("Attempt saved");
             });
 
-            it("should REFLECT attempt in Dashboard Analytics", async () => {
-                setProgress("Checking Analytics...");
+            it("should GENERATE Analytics Data (Score & Accuracy)", async () => {
+                setProgress("Verifying Dashboard Analytics...");
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 
+                // Check if attempt exists
                 const attempt = data.attempts.find((a: any) => a.id === attemptId);
                 expect(attempt).toBeDefined();
-                expect(parseInt(attempt.score)).toBe(100);
+                
+                // Verify Math
+                expect(parseInt(attempt.score)).toBe(3);
+                expect(parseFloat(attempt.accuracy_percent)).toBe(50);
             });
 
-            it("should retrieve Granular Details (Correct/Incorrect)", async () => {
+            it("should PERSIST Granular Details for 'Weak Areas'", async () => {
+                // This step ensures the "Weak Areas" chart has data to render
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 const attempt = data.attempts.find((a: any) => a.id === attemptId);
                 
-                // detailedResults are fetched by get_dashboard.php
+                // Check if detailed results (question breakdown) are loaded
                 expect(attempt.detailedResults).toBeDefined();
-                expect(attempt.detailedResults.length).toBeGreaterThan(0);
+                expect(attempt.detailedResults.length).toBe(2);
                 
-                // Verify incorrect answer persistence
+                // Verify specific incorrect answer is tracked (Crucial for Mistake Notebook)
                 const incorrect = attempt.detailedResults.find((r: any) => r.status === 'INCORRECT');
                 expect(incorrect).toBeDefined();
                 expect(incorrect.questionId).toBe('p_2');
+            });
+            
+            it("should JOIN Subject/Topic metadata for Analytics", async () => {
+                // Verify the backend JOINed the 'questions' table
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
+                const attempt = data.attempts.find((a: any) => a.id === attemptId);
+                const result = attempt.detailedResults[0];
+                
+                // If subjectId is missing, the Radar Chart will be empty
+                expect(result.subjectId).toBeDefined(); 
+                expect(result.subjectId).toBe('phys');
             });
         });
 
@@ -345,6 +362,7 @@ const TestRunner: React.FC = () => {
             let student: any;
             let parent: any;
             const attemptId = `att_p_${timestamp}`;
+            const topicId = 'm_cpx_1';
 
             it("should setup linked Student & Parent", async () => {
                 setProgress("Linking Accounts...");
@@ -362,9 +380,9 @@ const TestRunner: React.FC = () => {
                 });
             });
 
-            it("should record student activity (Exam & Syllabus)", async () => {
-                setProgress("Simulating Student Activity...");
-                // 1. Take Exam
+            it("should record Student EXAM Data", async () => {
+                setProgress("Student Taking Exam...");
+                // Simulate taking a test with specific score
                 await fetchApi('/api/save_attempt.php', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -373,27 +391,195 @@ const TestRunner: React.FC = () => {
                         detailedResults: []
                     })
                 });
-                // 2. Mark Syllabus
+            });
+
+            it("should record Student PROGRESS (Exercises)", async () => {
+                setProgress("Student Solving Exercises...");
+                // Simulate marking a chapter complete + entering solved question counts
                 await fetchApi('/api/sync_progress.php', {
                     method: 'POST',
-                    body: JSON.stringify({ user_id: student.id, topic_id: 'm_cpx_1', status: 'COMPLETED' })
+                    body: JSON.stringify({ 
+                        user_id: student.id, 
+                        topic_id: topicId, 
+                        status: 'COMPLETED',
+                        ex1Solved: 25,
+                        ex1Total: 30,
+                        ex2Solved: 10,
+                        ex2Total: 15
+                    })
                 });
             });
 
-            it("should allow PARENT to view Student Analytics", async () => {
-                setProgress("Fetching as Parent...");
-                // In the app, Parent uses student_id to fetch dashboard
+            it("should allow Parent to view EXAM ANALYTICS", async () => {
+                setProgress("Parent Checking Results...");
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
                 
-                // Verify Test Result visibility
+                // Verify Test Result exists
                 const attempt = data.attempts.find((a: any) => a.id === attemptId);
                 expect(attempt).toBeDefined();
                 expect(parseInt(attempt.score)).toBe(150);
+                expect(parseFloat(attempt.accuracy_percent)).toBe(85.7);
+            });
+
+            it("should allow Parent to view SYLLABUS & QUESTIONS", async () => {
+                setProgress("Parent Checking Progress...");
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
                 
-                // Verify Syllabus visibility
-                const topic = data.progress.find((p: any) => p.topic_id === 'm_cpx_1');
+                // Verify Topic Data
+                const topic = data.progress.find((p: any) => p.topic_id === topicId);
                 expect(topic).toBeDefined();
                 expect(topic.status).toBe('COMPLETED');
+                
+                // Verify Exercise Question Counts
+                expect(parseInt(topic.ex1_solved)).toBe(25);
+                expect(parseInt(topic.ex2_solved)).toBe(10);
+            });
+        });
+
+        // --- SUITE 8: ADMIN WORKFLOWS ---
+        engine.describe("8. Admin Workflows", (it) => {
+            let admin: any;
+            let targetUser: any;
+            const qId = `q_admin_${timestamp}`;
+            const testId = `t_admin_${timestamp}`;
+            const blogId = `b_admin_${timestamp}`;
+
+            it("should Authenticate as Admin", async () => {
+                setProgress("Admin Login...");
+                const data = await fetchApi('/api/login.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ email: 'admin', password: 'Ishika@123' })
+                });
+                expect(data.user).toBeDefined();
+                expect(data.user.role).toBe('ADMIN');
+                admin = data.user;
+            });
+
+            it("should CREATE a Question in the Bank", async () => {
+                setProgress("Adding Question...");
+                const data = await fetchApi('/api/manage_tests.php', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'add_question',
+                        id: qId, subjectId: 'phys', topicId: 'p_kin_1', 
+                        text: "Admin Test Question?", options: ["A","B","C","D"], correctOptionIndex: 0
+                    })
+                });
+                expect(data.message).toBe("Question added");
+            });
+
+            it("should PUBLISH a Mock Test using that Question", async () => {
+                setProgress("Creating Test...");
+                const data = await fetchApi('/api/manage_tests.php', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'create_test',
+                        id: testId, title: "Admin Generated Test", durationMinutes: 60,
+                        category: 'ADMIN', difficulty: 'CUSTOM', examType: 'JEE',
+                        questions: [{ id: qId }] // Link the question
+                    })
+                });
+                expect(data.message).toBe("Test created");
+            });
+
+            it("should SEND a Broadcast Notification", async () => {
+                const data = await fetchApi('/api/manage_broadcasts.php', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        action: 'send_notification',
+                        id: `n_${timestamp}`, title: "System Test", message: "Hello Students", type: "INFO", date: "2025-01-01"
+                    })
+                });
+                expect(data.message).toBe("Notification sent");
+            });
+
+            it("should MANAGE Users (Block/Unblock)", async () => {
+                setProgress("Blocking User...");
+                targetUser = await registerUser('STUDENT', 'Bad Student');
+                
+                // Block
+                await fetchApi('/api/manage_users.php', {
+                    method: 'PUT',
+                    body: JSON.stringify({ id: targetUser.id, isVerified: false })
+                });
+                
+                // Verify Blocked
+                const users = await fetchApi('/api/get_users.php');
+                const blocked = users.find((u: any) => u.id === targetUser.id);
+                expect(blocked.isVerified).toBe(false);
+            });
+
+            it("should MANAGE Blog Posts", async () => {
+                setProgress("Publishing Blog...");
+                const data = await fetchApi('/api/manage_blog.php', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        id: blogId, title: "Test Blog", content: "Content", author: "Admin", category: "Updates", imageUrl: "", date: "2025-01-01"
+                    })
+                });
+                expect(data.message).toBe("Blog post created");
+
+                // Verify it appears in public feed
+                const common = await fetchApi('/api/get_common.php');
+                const post = common.blogPosts.find((b: any) => b.id === blogId);
+                expect(post).toBeDefined();
+
+                // Delete
+                await fetchApi(`/api/manage_blog.php?id=${blogId}`, { method: 'DELETE' });
+            });
+
+            it("should RECEIVE Contact Messages", async () => {
+                setProgress("Checking Inbox...");
+                // 1. User sends message
+                await fetchApi('/api/contact.php', {
+                    method: 'POST',
+                    body: JSON.stringify({ name: "Visitor", email: "vis@test.com", subject: "Help", message: "Hello" })
+                });
+
+                // 2. Admin checks inbox
+                const msgs = await fetchApi('/api/manage_contact.php');
+                const msg = msgs.find((m: any) => m.email === "vis@test.com" && m.message === "Hello");
+                expect(msg).toBeDefined();
+            });
+        });
+
+        // --- SUITE 9: STUDY TOOLS DATA INTEGRITY ---
+        engine.describe("9. Study Tools (Flashcards & Hacks)", (it) => {
+            let commonData: any;
+
+            it("should fetch common data payload", async () => {
+                setProgress("Fetching Study Data...");
+                commonData = await fetchApi('/api/get_common.php');
+                expect(commonData).toBeDefined();
+            });
+
+            it("should verify FLASHCARD content exists", () => {
+                const deck = commonData.flashcards;
+                expect(Array.isArray(deck)).toBe(true);
+                expect(deck.length).toBeGreaterThan(0);
+                
+                // Check structure for Front/Back (Flipping mechanism dependency)
+                const card = deck[0];
+                expect(card.front).toBeDefined();
+                expect(card.back).toBeDefined();
+                expect(card.subject_id).toBeDefined();
+            });
+
+            it("should verify enough cards for Navigation", () => {
+                const deck = commonData.flashcards;
+                // If we have > 1 card, Next/Prev buttons will have data to cycle through
+                expect(deck.length).toBeGreaterThan(1);
+            });
+
+            it("should verify MEMORY HACKS content exists", () => {
+                const hacks = commonData.hacks;
+                expect(Array.isArray(hacks)).toBe(true);
+                expect(hacks.length).toBeGreaterThan(0);
+                
+                const hack = hacks[0];
+                expect(hack.title).toBeDefined();
+                expect(hack.trick).toBeDefined(); // The actual mnemonic
+                expect(hack.tags_json).toBeDefined(); // Tags for searching
             });
         });
 
@@ -471,6 +657,8 @@ const TestRunner: React.FC = () => {
                                  suiteName.includes('Analytics') ? <BarChart2 className="w-5 h-5 text-pink-500"/> :
                                  suiteName.includes('Timetable') ? <Calendar className="w-5 h-5 text-teal-500"/> :
                                  suiteName.includes('Task') ? <ListTodo className="w-5 h-5 text-orange-500"/> :
+                                 suiteName.includes('Admin') ? <Shield className="w-5 h-5 text-red-600"/> :
+                                 suiteName.includes('Study') ? <Layers className="w-5 h-5 text-yellow-500"/> :
                                  suiteName.includes('Syllabus') ? <Target className="w-5 h-5 text-indigo-500"/> :
                                  <BookOpen className="w-5 h-5 text-slate-500"/>}
                                 <h3 className="font-bold text-slate-800">{suiteName}</h3>
