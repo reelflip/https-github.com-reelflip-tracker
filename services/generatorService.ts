@@ -3,10 +3,10 @@ import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_M
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v2.1 Final Release)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v2.2 Final Release)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
--- Includes: Full Feature Set (Blogs, Contacts, SEO, 90+ Qs Question Bank, Parent Connect)
+-- Includes: Blog Date Fix, 90+ Qs Question Bank, Parent Connect
 
 SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
 SET time_zone = "+05:30";
@@ -354,8 +354,11 @@ CREATE TABLE blog_posts (
           const safeExcerpt = b.excerpt.replace(/'/g, "''");
           const safeContent = b.content.replace(/'/g, "''");
           const safeAuthor = b.author.replace(/'/g, "''");
-          // Use current date if not provided in YYYY-MM-DD
-          const safeDate = new Date().toISOString().split('T')[0]; 
+          // Format date as YYYY-MM-DD for MySQL
+          let safeDate = new Date().toISOString().split('T')[0];
+          if (b.date && b.date.match(/^\d{4}-\d{2}-\d{2}$/)) {
+              safeDate = b.date; // Use existing if format is correct
+          }
           return `('${b.id}', '${safeTitle}', '${safeExcerpt}', '${safeContent}', '${safeAuthor}', '${b.category}', '${b.imageUrl}', '${safeDate}')`;
       }).join(',\n');
       sql += blogValues + `;\n`;
@@ -610,7 +613,7 @@ Sitemap: https://iitgeeprep.com/sitemap.xml`;
             name: "README.txt",
             folder: "api",
             desc: "Instructions for Hostinger Deployment.",
-            content: `IITGEEPrep (v2.1 Final Release) - API DEPLOYMENT
+            content: `IITGEEPrep (v2.2 Final Release) - API DEPLOYMENT
 ============================================
 Website: iitgeeprep.com
 

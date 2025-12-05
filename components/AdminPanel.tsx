@@ -177,7 +177,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
             author: blogAuthor,
             category: blogCategory,
             imageUrl: blogImage || 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1000',
-            date: new Date().toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+            date: new Date().toISOString().split('T')[0] // Format YYYY-MM-DD for MySQL
         };
         if (onAddBlogPost) onAddBlogPost(newPost);
         
@@ -185,7 +185,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         setBlogExcerpt('');
         setBlogContent('');
         setBlogImage('');
-        alert("Blog Post Published!");
+        alert("Blog Post Published Successfully!");
     };
 
     const handleOptionChange = (idx: number, val: string) => {

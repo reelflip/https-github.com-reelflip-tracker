@@ -12,6 +12,16 @@ interface BlogProps {
 const Blog: React.FC<BlogProps> = ({ posts = BLOG_POSTS }) => {
   const [selectedPost, setSelectedPost] = useState<BlogPost | null>(null);
 
+  // Helper to safely format dates (handles both YYYY-MM-DD and legacy strings)
+  const formatDate = (dateStr: string) => {
+      try {
+          if (!dateStr) return 'Unknown Date';
+          const d = new Date(dateStr);
+          if (isNaN(d.getTime())) return dateStr; // Fallback to raw string
+          return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+      } catch (e) { return dateStr; }
+  };
+
   if (selectedPost) {
     return (
       <div className="max-w-4xl mx-auto animate-in fade-in slide-in-from-bottom-4 pb-10">
@@ -46,7 +56,7 @@ const Blog: React.FC<BlogProps> = ({ posts = BLOG_POSTS }) => {
                     <User className="w-4 h-4 mr-2" /> {selectedPost.author}
                  </div>
                  <div className="flex items-center">
-                    <Calendar className="w-4 h-4 mr-2" /> {selectedPost.date}
+                    <Calendar className="w-4 h-4 mr-2" /> {formatDate(selectedPost.date)}
                  </div>
                  <div className="flex items-center">
                     <Clock className="w-4 h-4 mr-2" /> 5 min read
@@ -95,7 +105,7 @@ const Blog: React.FC<BlogProps> = ({ posts = BLOG_POSTS }) => {
                </div>
                <div className="p-6 flex-1 flex flex-col">
                   <div className="flex items-center text-xs text-slate-400 mb-3 space-x-2">
-                     <span>{post.date}</span>
+                     <span>{formatDate(post.date)}</span>
                      <span>•</span>
                      <span>{post.author}</span>
                   </div>
