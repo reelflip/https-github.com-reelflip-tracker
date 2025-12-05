@@ -170,7 +170,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
           <h1 className="text-2xl font-bold tracking-tight text-blue-400">IITGEEPrep</h1>
           <p className="text-xs text-slate-400 mt-1">
             {currentUser.role}
-            {currentUser.role === 'ADMIN' && <span className="ml-1 opacity-75">• v3.8</span>}
+            {currentUser.role === 'ADMIN' && <span className="ml-1 opacity-75">• v3.9</span>}
           </p>
         </div>
         
@@ -247,7 +247,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
                 <div className="mb-4 md:mb-0">
                     &copy; 2025 IITGEEPrep. All rights reserved. 
-                    {currentUser.role === 'ADMIN' && <span className="ml-2 px-1.5 py-0.5 bg-slate-100 rounded text-slate-400">v3.8</span>}
+                    {currentUser.role === 'ADMIN' && <span className="ml-2 px-1.5 py-0.5 bg-slate-100 rounded text-slate-400">v3.9</span>}
                 </div>
                 <div className="flex space-x-6 flex-wrap justify-center gap-y-2">
                     <button onClick={() => onTabChange('about')} className="hover:text-blue-600 transition-colors flex items-center">
@@ -376,7 +376,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                         <span>Sign Out</span>
                     </button>
                     {currentUser.role === 'ADMIN' && (
-                        <p className="text-center text-[10px] text-slate-300 mt-4">App Version v3.8</p>
+                        <p className="text-center text-[10px] text-slate-300 mt-4">App Version v3.9</p>
                     )}
                 </div>
              </div>
