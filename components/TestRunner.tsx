@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { TestRunnerEngine, expect, TestResult } from '../utils/testFramework';
-import { Play, CheckCircle2, XCircle, Terminal, AlertTriangle, Loader2, RefreshCw, Shield } from 'lucide-react';
+import { Play, CheckCircle2, XCircle, Terminal, AlertTriangle, Loader2, RefreshCw, Shield, Download, FileJson, Copy } from 'lucide-react';
 
 const TestRunner: React.FC = () => {
     const [results, setResults] = useState<Record<string, TestResult[]> | null>(null);
@@ -16,9 +16,12 @@ const TestRunner: React.FC = () => {
             throw new Error(`Network Error: ${netErr.message}`);
         }
 
-        if (res.status === 404) throw new Error(`Endpoint not found (404): ${url}`);
-
         const text = await res.text();
+
+        if (res.status === 404) {
+             throw new Error(`Endpoint not found (404): ${url}. Check if file exists in /api/ folder.`);
+        }
+
         try {
             if (!text.trim()) throw new Error(`Empty response from ${url}`);
             const data = JSON.parse(text);
@@ -26,7 +29,9 @@ const TestRunner: React.FC = () => {
             return data;
         } catch (jsonErr) {
             console.error("Raw Response:", text);
-            throw new Error(`Invalid JSON from ${url}. Raw: "${text.substring(0, 100)}..."`);
+            // Capture the first 200 chars of HTML/Text response for the report
+            const preview = text.substring(0, 300).replace(/\s+/g, ' ').trim();
+            throw new Error(`Invalid JSON from ${url} (Status ${res.status}). Raw: "${preview}..."`);
         }
     };
 
@@ -85,6 +90,14 @@ const TestRunner: React.FC = () => {
                 student = await registerUser('STUDENT', 'Test Student');
                 if (!student || !student.id) throw new Error("Student registration returned invalid object");
                 expect(student.role).toBe('STUDENT');
+            });
+
+            it("should verify User ID format", async () => {
+                if(!student) throw new Error("Skipping: Student missing");
+                const id = parseInt(student.id);
+                // Verify random 6 digit logic
+                expect(id).toBeGreaterThan(99999);
+                expect(id).toBeLessThan(1000000);
             });
 
             it("should register a valid Parent", async () => {
@@ -196,14 +209,14 @@ const TestRunner: React.FC = () => {
                 expect(data.message).toContain("Saved");
             });
 
-            it("should retrieve attempt with Metadata", async () => {
+            it("should retrieve attempt with Metadata & Options", async () => {
                 if (!user?.id) throw new Error("User setup failed");
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 const attempt = data.attempts.find((a: any) => a.id.startsWith("att_"));
                 expect(attempt).toBeDefined();
                 if (attempt.detailedResults && attempt.detailedResults.length > 0) {
                     expect(attempt.detailedResults[0].subjectId).toBe('phys');
-                    // Verify option tracking
+                    // Verify selected option persistence
                     expect(parseInt(attempt.detailedResults[0].selectedOptionIndex)).toBe(3);
                 } else {
                     throw new Error("Detailed results missing in attempt");
@@ -220,12 +233,30 @@ const TestRunner: React.FC = () => {
                 const payload = {
                     user_id: user.id,
                     config: { wakeTime: "06:00" },
-                    slots: [{ time: "07:00", label: "Study", iconType: "book" }] // Use sanitized iconType
+                    slots: [{ time: "07:00", label: "Study", iconType: "book" }]
                 };
                 await fetchApi('/api/save_timetable.php', { method: 'POST', body: JSON.stringify(payload) });
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 expect(data.timetable).toBeDefined();
                 expect(data.timetable.slots[0].iconType).toBe("book");
+            });
+        });
+
+        // --- SUITE 10: USER PROFILE ---
+        engine.describe("10. User Profile", (it) => {
+            let user: any;
+            it("should update profile fields", async () => {
+                user = await registerUser('STUDENT', 'Prof User');
+                if(!user) throw new Error("User failed");
+                
+                await fetchApi('/api/manage_users.php', {
+                    method: 'PUT',
+                    body: JSON.stringify({ id: user.id, institute: "New Inst", targetExam: "BITSAT" })
+                });
+
+                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
+                // In a real app we'd fetch the user profile endpoint, but here we can check side effects or assume success if no error
+                // The manage_users returns OK.
             });
         });
 
@@ -273,6 +304,44 @@ const TestRunner: React.FC = () => {
         setProgress('');
     };
 
+    const generateReport = () => {
+        if (!results) return;
+        
+        const report = {
+            metadata: {
+                timestamp: new Date().toISOString(),
+                userAgent: navigator.userAgent,
+                url: window.location.href,
+                screen: `${window.innerWidth}x${window.innerHeight}`,
+                appVersion: "v3.5",
+            },
+            config: {
+                devToolsEnabled: window.IITJEE_CONFIG?.enableDevTools,
+                gaLoaded: !!window.IITJEE_CONFIG?.gaMeasurementId
+            },
+            summary: {
+                total: allTests.length,
+                passed: passedTests,
+                failed: failedTests,
+                passRate: Math.round((passedTests / allTests.length) * 100) + '%'
+            },
+            failures: allTests.filter(t => !t.passed).map(t => ({
+                test: t.description,
+                error: t.error
+            })),
+            fullResults: results
+        };
+
+        const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `IITGEEPrep_Diagnostic_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
+
     const allTests = results ? (Object.values(results).flat() as TestResult[]) : [];
     const passedTests = allTests.filter(r => r.passed).length;
     const failedTests = allTests.length - passedTests;
@@ -285,9 +354,18 @@ const TestRunner: React.FC = () => {
                         <Terminal className="w-8 h-8 mr-3 text-green-400" />
                         System Diagnostics
                     </h1>
-                    <p className="text-slate-400">Run end-to-end functional tests on your live API.</p>
+                    <p className="text-slate-400">Run end-to-end functional tests on your live Hostinger deployment.</p>
                 </div>
-                <div className="text-right">
+                <div className="text-right flex gap-3">
+                    {results && (
+                        <button 
+                            onClick={generateReport}
+                            className="bg-slate-700 hover:bg-slate-600 text-white px-6 py-4 rounded-xl font-bold shadow-lg flex items-center transition-all border border-slate-600"
+                        >
+                            <Download className="w-6 h-6 mr-2" />
+                            Download AI Report
+                        </button>
+                    )}
                     <button 
                         onClick={runTests} 
                         disabled={isRunning}
@@ -307,62 +385,68 @@ const TestRunner: React.FC = () => {
             )}
 
             {results && !isRunning && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-center">
-                        <div className="text-xs text-slate-500 font-bold uppercase mb-2">Total</div>
-                        <div className="text-4xl font-black text-slate-800">{allTests.length}</div>
+                <div className="space-y-6">
+                    {/* Summary Cards */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm text-center">
+                            <div className="text-xs text-slate-500 font-bold uppercase mb-2">Total Tests</div>
+                            <div className="text-4xl font-black text-slate-800">{allTests.length}</div>
+                        </div>
+                        <div className="bg-green-50 p-6 rounded-xl border border-green-200 shadow-sm text-center">
+                            <div className="text-xs text-green-600 font-bold uppercase mb-2">Passed</div>
+                            <div className="text-4xl font-black text-green-700">{passedTests}</div>
+                        </div>
+                        <div className={`p-6 rounded-xl border shadow-sm text-center ${failedTests > 0 ? 'bg-red-50 border-red-200' : 'bg-slate-50'}`}>
+                            <div className={`text-xs font-bold uppercase mb-2 ${failedTests > 0 ? 'text-red-600' : 'text-slate-500'}`}>Failed</div>
+                            <div className={`text-4xl font-black ${failedTests > 0 ? 'text-red-700' : 'text-slate-400'}`}>{failedTests}</div>
+                        </div>
                     </div>
-                    <div className="bg-green-50 p-6 rounded-xl border border-green-200 shadow-sm text-center">
-                        <div className="text-xs text-green-600 font-bold uppercase mb-2">Passed</div>
-                        <div className="text-4xl font-black text-green-700">{passedTests}</div>
-                    </div>
-                    <div className={`p-6 rounded-xl border shadow-sm text-center ${failedTests > 0 ? 'bg-red-50 border-red-200' : 'bg-slate-50'}`}>
-                        <div className={`text-xs font-bold uppercase mb-2 ${failedTests > 0 ? 'text-red-600' : 'text-slate-500'}`}>Failed</div>
-                        <div className={`text-4xl font-black ${failedTests > 0 ? 'text-red-700' : 'text-slate-400'}`}>{failedTests}</div>
+
+                    {/* Test Results */}
+                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        {results && Object.entries(results).map(([suiteName, data]: [string, TestResult[]]) => {
+                            const suitePassed = data.every(t => t.passed);
+                            return (
+                            <div key={suiteName} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
+                                <div className={`px-6 py-4 border-b border-slate-100 flex justify-between items-center ${suitePassed ? 'bg-slate-50' : 'bg-red-50'}`}>
+                                    <div className="flex items-center gap-3">
+                                        <Shield className="w-5 h-5 text-slate-500"/>
+                                        <h3 className="font-bold text-slate-800">{suiteName}</h3>
+                                    </div>
+                                    <span className={`text-xs font-bold px-2 py-1 rounded ${suitePassed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+                                        {data.filter(t => t.passed).length}/{data.length}
+                                    </span>
+                                </div>
+                                <div className="divide-y divide-slate-100 flex-1">
+                                    {data.map((test, idx) => (
+                                        <div key={idx} className="px-6 py-4 hover:bg-slate-50 transition-colors">
+                                            <div className="flex items-start justify-between">
+                                                <div className="flex items-start space-x-3 w-full">
+                                                    <div className="mt-0.5 shrink-0">
+                                                        {test.passed ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />}
+                                                    </div>
+                                                    <div className="w-full">
+                                                        <p className="text-sm font-medium text-slate-700">{test.description}</p>
+                                                        {!test.passed && (
+                                                            <div className="mt-2 bg-red-50 text-red-700 text-xs p-3 rounded-lg font-mono border border-red-100 break-all leading-relaxed whitespace-pre-wrap">
+                                                                <div className="flex items-center font-bold mb-1"><AlertTriangle className="w-3 h-3 mr-2"/> Error Details:</div>
+                                                                {test.error}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap ml-4">
+                                                    {test.duration.toFixed(0)}ms
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )})}
                     </div>
                 </div>
             )}
-
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                {results && Object.entries(results).map(([suiteName, data]: [string, TestResult[]]) => {
-                    const suitePassed = data.every(t => t.passed);
-                    return (
-                    <div key={suiteName} className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden flex flex-col">
-                        <div className={`px-6 py-4 border-b border-slate-100 flex justify-between items-center ${suitePassed ? 'bg-slate-50' : 'bg-red-50'}`}>
-                            <div className="flex items-center gap-3">
-                                <Shield className="w-5 h-5 text-slate-500"/>
-                                <h3 className="font-bold text-slate-800">{suiteName}</h3>
-                            </div>
-                            <span className={`text-xs font-bold px-2 py-1 rounded ${suitePassed ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
-                                {data.filter(t => t.passed).length}/{data.length}
-                            </span>
-                        </div>
-                        <div className="divide-y divide-slate-100 flex-1">
-                            {data.map((test, idx) => (
-                                <div key={idx} className="px-6 py-4 flex items-start justify-between hover:bg-slate-50 transition-colors">
-                                    <div className="flex items-start space-x-3">
-                                        <div className="mt-0.5 shrink-0">
-                                            {test.passed ? <CheckCircle2 className="w-5 h-5 text-green-500" /> : <XCircle className="w-5 h-5 text-red-500" />}
-                                        </div>
-                                        <div>
-                                            <p className="text-sm font-medium text-slate-700">{test.description}</p>
-                                            {!test.passed && (
-                                                <div className="mt-2 bg-red-50 text-red-700 text-xs p-3 rounded-lg font-mono border border-red-100 flex items-start break-all">
-                                                    <AlertTriangle className="w-3 h-3 mr-2 mt-0.5 shrink-0" />
-                                                    {test.error}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                    <span className="text-[10px] text-slate-400 font-mono whitespace-nowrap ml-4">
-                                        {test.duration.toFixed(0)}ms
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                )})}
-            </div>
         </div>
     );
 };

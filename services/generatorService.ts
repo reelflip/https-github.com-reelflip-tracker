@@ -3,7 +3,7 @@
 import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS, BLOG_POSTS } from '../constants';
 import { Question } from '../types';
 
-// ... existing SQL Generation ...
+// ... generateSQLSchema function (unchanged from previous v3.5 version) ...
 export const generateSQLSchema = (): string => {
   let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.5 Final Production)
 -- Generated for Hostinger / Shared Hosting (MySQL)
@@ -38,7 +38,6 @@ DROP TABLE IF EXISTS contact_messages;
 DROP TABLE IF EXISTS blog_posts;
 SET FOREIGN_KEY_CHECKS = 1;
 
--- ... (Rest of Schema remains the same, verified) ...
 -- 1. USERS TABLE
 CREATE TABLE users (
     id INT PRIMARY KEY,
@@ -64,7 +63,7 @@ CREATE TABLE users (
     FOREIGN KEY (student_id) REFERENCES users(id) ON DELETE SET NULL
 );
 
--- ... (Standard Schema Items) ...
+-- STANDARD TABLES
 CREATE TABLE subjects ( id VARCHAR(50) PRIMARY KEY, name VARCHAR(100) NOT NULL );
 CREATE TABLE chapters ( id VARCHAR(50) PRIMARY KEY, subject_id VARCHAR(50) NOT NULL, name VARCHAR(255) NOT NULL, sort_order INT DEFAULT 0, FOREIGN KEY (subject_id) REFERENCES subjects(id) ON DELETE CASCADE );
 CREATE TABLE topics ( id VARCHAR(50) PRIMARY KEY, chapter_id VARCHAR(50) NOT NULL, name VARCHAR(255) NOT NULL, sort_order INT DEFAULT 0, FOREIGN KEY (chapter_id) REFERENCES chapters(id) ON DELETE CASCADE );
@@ -106,7 +105,7 @@ CREATE TABLE memory_hacks ( id VARCHAR(50) PRIMARY KEY, subject_id ENUM('phys', 
 CREATE TABLE contact_messages ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), email VARCHAR(100), subject VARCHAR(255), message TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
 CREATE TABLE blog_posts ( id VARCHAR(50) PRIMARY KEY, title VARCHAR(255) NOT NULL, excerpt TEXT, content TEXT, author VARCHAR(100), category VARCHAR(50), image_url VARCHAR(255), created_at DATE DEFAULT (CURRENT_DATE) );
 
--- SEED DATA (Standard)
+-- SEED DATA
 INSERT IGNORE INTO subjects (id, name) VALUES ('phys', 'Physics'),('chem', 'Chemistry'),('math', 'Mathematics');
 ` + JEE_SYLLABUS.map(s => s.chapters.map((c, ci) => `INSERT IGNORE INTO chapters (id, subject_id, name, sort_order) VALUES ('${c.id}', '${s.id}', '${c.name.replace(/'/g, "''")}', ${ci});\n` + c.topics.map((t, ti) => `INSERT IGNORE INTO topics (id, chapter_id, name, sort_order) VALUES ('${t.id}', '${c.id}', '${t.name.replace(/'/g, "''")}', ${ti});`).join('\n')).join('\n')).join('\n') + `
 INSERT IGNORE INTO users (id, email, password_hash, full_name, role, is_verified) VALUES (100000, 'admin', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'System Administrator', 'ADMIN', 1);
@@ -114,6 +113,12 @@ INSERT IGNORE INTO users (id, email, password_hash, full_name, role, is_verified
 INSERT IGNORE INTO users (id, email, password_hash, full_name, role, is_verified) VALUES (749201, 'vikas.00@gmail.com', '$2y$10$TKh8H1.PfQx37YgCzwiKb.KjNyWgaHb9cbcoQgdIVFlYg7B77UdFm', 'Vikas Parent', 'PARENT', 1);
 UPDATE users SET student_id = 582910 WHERE id = 749201;
 UPDATE users SET parent_id = 749201 WHERE id = 582910;
+
+-- SEED CONTENT
+` + INITIAL_FLASHCARDS.map(f => `INSERT IGNORE INTO flashcards (id, subject_id, front, back, difficulty) VALUES ('${f.id}', '${f.subjectId}', '${f.front.replace(/'/g, "''")}', '${f.back.replace(/'/g, "''")}', '${f.difficulty}');`).join('\n') + `
+` + INITIAL_MEMORY_HACKS.map(h => `INSERT IGNORE INTO memory_hacks (id, subject_id, category, title, description, trick, tags_json) VALUES ('${h.id}', '${h.subjectId}', '${h.category.replace(/'/g, "''")}', '${h.title.replace(/'/g, "''")}', '${h.description.replace(/'/g, "''")}', '${h.trick.replace(/'/g, "''").replace(/\n/g, "\\n")}', '${JSON.stringify(h.tags)}');`).join('\n') + `
+` + DEFAULT_QUOTES.map(q => `INSERT IGNORE INTO quotes (id, text, author) VALUES ('${q.id}', '${q.text.replace(/'/g, "''")}', '${q.author?.replace(/'/g, "''")}');`).join('\n') + `
+` + BLOG_POSTS.map(b => `INSERT IGNORE INTO blog_posts (id, title, excerpt, content, author, category, image_url, created_at) VALUES ('${b.id}', '${b.title.replace(/'/g, "''")}', '${b.excerpt.replace(/'/g, "''")}', '${b.content.replace(/'/g, "''")}', '${b.author.replace(/'/g, "''")}', '${b.category}', '${b.imageUrl}', '${new Date(b.date).toISOString().split('T')[0]}');`).join('\n') + `
 `;
   return sql;
 };
@@ -149,6 +154,7 @@ export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: s
     const dbName = dbConfig?.name || "u131922718_iitjee_tracker";
 
     return [
+        // --- 1. CORE FILES ---
         {
             name: "config.php",
             folder: "api",
@@ -178,15 +184,88 @@ try {
 }`
         },
         { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v3.5"]);` },
+        { 
+            name: "test_db.php", 
+            folder: "api", 
+            desc: "DB Test & Diagnostics", 
+            content: `<?php require 'config.php'; header('Content-Type: application/json'); 
+            $tables = [];
+            try {
+                $res = $conn->query("SHOW TABLES");
+                while($row = $res->fetch(PDO::FETCH_NUM)) {
+                    $tName = $row[0];
+                    $count = $conn->query("SELECT COUNT(*) FROM $tName")->fetchColumn();
+                    $tables[] = ["name" => $tName, "rows" => $count];
+                }
+                echo json_encode([
+                    "status"=>"CONNECTED", 
+                    "tables"=>$tables,
+                    "php_version"=>phpversion(),
+                    "server_software"=>$_SERVER['SERVER_SOFTWARE'] ?? 'Unknown'
+                ]);
+            } catch(Exception $e) {
+                echo json_encode(["status"=>"ERROR", "message"=>$e->getMessage()]);
+            }` 
+        },
+        
+        // --- 2. AUTHENTICATION ---
         { name: "login.php", folder: "api", desc: "Login", content: `<?php require 'config.php'; header('Content-Type: application/json'); $data=json_decode(file_get_contents("php://input")); if(!isset($data->email)){exit();} $email=$data->email; $password=$data->password; if($email==='admin' && $password==='Ishika@123'){ $u=$conn->query("SELECT * FROM users WHERE email='admin'")->fetch(PDO::FETCH_ASSOC); if($u){ $u['role']='ADMIN'; echo json_encode(["message"=>"Success","user"=>$u]); exit(); }} try{ $stmt=$conn->prepare("SELECT * FROM users WHERE email=:e"); $stmt->execute([':e'=>$email]); $user=$stmt->fetch(PDO::FETCH_ASSOC); if($user && password_verify($password,$user['password_hash'])){ echo json_encode(["message"=>"Success","user"=>$user]); }else{ http_response_code(401); echo json_encode(["message"=>"Invalid"]); } }catch(Exception $e){ echo json_encode(["error"=>$e->getMessage()]); }` },
         { name: "register.php", folder: "api", desc: "Register", content: `<?php require 'config.php'; header('Content-Type: application/json'); $data=json_decode(file_get_contents("php://input")); if(!isset($data->email)){exit();} $id=mt_rand(100000,999999); $hash=password_hash($data->password,PASSWORD_DEFAULT); try{ $conn->prepare("INSERT INTO users (id,email,password_hash,full_name,role,is_verified,institute,target_year) VALUES (?,?,?,?,?,1,?,?)")->execute([$id,$data->email,$hash,$data->name,$data->role,isset($data->institute)?$data->institute:'',isset($data->targetYear)?$data->targetYear:2025]); $u=$conn->query("SELECT * FROM users WHERE id=$id")->fetch(PDO::FETCH_ASSOC); echo json_encode(["message"=>"Success","user"=>$u]); }catch(Exception $e){ http_response_code(500); echo json_encode(["error"=>$e->getMessage()]); }` },
-        { name: "sync_progress.php", folder: "api", desc: "Sync", content: `<?php require 'config.php'; header('Content-Type: application/json'); $data=json_decode(file_get_contents("php://input")); try{ $check=$conn->prepare("SELECT id FROM topic_progress WHERE user_id=:u AND topic_id=:t"); $check->execute([':u'=>$data->user_id,':t'=>$data->topic_id]); if($check->rowCount()>0){ $sql="UPDATE topic_progress SET status=:s, ex1_solved=:e1, ex1_total=:t1, revision_count=:rc, next_revision_date=:nr WHERE user_id=:u AND topic_id=:t"; }else{ $sql="INSERT INTO topic_progress (user_id,topic_id,status,ex1_solved,ex1_total,revision_count,next_revision_date) VALUES (:u,:t,:s,:e1,:t1,:rc,:nr)"; } $stmt=$conn->prepare($sql); $stmt->execute([':u'=>$data->user_id,':t'=>$data->topic_id,':s'=>$data->status,':e1'=>$data->ex1Solved,':t1'=>$data->ex1Total,':rc'=>isset($data->revisionCount)?$data->revisionCount:0,':nr'=>isset($data->nextRevisionDate)?$data->nextRevisionDate:null]); echo json_encode(["message"=>"Saved"]); }catch(Exception $e){echo json_encode(["error"=>$e->getMessage()]);} ` },
-        { name: "get_dashboard.php", folder: "api", desc: "Dashboard", content: `<?php require 'config.php'; header('Content-Type: application/json'); $uid=$_GET['user_id']; $res=[]; $res['progress']=$conn->query("SELECT * FROM topic_progress WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $res['goals']=$conn->query("SELECT * FROM daily_goals WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $res['backlogs']=$conn->query("SELECT * FROM backlogs WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $res['mistakes']=$conn->query("SELECT * FROM mistake_notebook WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $tt=$conn->query("SELECT * FROM timetable_settings WHERE user_id=$uid")->fetch(PDO::FETCH_ASSOC); if($tt){ $res['timetable']=['config'=>json_decode($tt['config_json']),'slots'=>json_decode($tt['generated_slots_json'])]; } $atts=$conn->query("SELECT * FROM test_attempts WHERE user_id=$uid ORDER BY attempt_date DESC")->fetchAll(PDO::FETCH_ASSOC); foreach($atts as &$a){ $d=$conn->query("SELECT ad.*, q.subject_id, q.topic_id FROM attempt_details ad LEFT JOIN questions q ON ad.question_id=q.id WHERE ad.attempt_id='{$a['id']}'")->fetchAll(PDO::FETCH_ASSOC); $a['detailedResults']=array_map(function($r){ return ['questionId'=>$r['question_id'],'status'=>$r['status'],'subjectId'=>$r['subject_id'],'topicId'=>$r['topic_id'],'selectedOptionIndex'=>(int)$r['selected_option']]; },$d); } $res['attempts']=$atts; echo json_encode($res);` },
+
+        // --- 3. PUBLIC & COMMON DATA ---
+        { name: "contact.php", folder: "api", desc: "Contact Form", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); $conn->prepare("INSERT INTO contact_messages (name,email,subject,message) VALUES (?,?,?,?)")->execute([$d->name,$d->email,$d->subject,$d->message]); echo json_encode(["message"=>"Sent"]);` },
+        { name: "get_common.php", folder: "api", desc: "Fetch Common", content: `<?php require 'config.php'; header('Content-Type: application/json'); $res=[]; $res['quotes']=$conn->query("SELECT * FROM quotes")->fetchAll(PDO::FETCH_ASSOC); $res['notifications']=$conn->query("SELECT * FROM notifications ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC); $res['flashcards']=$conn->query("SELECT * FROM flashcards")->fetchAll(PDO::FETCH_ASSOC); $res['hacks']=$conn->query("SELECT * FROM memory_hacks")->fetchAll(PDO::FETCH_ASSOC); $res['blogPosts']=$conn->query("SELECT id, title, excerpt, content, author, category, image_url as imageUrl, created_at as date FROM blog_posts ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC); $ts=$conn->query("SELECT * FROM tests")->fetchAll(PDO::FETCH_ASSOC); foreach($ts as &$t){ $t['questions']=$conn->query("SELECT * FROM questions q JOIN test_questions tq ON q.id=tq.question_id WHERE tq.test_id='{$t['id']}' ORDER BY tq.question_order")->fetchAll(PDO::FETCH_ASSOC); foreach($t['questions'] as &$q){ $q['options']=json_decode($q['options_json']); } } $res['tests']=$ts; echo json_encode($res);` },
+
+        // --- 4. USER FEATURES ---
+        { name: "sync_progress.php", folder: "api", desc: "Sync Syllabus", content: `<?php require 'config.php'; header('Content-Type: application/json'); $data=json_decode(file_get_contents("php://input")); try{ $check=$conn->prepare("SELECT id FROM topic_progress WHERE user_id=:u AND topic_id=:t"); $check->execute([':u'=>$data->user_id,':t'=>$data->topic_id]); if($check->rowCount()>0){ $sql="UPDATE topic_progress SET status=:s, ex1_solved=:e1, ex1_total=:t1, revision_count=:rc, next_revision_date=:nr WHERE user_id=:u AND topic_id=:t"; }else{ $sql="INSERT INTO topic_progress (user_id,topic_id,status,ex1_solved,ex1_total,revision_count,next_revision_date) VALUES (:u,:t,:s,:e1,:t1,:rc,:nr)"; } $stmt=$conn->prepare($sql); $stmt->execute([':u'=>$data->user_id,':t'=>$data->topic_id,':s'=>$data->status,':e1'=>$data->ex1Solved,':t1'=>$data->ex1Total,':rc'=>isset($data->revisionCount)?$data->revisionCount:0,':nr'=>isset($data->nextRevisionDate)?$data->nextRevisionDate:null]); echo json_encode(["message"=>"Saved"]); }catch(Exception $e){echo json_encode(["error"=>$e->getMessage()]);} ` },
+        { name: "get_dashboard.php", folder: "api", desc: "User Dashboard", content: `<?php require 'config.php'; header('Content-Type: application/json'); $uid=$_GET['user_id']; $res=[]; $u=$conn->query("SELECT * FROM users WHERE id=$uid")->fetch(PDO::FETCH_ASSOC); if($u){ $res['userProfileSync']=['pendingRequest'=>json_decode($u['pending_request_json']),'parentId'=>$u['parent_id'],'studentId'=>$u['student_id']]; } $res['progress']=$conn->query("SELECT * FROM topic_progress WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $res['goals']=$conn->query("SELECT * FROM daily_goals WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $res['backlogs']=$conn->query("SELECT * FROM backlogs WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $res['mistakes']=$conn->query("SELECT * FROM mistake_notebook WHERE user_id=$uid")->fetchAll(PDO::FETCH_ASSOC); $tt=$conn->query("SELECT * FROM timetable_settings WHERE user_id=$uid")->fetch(PDO::FETCH_ASSOC); if($tt){ $res['timetable']=['config'=>json_decode($tt['config_json']),'slots'=>json_decode($tt['generated_slots_json'])]; } $atts=$conn->query("SELECT * FROM test_attempts WHERE user_id=$uid ORDER BY attempt_date DESC")->fetchAll(PDO::FETCH_ASSOC); foreach($atts as &$a){ $d=$conn->query("SELECT ad.*, q.subject_id, q.topic_id FROM attempt_details ad LEFT JOIN questions q ON ad.question_id=q.id WHERE ad.attempt_id='{$a['id']}'")->fetchAll(PDO::FETCH_ASSOC); $a['detailedResults']=array_map(function($r){ return ['questionId'=>$r['question_id'],'status'=>$r['status'],'subjectId'=>$r['subject_id'],'topicId'=>$r['topic_id'],'selectedOptionIndex'=>(int)$r['selected_option']]; },$d); } $res['attempts']=$atts; echo json_encode($res);` },
         { name: "save_attempt.php", folder: "api", desc: "Save Attempt", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); try { $conn->beginTransaction(); $aid="att_".time()."_".mt_rand(100,999); $conn->prepare("INSERT INTO test_attempts (id,user_id,test_id,score,total_questions,correct_count,incorrect_count,accuracy_percent) VALUES (?,?,?,?,?,?,?,?)")->execute([$aid, $d->user_id, $d->testId, $d->score, $d->totalQuestions, $d->correctCount, $d->incorrectCount, $d->accuracy_percent]); if(isset($d->detailedResults)){ $stmt=$conn->prepare("INSERT INTO attempt_details (attempt_id,question_id,status,selected_option) VALUES (?,?,?,?)"); foreach($d->detailedResults as $r){ $stmt->execute([$aid, $r->questionId, $r->status, $r->selectedOptionIndex]); } } $conn->commit(); echo json_encode(["message"=>"Saved", "attemptId"=>$aid]); } catch(Exception $e){ $conn->rollBack(); echo json_encode(["error"=>$e->getMessage()]); }` },
-        { name: "test_db.php", folder: "api", desc: "DB Test", content: `<?php require 'config.php'; header('Content-Type: application/json'); echo json_encode(["status"=>"CONNECTED"]);` },
-        { name: "send_request.php", folder: "api", desc: "Send Req", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); $sid=$d->student_identifier; if(strpos($sid,'@')){ $u=$conn->query("SELECT id FROM users WHERE email='$sid'")->fetch(); $sid=$u?$u['id']:null; } if($sid){ $req=json_encode(['fromId'=>$d->parent_id, 'fromName'=>$d->parent_name]); $conn->prepare("UPDATE users SET pending_request_json=? WHERE id=?")->execute([$req, $sid]); echo json_encode(["message"=>"Success"]); }else{ echo json_encode(["message"=>"User not found"]); }` },
-        { name: "respond_request.php", folder: "api", desc: "Resp Req", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); if($d->accept){ $conn->query("UPDATE users SET parent_id={$d->parent_id} WHERE id={$d->student_id}"); $conn->query("UPDATE users SET student_id={$d->student_id} WHERE id={$d->parent_id}"); } $conn->query("UPDATE users SET pending_request_json=NULL WHERE id={$d->student_id}"); echo json_encode(["message"=>"Processed"]);` },
-        { name: "save_timetable.php", folder: "api", desc: "Timetable", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); $uid=$d->user_id; $conf=json_encode($d->config); $slots=json_encode($d->slots); $conn->query("DELETE FROM timetable_settings WHERE user_id=$uid"); $conn->prepare("INSERT INTO timetable_settings (user_id, config_json, generated_slots_json) VALUES (?,?,?)")->execute([$uid, $conf, $slots]); echo json_encode(["message"=>"Saved"]);` },
-        { name: "manage_goals.php", folder: "api", desc: "Goals", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST'){ $conn->prepare("INSERT INTO daily_goals (id,user_id,goal_text) VALUES (?,?,?)")->execute([$d->id, $d->user_id, $d->text]); } if($m=='PUT'){ $conn->query("UPDATE daily_goals SET is_completed = NOT is_completed WHERE id='{$d->id}'"); } echo json_encode(["message"=>"OK"]);` }
+        { name: "save_timetable.php", folder: "api", desc: "Save Timetable", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); $uid=$d->user_id; $conf=json_encode($d->config); $slots=json_encode($d->slots); $conn->query("DELETE FROM timetable_settings WHERE user_id=$uid"); $conn->prepare("INSERT INTO timetable_settings (user_id, config_json, generated_slots_json) VALUES (?,?,?)")->execute([$uid, $conf, $slots]); echo json_encode(["message"=>"Saved"]);` },
+        { name: "manage_goals.php", folder: "api", desc: "Manage Goals", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST'){ $conn->prepare("INSERT INTO daily_goals (id,user_id,goal_text) VALUES (?,?,?)")->execute([$d->id, $d->user_id, $d->text]); } if($m=='PUT'){ $conn->query("UPDATE daily_goals SET is_completed = NOT is_completed WHERE id='{$d->id}'"); } echo json_encode(["message"=>"OK"]);` },
+        { name: "manage_backlogs.php", folder: "api", desc: "Manage Backlogs", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST'){ $conn->prepare("INSERT INTO backlogs (id,user_id,title,subject_id,priority,deadline,status) VALUES (?,?,?,?,?,?,?)")->execute([$d->id, $d->user_id, $d->title, $d->subjectId, $d->priority, $d->deadline, $d->status]); } if($m=='PUT'){ $conn->query("UPDATE backlogs SET status = IF(status='PENDING','CLEARED','PENDING') WHERE id='{$d->id}'"); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM backlogs WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
+        { name: "manage_mistakes.php", folder: "api", desc: "Manage Mistakes", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST'){ $tags=json_encode($d->tags); $conn->prepare("INSERT INTO mistake_notebook (id,user_id,question_text,subject_id,topic_id,test_name,tags_json) VALUES (?,?,?,?,?,?,?)")->execute([$d->id, $d->user_id, $d->questionText, $d->subjectId, $d->topicId, $d->testName, $tags]); } if($m=='PUT'){ $tags=json_encode($d->tags); $conn->prepare("UPDATE mistake_notebook SET user_notes=?, tags_json=? WHERE id=?")->execute([$d->userNotes, $tags, $d->id]); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM mistake_notebook WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
+        
+        // --- 5. CONNECTIONS ---
+        { name: "send_request.php", folder: "api", desc: "Send Request", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); $sid=$d->student_identifier; if(strpos($sid,'@')){ $u=$conn->query("SELECT id FROM users WHERE email='$sid'")->fetch(); $sid=$u?$u['id']:null; } if($sid){ $req=json_encode(['fromId'=>$d->parent_id, 'fromName'=>$d->parent_name]); $conn->prepare("UPDATE users SET pending_request_json=? WHERE id=?")->execute([$req, $sid]); echo json_encode(["message"=>"Success"]); }else{ echo json_encode(["message"=>"User not found"]); }` },
+        { name: "respond_request.php", folder: "api", desc: "Resp Request", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); if($d->accept){ $conn->query("UPDATE users SET parent_id={$d->parent_id} WHERE id={$d->student_id}"); $conn->query("UPDATE users SET student_id={$d->student_id} WHERE id={$d->parent_id}"); } $conn->query("UPDATE users SET pending_request_json=NULL WHERE id={$d->student_id}"); echo json_encode(["message"=>"Processed"]);` },
+
+        // --- 6. ADMIN TOOLS ---
+        { name: "get_users.php", folder: "api", desc: "Admin Get Users", content: `<?php require 'config.php'; header('Content-Type: application/json'); echo json_encode($conn->query("SELECT id, full_name as name, email, role, is_verified as isVerified, target_exam as targetExam, institute FROM users")->fetchAll(PDO::FETCH_ASSOC));` },
+        { name: "manage_users.php", folder: "api", desc: "Admin Manage User", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='PUT'){ $iv=$d->isVerified?1:0; $conn->prepare("UPDATE users SET full_name=?, target_exam=?, institute=?, is_verified=$iv WHERE id=?")->execute([$d->name, $d->targetExam, $d->institute, $d->id]); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM users WHERE id=$id"); } echo json_encode(["message"=>"OK"]);` },
+        { name: "manage_broadcasts.php", folder: "api", desc: "Admin Broadcasts", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); if($d->action=='send_notification'){ $conn->prepare("INSERT INTO notifications (id,title,message,type) VALUES (?,?,?,?)")->execute([$d->id, $d->title, $d->message, $d->type]); } if($d->action=='add_quote'){ $conn->prepare("INSERT INTO quotes (id,text,author) VALUES (?,?,?)")->execute([$d->id, $d->text, $d->author]); } if($_GET['action']=='delete_quote'){ $id=$_GET['id']; $conn->query("DELETE FROM quotes WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
+        { name: "manage_tests.php", folder: "api", desc: "Admin Tests", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); if($d->action=='add_question'){ $opts=json_encode($d->options); $conn->prepare("INSERT INTO questions (id,subject_id,topic_id,question_text,options_json,correct_option_index) VALUES (?,?,?,?,?,?)")->execute([$d->id, $d->subjectId, $d->topicId, $d->text, $opts, $d->correctOptionIndex]); } if($d->action=='create_test'){ $conn->prepare("INSERT INTO tests (id,title,duration_minutes,category,difficulty,exam_type) VALUES (?,?,?,?,?,?)")->execute([$d->id, $d->title, $d->durationMinutes, 'ADMIN', $d->difficulty, $d->examType]); $i=0; foreach($d->questions as $q){ $conn->prepare("INSERT INTO test_questions (test_id,question_id,question_order) VALUES (?,?,?)")->execute([$d->id, $q->id, $i++]); } } echo json_encode(["message"=>"OK"]);` },
+        { name: "manage_blog.php", folder: "api", desc: "Admin Blog", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; if($m=='POST'){ $d=json_decode(file_get_contents("php://input")); $conn->prepare("INSERT INTO blog_posts (id,title,excerpt,content,author,category,image_url,created_at) VALUES (?,?,?,?,?,?,?,?)")->execute([$d->id, $d->title, $d->excerpt, $d->content, $d->author, $d->category, $d->imageUrl, $d->date]); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM blog_posts WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
+        { name: "manage_contact.php", folder: "api", desc: "Admin Contact", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; if($m=='GET'){ echo json_encode($conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC)); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM contact_messages WHERE id=$id"); echo json_encode(["message"=>"Deleted"]); }` },
+
+        // --- 7. SEO & MISC (Root Folder) ---
+        { name: "sitemap.xml", folder: "root", desc: "SEO Sitemap", content: `<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url><loc>https://iitgeeprep.com/</loc><priority>1.0</priority></url>
+  <url><loc>https://iitgeeprep.com/about</loc><priority>0.8</priority></url>
+  <url><loc>https://iitgeeprep.com/blog</loc><priority>0.8</priority></url>
+  <url><loc>https://iitgeeprep.com/exams</loc><priority>0.8</priority></url>
+  <url><loc>https://iitgeeprep.com/contact</loc><priority>0.6</priority></url>
+</urlset>` },
+        { name: "robots.txt", folder: "root", desc: "SEO Robots", content: `User-agent: *
+Allow: /
+Sitemap: https://iitgeeprep.com/sitemap.xml` },
+        { name: "README.txt", folder: "root", desc: "Instructions", content: `IITGEEPrep Backend Deployment Instructions
+==========================================
+
+1. DATABASE:
+   - Create a MySQL Database in Hostinger.
+   - Import 'database.sql'.
+
+2. API FILES:
+   - The 'api' folder contains all PHP scripts.
+   - Edit 'api/config.php' if your DB credentials change.
+   - Permissions: Folders (755), Files (644).
+
+3. FRONTEND:
+   - Upload your React build (index.html, assets/) to public_html.
+   - Upload .htaccess to public_html to fix routing.
+
+4. TROUBLESHOOTING:
+   - Visit https://iitgeeprep.com/api/test_db.php to check connection.` }
     ];
 };
