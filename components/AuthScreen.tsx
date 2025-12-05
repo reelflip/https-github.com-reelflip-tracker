@@ -18,7 +18,8 @@ import {
   CheckCircle2,
   Zap,
   Users,
-  Target
+  Target,
+  Terminal
 } from 'lucide-react';
 
 interface AuthScreenProps {
@@ -497,7 +498,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                     <p className="text-[10px] text-center text-slate-400 font-bold uppercase tracking-wider mb-3 flex items-center justify-center">
                         <Zap className="w-3 h-3 mr-1" /> Developer Shortcuts (Offline)
                     </p>
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-4 gap-2">
                         <button 
                             onClick={() => handleQuickLogin('ADMIN')}
                             className="bg-slate-100 text-slate-600 hover:bg-slate-200 text-[10px] py-2 rounded-lg font-bold flex flex-col items-center border border-slate-200 transition-colors"
@@ -518,6 +519,13 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                         >
                             <Users className="w-4 h-4 mb-1 text-green-500" />
                             Parent
+                        </button>
+                        <button 
+                            onClick={() => onNavigate('test_runner')}
+                            className="bg-slate-800 text-white hover:bg-slate-700 text-[10px] py-2 rounded-lg font-bold flex flex-col items-center border border-slate-700 transition-colors"
+                        >
+                            <Terminal className="w-4 h-4 mb-1 text-green-400" />
+                            Tests
                         </button>
                     </div>
                 </div>

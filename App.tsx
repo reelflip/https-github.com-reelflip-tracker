@@ -24,6 +24,7 @@ import PrivacyPolicy from './components/PrivacyPolicy';
 import ContactUs from './components/ContactUs';
 import Blog from './components/Blog';
 import ExamGuide from './components/ExamGuide';
+import TestRunner from './components/TestRunner';
 import { API_BASE_URL } from './config'; 
 
 // Initial global questions combined from constants
@@ -589,6 +590,12 @@ function App() {
         return <PublicLayout onNavigate={setActiveTab}><Blog posts={blogPosts} /></PublicLayout>;
       case 'exams':
         return <PublicLayout onNavigate={setActiveTab}><ExamGuide /></PublicLayout>;
+      case 'test_runner':
+        // Only allow if dev tools enabled
+        if (window.IITJEE_CONFIG?.enableDevTools) {
+            return <PublicLayout onNavigate={setActiveTab}><TestRunner /></PublicLayout>;
+        }
+        return <AuthScreen onLogin={handleLogin} onNavigate={setActiveTab} />;
       default:
         // Default to AuthScreen (Login/Register)
         return <AuthScreen onLogin={handleLogin} onNavigate={setActiveTab} />;
