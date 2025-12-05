@@ -70,6 +70,26 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
       return `${displayH}:${mn.toString().padStart(2, '0')} ${ampm}`;
   };
 
+  // Helper to render icons safely (avoids storing React Nodes in DB)
+  const getIcon = (slot: any) => {
+      // 1. Check specific iconType string (from new generation logic)
+      if (slot.iconType === 'sun') return <SunIcon className="w-4 h-4" />;
+      if (slot.iconType === 'moon') return <Moon className="w-4 h-4" />;
+      if (slot.iconType === 'coffee') return <Coffee className="w-4 h-4" />;
+      if (slot.iconType === 'rotate') return <RotateCw className="w-4 h-4" />;
+      
+      // 2. Fallback to Type-based icons
+      switch (slot.type) {
+          case 'theory': return <Brain className="w-4 h-4" />;
+          case 'practice': return <PenTool className="w-4 h-4" />;
+          case 'revision': return <Layers className="w-4 h-4" />;
+          case 'school': return <Briefcase className="w-4 h-4" />;
+          case 'coaching': return <BookOpen className="w-4 h-4" />;
+          case 'sleep': return <Moon className="w-4 h-4" />;
+          default: return <Clock className="w-4 h-4" />;
+      }
+  };
+
   const handleGenerate = () => {
     let slots: any[] = [];
     let currentMins = toMins(wakeTime);
@@ -81,7 +101,7 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
         endTime: fromMins(currentMins + 30),
         label: 'Wake Up & Routine',
         type: 'routine',
-        icon: <SunIcon className="w-4 h-4" />
+        iconType: 'sun'
     });
     currentMins += 30; // 30 mins freshen up
 
@@ -124,21 +144,21 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
             // Breakfast (7-9 AM)
             if (hour >= 7 && hour < 9 && duration >= 20 && !slots.some(s => s.label.includes('Breakfast'))) {
                  const len = Math.min(30, duration);
-                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Breakfast', type: 'routine', icon: <Coffee className="w-4 h-4" /> });
+                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Breakfast', type: 'routine', iconType: 'coffee' });
                  now += len;
                  continue;
             }
             // Lunch (12-2 PM)
             if (hour >= 12 && hour < 14 && duration >= 30 && !slots.some(s => s.label.includes('Lunch'))) {
                  const len = Math.min(45, duration);
-                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Lunch & Power Nap', type: 'routine', icon: <Coffee className="w-4 h-4" /> });
+                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Lunch & Power Nap', type: 'routine', iconType: 'coffee' });
                  now += len;
                  continue;
             }
             // Dinner (7:30-9:30 PM)
             if (hour >= 19.5 && hour < 21.5 && duration >= 30 && !slots.some(s => s.label.includes('Dinner'))) {
                  const len = Math.min(45, duration);
-                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Dinner & Relax', type: 'routine', icon: <Coffee className="w-4 h-4" /> });
+                 slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Dinner & Relax', type: 'routine', iconType: 'coffee' });
                  now += len;
                  continue;
             }
@@ -152,7 +172,7 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
                     label: 'Class Notes Revision', 
                     type: 'revision', 
                     subtext: "Immediately revise today's coaching topics.",
-                    icon: <RotateCw className="w-4 h-4" />
+                    iconType: 'rotate'
                 });
                 now += revLen;
                 coachingRevisionDone = true; 
@@ -244,7 +264,7 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
         time: fromMins(endOfDayMins),
         label: 'Sleep & Recovery',
         type: 'sleep',
-        icon: <Moon className="w-4 h-4" />
+        iconType: 'moon'
     });
 
     setGeneratedSchedule(slots);
@@ -402,24 +422,22 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
                          let bg = 'bg-slate-50';
                          let border = 'border-slate-100';
                          let text = 'text-slate-700';
-                         let icon = slot.icon || <Clock className="w-4 h-4" />;
                          
+                         // Determine styles
                          if (slot.type === 'theory') {
                              bg = 'bg-purple-50'; border = 'border-purple-100'; text = 'text-purple-900';
-                             icon = <Brain className="w-4 h-4" />;
                          } else if (slot.type === 'practice') {
                              bg = 'bg-blue-50'; border = 'border-blue-100'; text = 'text-blue-900';
-                             icon = <PenTool className="w-4 h-4" />;
                          } else if (slot.type === 'revision') {
                              bg = 'bg-amber-50'; border = 'border-amber-100'; text = 'text-amber-900';
-                             icon = <Layers className="w-4 h-4" />;
                          } else if (slot.type === 'school') {
                              bg = 'bg-green-50'; border = 'border-green-100'; text = 'text-green-900';
-                             icon = <Briefcase className="w-4 h-4" />;
                          } else if (slot.type === 'coaching') {
                              bg = 'bg-orange-50'; border = 'border-orange-100'; text = 'text-orange-900';
-                             icon = <BookOpen className="w-4 h-4" />;
                          }
+
+                         // Determine icon (ignore corrupt slot.icon from legacy DB)
+                         const icon = getIcon(slot);
 
                          return (
                             <div key={idx} className="relative pl-8">
