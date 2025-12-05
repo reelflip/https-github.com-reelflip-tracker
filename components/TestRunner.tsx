@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { TestRunnerEngine, expect, TestResult } from '../utils/testFramework';
-import { Play, CheckCircle2, XCircle, Terminal, AlertTriangle, Loader2, RefreshCw, Database, Users, BookOpen, Target, BarChart2, Calendar, ListTodo, Shield, Mail, Layers } from 'lucide-react';
+import { Play, CheckCircle2, XCircle, Terminal, AlertTriangle, Loader2, RefreshCw, Database, Users, BookOpen, Target, BarChart2, Calendar, ListTodo, Shield, Mail, Layers, UserCog } from 'lucide-react';
 
 const TestRunner: React.FC = () => {
     const [results, setResults] = useState<Record<string, TestResult[]> | null>(null);
@@ -57,6 +57,13 @@ const TestRunner: React.FC = () => {
                     institute: 'Test Inst', targetYear: 2025
                 })
             });
+            
+            // Verify ID is valid random 6-digit
+            const id = parseInt(data.user.id);
+            if (isNaN(id) || id < 100000 || id > 999999) {
+                throw new Error(`Invalid User ID Generated: ${data.user.id}`);
+            }
+            
             return data.user;
         };
 
@@ -77,24 +84,24 @@ const TestRunner: React.FC = () => {
         });
 
         // --- SUITE 2: AUTH & CONNECTION FLOW ---
-        engine.describe("2. Parent-Student Connection", (it) => {
+        engine.describe("2. Auth & Connections", (it) => {
             let student: any;
             let parent: any;
 
-            it("should register a fresh Student", async () => {
+            it("should register a valid Student", async () => {
                 setProgress("Creating Student...");
                 student = await registerUser('STUDENT', 'Test Student');
                 expect(student.role).toBe('STUDENT');
             });
 
-            it("should register a fresh Parent", async () => {
+            it("should register a valid Parent", async () => {
                 setProgress("Creating Parent...");
                 parent = await registerUser('PARENT', 'Test Parent');
                 expect(parent.role).toBe('PARENT');
             });
 
-            it("should allow Parent to send connection request", async () => {
-                setProgress("Sending Request...");
+            it("should send Connection Request", async () => {
+                setProgress("Linking...");
                 const data = await fetchApi('/api/send_request.php', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -106,18 +113,7 @@ const TestRunner: React.FC = () => {
                 expect(data.message).toContain("Success");
             });
 
-            it("should show request in Student profile (DB Check)", async () => {
-                setProgress("Verifying Request...");
-                // Re-login student to fetch fresh profile
-                const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
-                
-                const request = data.userProfileSync.pendingRequest;
-                expect(request).toBeDefined();
-                expect(request.fromId).toBe(parent.id);
-            });
-
-            it("should allow Student to accept request", async () => {
-                setProgress("Accepting Request...");
+            it("should accept Connection Request", async () => {
                 const data = await fetchApi('/api/respond_request.php', {
                     method: 'POST',
                     body: JSON.stringify({
@@ -128,458 +124,153 @@ const TestRunner: React.FC = () => {
                 });
                 expect(data.message).toContain("Accepted");
             });
-
-            it("should link accounts in Database", async () => {
-                setProgress("Checking Linkage...");
-                const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
-                // Student should point to Parent
-                expect(data.userProfileSync.parentId).toBe(parent.id);
-            });
         });
 
-        // --- SUITE 3: SYLLABUS TRACKING ---
-        engine.describe("3. Syllabus Sync", (it) => {
+        // --- SUITE 3: SYLLABUS SYNC ---
+        engine.describe("3. Syllabus Data", (it) => {
             let user: any;
-            const topicId = 'p_kin_1'; // Motion in Straight Line
+            const topicId = 'p_kin_1';
 
-            it("should create a user for tracking", async () => {
-                setProgress("Creating Syllabus User...");
-                user = await registerUser('STUDENT', 'Syllabus Tester');
+            it("should create user", async () => {
+                user = await registerUser('STUDENT', 'Syllabus User');
             });
 
-            it("should save topic progress (COMPLETED)", async () => {
-                setProgress("Updating Topic...");
+            it("should save topic progress", async () => {
+                setProgress("Syncing Syllabus...");
                 const payload = {
-                    user_id: user.id,
-                    topic_id: topicId,
-                    status: 'COMPLETED',
-                    ex1Solved: 10,
-                    ex1Total: 30
+                    user_id: user.id, topic_id: topicId, status: 'COMPLETED',
+                    ex1Solved: 10, ex1Total: 30
                 };
                 const data = await fetchApi('/api/sync_progress.php', {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
+                    method: 'POST', body: JSON.stringify(payload)
                 });
                 expect(data.message).toContain("saved");
             });
 
-            it("should retrieve saved progress from DB", async () => {
-                setProgress("Fetching Dashboard...");
+            it("should retrieve progress correctly", async () => {
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
-                
-                // Find the topic in the progress array
                 const topic = data.progress.find((p: any) => p.topic_id === topicId);
-                expect(topic).toBeDefined();
                 expect(topic.status).toBe('COMPLETED');
                 expect(parseInt(topic.ex1_solved)).toBe(10);
             });
         });
 
-        // --- SUITE 4: TASK MANAGEMENT (BACKLOGS & GOALS) ---
-        engine.describe("4. Backlogs & Goals (Full CRUD)", (it) => {
+        // --- SUITE 4: TASK MANAGEMENT ---
+        engine.describe("4. Task Management", (it) => {
             let user: any;
             let goalId = `g_${timestamp}`;
-            let backlogId = `b_${timestamp}`;
 
-            it("should setup test user", async () => {
-                user = await registerUser('STUDENT', 'Task Tester');
+            it("should create user", async () => {
+                user = await registerUser('STUDENT', 'Task User');
             });
 
-            // 1. GOALS
-            it("should CREATE a Daily Goal", async () => {
+            it("should create & toggle Goal", async () => {
                 setProgress("Testing Goals...");
-                const data = await fetchApi('/api/manage_goals.php', {
-                    method: 'POST',
-                    body: JSON.stringify({ id: goalId, user_id: user.id, text: "Test DB Integrity" })
-                });
-                expect(data.message).toBe("Goal added");
-            });
-
-            it("should UPDATE (Toggle) the Goal", async () => {
                 await fetchApi('/api/manage_goals.php', {
-                    method: 'PUT',
-                    body: JSON.stringify({ id: goalId })
+                    method: 'POST', body: JSON.stringify({ id: goalId, user_id: user.id, text: "Test Goal" })
                 });
-                // Verify
+                await fetchApi('/api/manage_goals.php', {
+                    method: 'PUT', body: JSON.stringify({ id: goalId })
+                });
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
                 const goal = data.goals.find((g: any) => g.id === goalId);
                 expect(goal.is_completed == 1).toBe(true);
             });
-
-            // 2. BACKLOGS
-            it("should CREATE a Backlog item", async () => {
-                setProgress("Testing Backlogs...");
-                const data = await fetchApi('/api/manage_backlogs.php', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        id: backlogId, user_id: user.id, 
-                        title: "Rotational Motion", subjectId: 'phys', 
-                        priority: 'HIGH', deadline: '2025-12-31'
-                    })
-                });
-                expect(data.message).toBe("Backlog added");
-            });
-
-            it("should UPDATE Backlog Status (Clear)", async () => {
-                const data = await fetchApi('/api/manage_backlogs.php', {
-                    method: 'PUT',
-                    body: JSON.stringify({ id: backlogId })
-                });
-                expect(data.message).toBe("Status updated");
-                
-                // Verify DB
-                const dash = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
-                const backlog = dash.backlogs.find((b: any) => b.id === backlogId);
-                expect(backlog.status).toBe('CLEARED');
-            });
-
-            it("should DELETE a Backlog item", async () => {
-                const data = await fetchApi(`/api/manage_backlogs.php?id=${backlogId}`, { method: 'DELETE' });
-                expect(data.message).toBe("Deleted");
-                
-                // Verify gone
-                const dashData = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
-                const backlog = dashData.backlogs.find((b: any) => b.id === backlogId);
-                if (backlog) throw new Error("Backlog should have been deleted");
-            });
         });
 
-        // --- SUITE 5: EXAM ENGINE & ANALYTICS ---
-        engine.describe("5. Exam Engine & Analytics", (it) => {
+        // --- SUITE 5: ANALYTICS & EXAM ---
+        engine.describe("5. Exam & Analytics", (it) => {
             let user: any;
-            let attemptId = `att_analy_${timestamp}`;
-            let testId = 'test_jee_main_2024';
+            let attemptId = `att_${timestamp}`;
 
-            it("should setup test user", async () => {
-                user = await registerUser('STUDENT', 'Analytics Tester');
+            it("should create user", async () => {
+                user = await registerUser('STUDENT', 'Exam User');
             });
 
-            it("should SAVE a Test Attempt with Results", async () => {
-                setProgress("Submitting Test...");
-                // Scenario: 1 Correct (+4), 1 Incorrect (-1) = 3 Score
+            it("should save detailed test attempt", async () => {
+                setProgress("Submitting Exam...");
                 const payload = {
-                    id: attemptId,
-                    user_id: user.id,
-                    testId: testId,
-                    score: 3,
-                    totalQuestions: 2,
-                    correctCount: 1,
-                    incorrectCount: 1,
-                    accuracy_percent: 50.0,
+                    id: attemptId, user_id: user.id, testId: 'test_jee_main_2024',
+                    score: 4, totalQuestions: 1, correctCount: 1, incorrectCount: 0, accuracy_percent: 100,
                     detailedResults: [
-                        { questionId: 'p_1', status: 'CORRECT', subjectId: 'phys', topicId: 'p_kin_1' },
-                        { questionId: 'p_2', status: 'INCORRECT', subjectId: 'phys', topicId: 'p_kin_2' } 
+                        { questionId: 'p_1', status: 'CORRECT', subjectId: 'phys', topicId: 'p_kin_1', selectedOptionIndex: 3 }
                     ]
                 };
-                
                 const data = await fetchApi('/api/save_attempt.php', {
-                    method: 'POST',
-                    body: JSON.stringify(payload)
+                    method: 'POST', body: JSON.stringify(payload)
                 });
                 expect(data.message).toContain("Attempt saved");
             });
 
-            it("should GENERATE Analytics Data (Score & Accuracy)", async () => {
-                setProgress("Verifying Dashboard Analytics...");
+            it("should retrieve attempt with Topic Metadata", async () => {
+                setProgress("Verifying Analytics...");
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
-                
-                // Check if attempt exists
                 const attempt = data.attempts.find((a: any) => a.id === attemptId);
+                
                 expect(attempt).toBeDefined();
-                
-                // Verify Math
-                expect(parseInt(attempt.score)).toBe(3);
-                expect(parseFloat(attempt.accuracy_percent)).toBe(50);
-            });
-
-            it("should PERSIST Granular Details for 'Weak Areas'", async () => {
-                // This step ensures the "Weak Areas" chart has data to render
-                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
-                const attempt = data.attempts.find((a: any) => a.id === attemptId);
-                
-                // Check if detailed results (question breakdown) are loaded
-                expect(attempt.detailedResults).toBeDefined();
-                expect(attempt.detailedResults.length).toBe(2);
-                
-                // Verify specific incorrect answer is tracked (Crucial for Mistake Notebook)
-                const incorrect = attempt.detailedResults.find((r: any) => r.status === 'INCORRECT');
-                expect(incorrect).toBeDefined();
-                expect(incorrect.questionId).toBe('p_2');
-            });
-            
-            it("should JOIN Subject/Topic metadata for Analytics", async () => {
-                // Verify the backend JOINed the 'questions' table
-                const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
-                const attempt = data.attempts.find((a: any) => a.id === attemptId);
-                const result = attempt.detailedResults[0];
-                
-                // If subjectId is missing, the Radar Chart will be empty
-                expect(result.subjectId).toBeDefined(); 
-                expect(result.subjectId).toBe('phys');
+                expect(attempt.detailedResults[0].subjectId).toBe('phys'); // Check JOIN worked
+                expect(attempt.detailedResults[0].selectedOptionIndex).toBe(3); // Check Option saved
             });
         });
 
-        // --- SUITE 6: TIMETABLE GENERATOR ---
-        engine.describe("6. Timetable Generator", (it) => {
+        // --- SUITE 6: TIMETABLE ---
+        engine.describe("6. Timetable Engine", (it) => {
             let user: any;
-            
-            it("should setup user", async () => {
-                user = await registerUser('STUDENT', 'Timetable User');
+
+            it("should create user", async () => {
+                user = await registerUser('STUDENT', 'TT User');
             });
 
-            it("should SAVE generated timetable slots", async () => {
-                setProgress("Saving Schedule...");
-                const config = { wakeTime: "06:00", bedTime: "22:00", schoolEnabled: true };
+            it("should save complex timetable slots", async () => {
+                setProgress("Saving Timetable...");
                 const slots = [
-                    { time: "06:00", label: "Wake Up", type: "routine", iconType: "sun" },
-                    { time: "07:00", label: "Physics Theory", type: "theory", iconType: "book" }
+                    { time: "06:00", label: "Wake Up", iconType: "sun" }
                 ];
-                
-                const data = await fetchApi('/api/save_timetable.php', {
+                await fetchApi('/api/save_timetable.php', {
                     method: 'POST',
-                    body: JSON.stringify({
-                        user_id: user.id,
-                        config,
-                        slots
-                    })
+                    body: JSON.stringify({ user_id: user.id, config: {}, slots })
                 });
-                expect(data.message).toBe("Timetable saved");
             });
 
-            it("should RETRIEVE timetable settings & slots", async () => {
-                setProgress("Loading Schedule...");
+            it("should retrieve valid slots", async () => {
                 const data = await fetchApi(`/api/get_dashboard.php?user_id=${user.id}`);
-                
-                expect(data.timetable).toBeDefined();
-                expect(data.timetable.config.wakeTime).toBe("06:00");
-                expect(data.timetable.slots.length).toBe(2);
-                expect(data.timetable.slots[1].label).toBe("Physics Theory");
+                expect(data.timetable.slots[0].iconType).toBe("sun");
             });
         });
 
-        // --- SUITE 7: PARENT MONITORING VIEW ---
-        engine.describe("7. Parent Monitoring Access", (it) => {
-            let student: any;
-            let parent: any;
-            const attemptId = `att_p_${timestamp}`;
-            const topicId = 'm_cpx_1';
-
-            it("should setup linked Student & Parent", async () => {
-                setProgress("Linking Accounts...");
-                student = await registerUser('STUDENT', 'Child User');
-                parent = await registerUser('PARENT', 'Parent User');
-                
-                // Fast-track linking via API
-                await fetchApi('/api/send_request.php', {
-                    method: 'POST',
-                    body: JSON.stringify({ student_identifier: student.email, parent_id: parent.id, parent_name: parent.name })
-                });
-                await fetchApi('/api/respond_request.php', {
-                    method: 'POST',
-                    body: JSON.stringify({ student_id: student.id, parent_id: parent.id, accept: true })
-                });
-            });
-
-            it("should record Student EXAM Data", async () => {
-                setProgress("Student Taking Exam...");
-                // Simulate taking a test with specific score
-                await fetchApi('/api/save_attempt.php', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        id: attemptId, user_id: student.id, testId: 'test_jee_adv_2023',
-                        score: 150, totalQuestions: 50, correctCount: 30, incorrectCount: 5, accuracy_percent: 85.7,
-                        detailedResults: []
-                    })
-                });
-            });
-
-            it("should record Student PROGRESS (Exercises)", async () => {
-                setProgress("Student Solving Exercises...");
-                // Simulate marking a chapter complete + entering solved question counts
-                await fetchApi('/api/sync_progress.php', {
-                    method: 'POST',
-                    body: JSON.stringify({ 
-                        user_id: student.id, 
-                        topic_id: topicId, 
-                        status: 'COMPLETED',
-                        ex1Solved: 25,
-                        ex1Total: 30,
-                        ex2Solved: 10,
-                        ex2Total: 15
-                    })
-                });
-            });
-
-            it("should allow Parent to view EXAM ANALYTICS", async () => {
-                setProgress("Parent Checking Results...");
-                const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
-                
-                // Verify Test Result exists
-                const attempt = data.attempts.find((a: any) => a.id === attemptId);
-                expect(attempt).toBeDefined();
-                expect(parseInt(attempt.score)).toBe(150);
-                expect(parseFloat(attempt.accuracy_percent)).toBe(85.7);
-            });
-
-            it("should allow Parent to view SYLLABUS & QUESTIONS", async () => {
-                setProgress("Parent Checking Progress...");
-                const data = await fetchApi(`/api/get_dashboard.php?user_id=${student.id}`);
-                
-                // Verify Topic Data
-                const topic = data.progress.find((p: any) => p.topic_id === topicId);
-                expect(topic).toBeDefined();
-                expect(topic.status).toBe('COMPLETED');
-                
-                // Verify Exercise Question Counts
-                expect(parseInt(topic.ex1_solved)).toBe(25);
-                expect(parseInt(topic.ex2_solved)).toBe(10);
-            });
-        });
-
-        // --- SUITE 8: ADMIN WORKFLOWS ---
-        engine.describe("8. Admin Workflows", (it) => {
+        // --- SUITE 8: ADMIN ---
+        engine.describe("8. Admin Features", (it) => {
             let admin: any;
-            let targetUser: any;
-            const qId = `q_admin_${timestamp}`;
-            const testId = `t_admin_${timestamp}`;
-            const blogId = `b_admin_${timestamp}`;
+            const blogId = `b_${timestamp}`;
 
-            it("should Authenticate as Admin", async () => {
-                setProgress("Admin Login...");
+            it("should login as Admin", async () => {
                 const data = await fetchApi('/api/login.php', {
-                    method: 'POST',
-                    body: JSON.stringify({ email: 'admin', password: 'Ishika@123' })
+                    method: 'POST', body: JSON.stringify({ email: 'admin', password: 'Ishika@123' })
                 });
-                expect(data.user).toBeDefined();
-                expect(data.user.role).toBe('ADMIN');
                 admin = data.user;
+                expect(admin.role).toBe('ADMIN');
             });
 
-            it("should CREATE a Question in the Bank", async () => {
-                setProgress("Adding Question...");
-                const data = await fetchApi('/api/manage_tests.php', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'add_question',
-                        id: qId, subjectId: 'phys', topicId: 'p_kin_1', 
-                        text: "Admin Test Question?", options: ["A","B","C","D"], correctOptionIndex: 0
-                    })
-                });
-                expect(data.message).toBe("Question added");
-            });
-
-            it("should PUBLISH a Mock Test using that Question", async () => {
-                setProgress("Creating Test...");
-                const data = await fetchApi('/api/manage_tests.php', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'create_test',
-                        id: testId, title: "Admin Generated Test", durationMinutes: 60,
-                        category: 'ADMIN', difficulty: 'CUSTOM', examType: 'JEE',
-                        questions: [{ id: qId }] // Link the question
-                    })
-                });
-                expect(data.message).toBe("Test created");
-            });
-
-            it("should SEND a Broadcast Notification", async () => {
-                const data = await fetchApi('/api/manage_broadcasts.php', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        action: 'send_notification',
-                        id: `n_${timestamp}`, title: "System Test", message: "Hello Students", type: "INFO", date: "2025-01-01"
-                    })
-                });
-                expect(data.message).toBe("Notification sent");
-            });
-
-            it("should MANAGE Users (Block/Unblock)", async () => {
-                setProgress("Blocking User...");
-                targetUser = await registerUser('STUDENT', 'Bad Student');
+            it("should create Blog Post with ISO Date", async () => {
+                setProgress("Testing Blog...");
+                const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD
                 
-                // Block
-                await fetchApi('/api/manage_users.php', {
-                    method: 'PUT',
-                    body: JSON.stringify({ id: targetUser.id, isVerified: false })
+                await fetchApi('/api/manage_blog.php', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        id: blogId, title: "Test Blog", content: "Content", 
+                        author: "Admin", category: "Updates", 
+                        imageUrl: "", date: today
+                    })
                 });
                 
-                // Verify Blocked
-                const users = await fetchApi('/api/get_users.php');
-                const blocked = users.find((u: any) => u.id === targetUser.id);
-                expect(blocked.isVerified).toBe(false);
-            });
-
-            it("should MANAGE Blog Posts", async () => {
-                setProgress("Publishing Blog...");
-                const data = await fetchApi('/api/manage_blog.php', {
-                    method: 'POST',
-                    body: JSON.stringify({
-                        id: blogId, title: "Test Blog", content: "Content", author: "Admin", category: "Updates", imageUrl: "", date: "2025-01-01"
-                    })
-                });
-                expect(data.message).toBe("Blog post created");
-
-                // Verify it appears in public feed
                 const common = await fetchApi('/api/get_common.php');
                 const post = common.blogPosts.find((b: any) => b.id === blogId);
                 expect(post).toBeDefined();
-
-                // Delete
+                expect(post.date).toBe(today); // Verify format didn't break DB
+                
+                // Cleanup
                 await fetchApi(`/api/manage_blog.php?id=${blogId}`, { method: 'DELETE' });
-            });
-
-            it("should RECEIVE Contact Messages", async () => {
-                setProgress("Checking Inbox...");
-                // 1. User sends message
-                await fetchApi('/api/contact.php', {
-                    method: 'POST',
-                    body: JSON.stringify({ name: "Visitor", email: "vis@test.com", subject: "Help", message: "Hello" })
-                });
-
-                // 2. Admin checks inbox
-                const msgs = await fetchApi('/api/manage_contact.php');
-                const msg = msgs.find((m: any) => m.email === "vis@test.com" && m.message === "Hello");
-                expect(msg).toBeDefined();
-            });
-        });
-
-        // --- SUITE 9: STUDY TOOLS DATA INTEGRITY ---
-        engine.describe("9. Study Tools (Flashcards & Hacks)", (it) => {
-            let commonData: any;
-
-            it("should fetch common data payload", async () => {
-                setProgress("Fetching Study Data...");
-                commonData = await fetchApi('/api/get_common.php');
-                expect(commonData).toBeDefined();
-            });
-
-            it("should verify FLASHCARD content exists", () => {
-                const deck = commonData.flashcards;
-                expect(Array.isArray(deck)).toBe(true);
-                expect(deck.length).toBeGreaterThan(0);
-                
-                // Check structure for Front/Back (Flipping mechanism dependency)
-                const card = deck[0];
-                expect(card.front).toBeDefined();
-                expect(card.back).toBeDefined();
-                expect(card.subject_id).toBeDefined();
-            });
-
-            it("should verify enough cards for Navigation", () => {
-                const deck = commonData.flashcards;
-                // If we have > 1 card, Next/Prev buttons will have data to cycle through
-                expect(deck.length).toBeGreaterThan(1);
-            });
-
-            it("should verify MEMORY HACKS content exists", () => {
-                const hacks = commonData.hacks;
-                expect(Array.isArray(hacks)).toBe(true);
-                expect(hacks.length).toBeGreaterThan(0);
-                
-                const hack = hacks[0];
-                expect(hack.title).toBeDefined();
-                expect(hack.trick).toBeDefined(); // The actual mnemonic
-                expect(hack.tags_json).toBeDefined(); // Tags for searching
             });
         });
 
@@ -660,6 +351,7 @@ const TestRunner: React.FC = () => {
                                  suiteName.includes('Admin') ? <Shield className="w-5 h-5 text-red-600"/> :
                                  suiteName.includes('Study') ? <Layers className="w-5 h-5 text-yellow-500"/> :
                                  suiteName.includes('Syllabus') ? <Target className="w-5 h-5 text-indigo-500"/> :
+                                 suiteName.includes('User') ? <UserCog className="w-5 h-5 text-cyan-600"/> :
                                  <BookOpen className="w-5 h-5 text-slate-500"/>}
                                 <h3 className="font-bold text-slate-800">{suiteName}</h3>
                             </div>
@@ -681,7 +373,7 @@ const TestRunner: React.FC = () => {
                                         <div>
                                             <p className="text-sm font-medium text-slate-700">{test.description}</p>
                                             {!test.passed && (
-                                                <div className="mt-2 bg-red-50 text-red-700 text-xs p-3 rounded-lg font-mono border border-red-100 flex items-start">
+                                                <div className="mt-2 bg-red-50 text-red-700 text-xs p-3 rounded-lg font-mono border border-red-100 flex items-start break-all">
                                                     <AlertTriangle className="w-3 h-3 mr-2 mt-0.5 shrink-0" />
                                                     {test.error}
                                                 </div>

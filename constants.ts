@@ -42,14 +42,14 @@ export const TARGET_YEARS = [2025, 2026, 2027, 2028];
 
 export const MOCK_USERS: User[] = [
   { 
-      id: 'admin_001', 
+      id: '100000', 
       name: 'System Administrator', 
       email: 'admin', 
       role: 'ADMIN',
       isVerified: true
   },
   {
-      id: 'u_student_demo',
+      id: '582910',
       name: 'InnFriend Student',
       email: 'innfriend1@gmail.com',
       role: 'STUDENT',
@@ -58,20 +58,20 @@ export const MOCK_USERS: User[] = [
       targetYear: 2025,
       targetExam: 'JEE Main & Advanced',
       avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=innfriend1',
-      parentId: 'u_parent_demo'
+      parentId: '749201'
   },
   {
-      id: 'u_parent_demo',
+      id: '749201',
       name: 'Vikas Parent',
       email: 'vikas.00@gmail.com',
       role: 'PARENT',
       isVerified: true,
-      studentId: 'u_student_demo',
+      studentId: '582910',
       avatarUrl: 'https://api.dicebear.com/7.x/avataaars/svg?seed=vikas'
   },
   // --- LOCAL DEV ACCOUNTS (For testing connection flow) ---
   {
-      id: 'student_local',
+      id: '492813',
       name: 'Dev Student',
       email: 'student@dev.local',
       role: 'STUDENT',
@@ -81,7 +81,7 @@ export const MOCK_USERS: User[] = [
       institute: 'Dev Institute'
   },
   {
-      id: 'parent_local',
+      id: '839102',
       name: 'Dev Parent',
       email: 'parent@dev.local',
       role: 'PARENT',

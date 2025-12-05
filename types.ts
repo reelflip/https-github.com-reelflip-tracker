@@ -41,6 +41,7 @@ export interface TopicProgress {
   ex3Total: number;
   ex4Solved: number;
   ex4Total: number;
+  lastUpdated?: string; // ISO Date string for smart scheduling
 }
 
 export interface Topic {
@@ -84,6 +85,7 @@ export interface QuestionResult {
   subjectId: string;
   topicId: string;
   status: 'CORRECT' | 'INCORRECT' | 'UNATTEMPTED';
+  selectedOptionIndex?: number; // New: Store which option was picked
 }
 
 export interface TestAttempt {

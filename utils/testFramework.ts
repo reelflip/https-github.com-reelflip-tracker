@@ -71,6 +71,11 @@ export const expect = (actual: any) => ({
             throw new Error(`Expected > ${expected}, got ${actual}`);
         }
     },
+    toBeLessThan: (expected: number) => {
+        if (typeof actual !== 'number' || actual >= expected) {
+            throw new Error(`Expected < ${expected}, got ${actual}`);
+        }
+    },
     toContain: (item: any) => {
         if (Array.isArray(actual)) {
             const found = actual.some(i => 

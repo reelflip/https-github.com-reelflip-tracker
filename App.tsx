@@ -118,6 +118,7 @@ function App() {
                       ex3Total: parseInt(p.ex3_total || 15),
                       ex4Solved: parseInt(p.ex4_solved || 0),
                       ex4Total: parseInt(p.ex4_total || 10),
+                      lastUpdated: p.last_updated // Capture timestamp for smart scheduling
                   };
               });
               setProgress(progObj);
@@ -609,6 +610,8 @@ function App() {
             goals={goals}
             onToggleGoal={handleToggleGoal}
             onAddGoal={handleAddGoal}
+            attempts={attempts}
+            tests={tests}
             totalUsers={allUsers.length}
             contactMessages={contactMessages}
           />
@@ -636,7 +639,7 @@ function App() {
       case 'analytics':
         return <Analytics attempts={attempts} tests={tests} syllabus={JEE_SYLLABUS} />;
       case 'timetable':
-        return <TimetableGenerator user={currentUser} savedData={timetableData} onUpdate={handleTimetableUpdate} />;
+        return <TimetableGenerator user={currentUser} savedData={timetableData} onUpdate={handleTimetableUpdate} progress={progress} />;
       case 'users':
         return (
             <AdminPanel 
@@ -752,6 +755,8 @@ function App() {
                 goals={goals} // Viewing student's goals
                 onToggleGoal={() => {}} // Read only
                 onAddGoal={() => {}}
+                attempts={attempts}
+                tests={tests}
             />
         );
       default:

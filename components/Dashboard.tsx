@@ -1,7 +1,7 @@
 
 import React, { useEffect, useState } from 'react';
-import { User, TopicProgress, Notification, DailyGoal, Quote, ContactMessage } from '../types';
-import { Calendar, CheckCircle2, Trophy, ArrowRight, Bell, Flame, Plus, Square, CheckSquare, Target, UserPlus, Link as LinkIcon, Users, Inbox, Database, PenTool, Activity } from 'lucide-react';
+import { User, TopicProgress, Notification, DailyGoal, Quote, ContactMessage, TestAttempt, Test } from '../types';
+import { Calendar, CheckCircle2, Trophy, ArrowRight, Bell, Flame, Plus, Square, CheckSquare, Target, UserPlus, Link as LinkIcon, Users, Inbox, Database, PenTool, Activity, TrendingUp } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 
 interface DashboardProps {
@@ -13,6 +13,8 @@ interface DashboardProps {
   goals: DailyGoal[];
   onToggleGoal: (id: string) => void;
   onAddGoal: (text: string) => void;
+  attempts?: TestAttempt[];
+  tests?: Test[];
   // Admin specific props
   totalUsers?: number;
   contactMessages?: ContactMessage[];
@@ -27,6 +29,8 @@ const Dashboard: React.FC<DashboardProps> = ({
     goals, 
     onToggleGoal, 
     onAddGoal,
+    attempts = [],
+    tests = [],
     totalUsers = 0,
     contactMessages = []
 }) => {
@@ -70,6 +74,10 @@ const Dashboard: React.FC<DashboardProps> = ({
   };
 
   const completedGoals = goals.filter(g => g.completed).length;
+  
+  // Get latest attempt
+  const latestAttempt = attempts.length > 0 ? attempts[0] : null;
+  const latestTestTitle = latestAttempt ? (tests.find(t => t.id === latestAttempt.testId)?.title || 'Unknown Test') : '';
 
   // --- ADMIN OVERVIEW ---
   if (user.role === 'ADMIN') {
@@ -105,7 +113,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                   {/* Inbox Stats */}
                   <div 
-                    onClick={() => onChangeTab('content')} 
+                    onClick={() => onChangeTab('content_admin')} 
                     className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                   >
                       <div className="flex items-center justify-between mb-4">
@@ -125,7 +133,7 @@ const Dashboard: React.FC<DashboardProps> = ({
 
                   {/* Content Stats */}
                   <div 
-                    onClick={() => onChangeTab('content')}
+                    onClick={() => onChangeTab('tests_admin')}
                     className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm hover:shadow-md transition-all cursor-pointer group"
                   >
                       <div className="flex items-center justify-between mb-4">
@@ -190,7 +198,14 @@ const Dashboard: React.FC<DashboardProps> = ({
       {/* Welcome & Motivation */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-600 rounded-2xl p-6 text-white shadow-lg relative overflow-hidden transition-all duration-500">
         <div className="relative z-10">
-            <h2 className="text-2xl font-bold mb-2">Hello, {user.name.split(' ')[0]}! 👋</h2>
+            <div className="flex justify-between items-start">
+                <h2 className="text-2xl font-bold mb-2">Hello, {user.name.split(' ')[0]}! 👋</h2>
+                {user.role === 'PARENT' && (
+                    <span className="bg-white/20 px-3 py-1 rounded-full text-xs font-bold border border-white/20">
+                        Viewing Child's Progress
+                    </span>
+                )}
+            </div>
             <div className="min-h-[80px] flex flex-col justify-center">
                  <p className="text-blue-100 italic text-lg leading-relaxed opacity-90 animate-in fade-in slide-in-from-right-4 duration-700 key={currentQuoteIndex}">
                     "{currentQuote.text}"
@@ -268,8 +283,44 @@ const Dashboard: React.FC<DashboardProps> = ({
             </div>
         </div>
 
+        {/* Recent Test Performance (NEW) */}
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100 flex flex-col justify-between">
+            <div className="flex items-center space-x-2 text-slate-500 mb-2">
+                <Trophy className="w-5 h-5 text-yellow-500" />
+                <span className="font-medium text-sm uppercase tracking-wide">Recent Test</span>
+            </div>
+            {latestAttempt ? (
+                <>
+                    <div>
+                        <h3 className="font-bold text-slate-800 text-lg line-clamp-1" title={latestTestTitle}>{latestTestTitle}</h3>
+                        <p className="text-xs text-slate-400">{new Date(latestAttempt.date).toLocaleDateString()}</p>
+                    </div>
+                    <div className="flex items-end justify-between mt-3">
+                        <div>
+                            <span className="text-2xl font-bold text-blue-600">{latestAttempt.score}</span>
+                            <span className="text-xs text-slate-400 block">Score</span>
+                        </div>
+                        <div className="text-right">
+                            <span className="text-2xl font-bold text-green-600">{latestAttempt.accuracy_percent}%</span>
+                            <span className="text-xs text-slate-400 block">Accuracy</span>
+                        </div>
+                    </div>
+                    <button onClick={() => onChangeTab('analytics')} className="mt-3 text-blue-600 text-xs font-bold flex items-center hover:underline">
+                        View Analysis <ArrowRight className="w-3 h-3 ml-1" />
+                    </button>
+                </>
+            ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center">
+                    <p className="text-slate-400 text-sm">No tests taken yet.</p>
+                    <button onClick={() => onChangeTab('tests')} className="mt-2 text-blue-600 text-xs font-bold hover:underline">
+                        Go to Test Center
+                    </button>
+                </div>
+            )}
+        </div>
+
         {/* Daily Micro Goals */}
-        <div className="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <div className="md:col-span-3 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
            <div className="flex items-center justify-between text-slate-500 mb-4">
              <div className="flex items-center space-x-2">
                 <Target className="w-5 h-5" />

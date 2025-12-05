@@ -1,7 +1,8 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Test, Question, TestAttempt, QuestionResult, User } from '../types';
-import { Clock, Check, AlertCircle, Star, Filter, Target, Zap, Globe, Layers, Eye, EyeOff } from 'lucide-react';
+import { Clock, Check, AlertCircle, Star, Filter, Target, Zap, Globe, Layers, Eye, EyeOff, RotateCcw, BarChart2, ArrowRight } from 'lucide-react';
 
 interface TestCenterProps {
   availableTests: Test[];
@@ -14,6 +15,9 @@ const TestCenter: React.FC<TestCenterProps> = ({ availableTests, attempts, onCom
   const [activeTest, setActiveTest] = useState<Test | null>(null);
   const [activeTab, setActiveTab] = useState<'JEE' | 'BITSAT' | 'VITEEE' | 'OTHER' | 'ADMIN'>('JEE');
   const [showAllExams, setShowAllExams] = useState(false);
+  
+  // New State for Result Summary View
+  const [lastAttempt, setLastAttempt] = useState<TestAttempt | null>(null);
 
   // Set default tab based on user's target exam
   useEffect(() => {
@@ -70,6 +74,47 @@ const TestCenter: React.FC<TestCenterProps> = ({ availableTests, attempts, onCom
   const visibleTabs = (!showAllExams && isTargetJEE) 
       ? allTabs.filter(t => t.id === 'JEE' || t.id === 'ADMIN')
       : allTabs;
+
+  if (lastAttempt) {
+      return (
+          <div className="max-w-2xl mx-auto space-y-6 animate-in fade-in zoom-in-95 py-10">
+              <div className="bg-white rounded-2xl shadow-xl border border-slate-200 overflow-hidden text-center">
+                  <div className="bg-slate-900 p-8 text-white">
+                      <div className="inline-flex p-4 bg-white/10 rounded-full mb-4">
+                          <Target className="w-12 h-12 text-green-400" />
+                      </div>
+                      <h2 className="text-3xl font-bold mb-2">Test Completed!</h2>
+                      <p className="text-slate-400">Your results have been saved.</p>
+                  </div>
+                  <div className="p-8">
+                      <div className="grid grid-cols-3 gap-4 mb-8">
+                          <div className="p-4 bg-blue-50 rounded-xl border border-blue-100">
+                              <p className="text-xs font-bold text-blue-600 uppercase mb-1">Score</p>
+                              <p className="text-3xl font-black text-slate-800">{lastAttempt.score}</p>
+                          </div>
+                          <div className="p-4 bg-green-50 rounded-xl border border-green-100">
+                              <p className="text-xs font-bold text-green-600 uppercase mb-1">Accuracy</p>
+                              <p className="text-3xl font-black text-slate-800">{lastAttempt.accuracy_percent}%</p>
+                          </div>
+                          <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                              <p className="text-xs font-bold text-slate-500 uppercase mb-1">Attempted</p>
+                              <p className="text-3xl font-black text-slate-800">{lastAttempt.totalQuestions - lastAttempt.unattemptedCount}/{lastAttempt.totalQuestions}</p>
+                          </div>
+                      </div>
+                      
+                      <div className="flex flex-col gap-3">
+                          <button 
+                              onClick={() => { setLastAttempt(null); }}
+                              className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold hover:bg-slate-800 transition-colors flex items-center justify-center"
+                          >
+                              <RotateCcw className="w-4 h-4 mr-2" /> Take Another Test
+                          </button>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      );
+  }
 
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -148,6 +193,7 @@ const TestCenter: React.FC<TestCenterProps> = ({ availableTests, attempts, onCom
       ) : (
         <ActiveTestSession test={activeTest} onFinish={(results) => {
             onCompleteTest(results);
+            setLastAttempt(results);
             setActiveTest(null);
         }} />
       )}
@@ -184,6 +230,7 @@ const TestCard: React.FC<TestCardProps> = ({ test, onStart, badgeStyle, examStyl
                 <span className={`text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wide border ${badgeStyle}`}>
                     {test.difficulty}
                 </span>
+                <span className="text-[10px] text-slate-400">{test.questions?.length || 0} Questions</span>
             </div>
         </div>
         <button 
@@ -199,6 +246,11 @@ const ActiveTestSession = ({ test, onFinish }: { test: Test, onFinish: (r: TestA
     const [timeLeft, setTimeLeft] = useState(test.durationMinutes * 60);
     const [answers, setAnswers] = useState<Record<string, number>>({});
     const [currentQ, setCurrentQ] = useState(0);
+
+    // Calculate progress
+    const totalQuestions = test.questions.length;
+    const answeredCount = Object.keys(answers).length;
+    const progressPercent = Math.round((answeredCount / totalQuestions) * 100);
 
     useEffect(() => {
         const timer = setInterval(() => {
@@ -249,7 +301,8 @@ const ActiveTestSession = ({ test, onFinish }: { test: Test, onFinish: (r: TestA
                 questionId: q.id,
                 subjectId: q.subjectId,
                 topicId: q.topicId,
-                status
+                status,
+                selectedOptionIndex: ans // Save what they clicked (undefined if unattempted)
             });
         });
 
@@ -278,9 +331,9 @@ const ActiveTestSession = ({ test, onFinish }: { test: Test, onFinish: (r: TestA
     const question = test.questions[currentQ];
 
     return (
-        <div className="bg-white rounded-xl shadow-lg border border-slate-200 flex flex-col min-h-[500px] animate-in zoom-in-95 duration-300">
+        <div className="bg-white rounded-xl shadow-lg border border-slate-200 flex flex-col min-h-[500px] animate-in zoom-in-95 duration-300 overflow-hidden">
             {/* Header */}
-            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50 rounded-t-xl">
+            <div className="p-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
                 <div>
                     <h3 className="font-bold text-slate-800">Question {currentQ + 1} of {test.questions.length}</h3>
                     <span className="text-xs uppercase font-bold text-slate-400">{question.subjectId}</span>
@@ -289,6 +342,14 @@ const ActiveTestSession = ({ test, onFinish }: { test: Test, onFinish: (r: TestA
                     <Clock size={16} className="mr-2" />
                     {formatTime(timeLeft)}
                 </div>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="w-full bg-slate-100 h-1.5" title={`${answeredCount} answered out of ${totalQuestions}`}>
+                <div 
+                    className="bg-blue-600 h-1.5 transition-all duration-500 ease-out" 
+                    style={{ width: `${progressPercent}%` }} 
+                />
             </div>
 
             {/* Content */}
@@ -318,7 +379,7 @@ const ActiveTestSession = ({ test, onFinish }: { test: Test, onFinish: (r: TestA
             </div>
 
             {/* Footer */}
-            <div className="p-4 border-t border-slate-200 flex justify-between items-center bg-slate-50 rounded-b-xl">
+            <div className="p-4 border-t border-slate-200 flex justify-between items-center bg-slate-50">
                 <button 
                     disabled={currentQ === 0}
                     onClick={() => setCurrentQ(prev => prev - 1)}

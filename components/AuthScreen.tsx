@@ -126,7 +126,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
             // The backend now returns normalized camelCase data (name, studentId, etc.)
             // But we keep the fallbacks just in case an old PHP file is used.
             const normalizedUser: User = {
-                id: rawUser.id,
+                id: String(rawUser.id),
                 name: rawUser.name || rawUser.full_name, 
                 email: rawUser.email,
                 role: (rawUser.role || 'STUDENT').toUpperCase() as Role,
@@ -156,7 +156,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
 
   const handleQuickLogin = (role: Role) => {
       const mockUser: User = {
-          id: role === 'ADMIN' ? 'admin_local' : role === 'STUDENT' ? 'student_local' : 'parent_local',
+          id: role === 'ADMIN' ? '100000' : role === 'STUDENT' ? '492813' : '839102',
           name: role === 'ADMIN' ? 'Dev Admin' : role === 'STUDENT' ? 'Dev Student' : 'Dev Parent',
           email: `${role.toLowerCase()}@dev.local`,
           role: role,

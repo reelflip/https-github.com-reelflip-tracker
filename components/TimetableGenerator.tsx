@@ -1,15 +1,18 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Calendar, Clock, Moon, BookOpen, Briefcase, RefreshCw, Brain, PenTool, Layers, Coffee, Zap, Sun as SunIcon, RotateCw } from 'lucide-react';
-import { User } from '../types';
+import { User, TopicProgress } from '../types';
+import { JEE_SYLLABUS } from '../constants';
 
 interface TimetableGeneratorProps {
     user?: User | null;
     savedData?: { config: any, slots: any[] } | null;
     onUpdate?: (config: any, slots: any[]) => void;
+    progress?: Record<string, TopicProgress>;
 }
 
-const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData, onUpdate }) => {
+const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData, onUpdate, progress }) => {
   // State
   const [coachingDays, setCoachingDays] = useState<string[]>(['Mon', 'Wed', 'Fri']);
   const [coachingStart, setCoachingStart] = useState('06:00');
@@ -90,6 +93,49 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
       }
   };
 
+  // --- Smart Logic Helpers ---
+  
+  const getSmartTopic = (): string | null => {
+      if (!progress) return null;
+      
+      // 1. Prioritize topics marked 'REVISE'
+      const reviseTopics = (Object.values(progress) as TopicProgress[]).filter(p => p.status === 'REVISE');
+      if (reviseTopics.length > 0) {
+          const t = reviseTopics[Math.floor(Math.random() * reviseTopics.length)];
+          const topicName = findTopicName(t.topicId);
+          return topicName ? `Revise: ${topicName}` : null;
+      }
+
+      // 2. Prioritize Stale Topics (In Progress but old lastUpdated)
+      // Sort by lastUpdated ascending (oldest first)
+      const staleTopics = (Object.values(progress) as TopicProgress[])
+          .filter(p => p.status === 'IN_PROGRESS' || p.status === 'COMPLETED')
+          .sort((a, b) => {
+              if (!a.lastUpdated) return -1;
+              if (!b.lastUpdated) return 1;
+              return new Date(a.lastUpdated).getTime() - new Date(b.lastUpdated).getTime();
+          })
+          .slice(0, 3); // Take top 3 oldest
+
+      if (staleTopics.length > 0) {
+          const t = staleTopics[0]; // Pick oldest
+          const topicName = findTopicName(t.topicId);
+          return topicName ? `Practice: ${topicName}` : null;
+      }
+
+      return null;
+  };
+
+  const findTopicName = (id: string): string | null => {
+      for (const subject of JEE_SYLLABUS) {
+          for (const chapter of subject.chapters) {
+              const topic = chapter.topics.find(t => t.id === id);
+              if (topic) return topic.name;
+          }
+      }
+      return null;
+  };
+
   const handleGenerate = () => {
     let slots: any[] = [];
     let currentMins = toMins(wakeTime);
@@ -118,7 +164,6 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
         });
     }
 
-    // Assume today is a coaching day for generation purposes
     if (coachingDays.length > 0) {
          fixedBlocks.push({
             start: toMins(coachingStart),
@@ -128,7 +173,7 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
         });
     }
 
-    // Sort blocks by start time (Crucial for Morning Coaching)
+    // Sort blocks by start time
     fixedBlocks.sort((a, b) => a.start - b.start);
 
     // --- GAP FILLER LOGIC ---
@@ -140,22 +185,19 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
             const duration = end - now;
             const hour = Math.floor(now / 60);
 
-            // A. MEALS
-            // Breakfast (7-9 AM)
+            // A. MEALS (Prioritized Fixed Slots)
             if (hour >= 7 && hour < 9 && duration >= 20 && !slots.some(s => s.label.includes('Breakfast'))) {
                  const len = Math.min(30, duration);
                  slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Breakfast', type: 'routine', iconType: 'coffee' });
                  now += len;
                  continue;
             }
-            // Lunch (12-2 PM)
             if (hour >= 12 && hour < 14 && duration >= 30 && !slots.some(s => s.label.includes('Lunch'))) {
                  const len = Math.min(45, duration);
                  slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Lunch & Power Nap', type: 'routine', iconType: 'coffee' });
                  now += len;
                  continue;
             }
-            // Dinner (7:30-9:30 PM)
             if (hour >= 19.5 && hour < 21.5 && duration >= 30 && !slots.some(s => s.label.includes('Dinner'))) {
                  const len = Math.min(45, duration);
                  slots.push({ time: fromMins(now), endTime: fromMins(now+len), label: 'Dinner & Relax', type: 'routine', iconType: 'coffee' });
@@ -163,7 +205,7 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
                  continue;
             }
 
-            // B. COACHING REVISION (Specific Priority)
+            // B. COACHING REVISION (Post-Class Priority)
             if (!coachingRevisionDone && duration >= 20) {
                 const revLen = Math.min(60, duration);
                 slots.push({ 
@@ -179,48 +221,66 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
                 continue;
             }
 
-            // C. STUDY SLOTS
+            // C. STUDY SLOTS & BREAKS (Rhythmic Filling)
             if (duration < 30) {
+                // Too small for deep work, just buffer
                 slots.push({ time: fromMins(now), endTime: fromMins(end), label: 'Transit / Relax', type: 'routine' });
                 now = end;
-            } else if (duration < 60) {
-                slots.push({ time: fromMins(now), endTime: fromMins(now + duration), label: 'Quick Revision / Flashcards', type: 'revision' });
+            } else if (duration <= 60) {
+                // Short study session
+                const topicRec = getSmartTopic();
+                slots.push({ 
+                    time: fromMins(now), 
+                    endTime: fromMins(now + duration), 
+                    label: topicRec || 'Quick Revision / Flashcards', 
+                    type: 'revision',
+                    subtext: topicRec ? 'Based on your syllabus progress.' : 'Use Flashcards feature.'
+                });
                 now += duration;
             } else {
-                // Deep work block
+                // Long Duration: Enforce 50/10 Rhythm
+                // Work 50 mins
+                const workLen = 50;
+                
+                // Determine Subject based on Time of Day
                 let subject = 'Physics'; 
                 let type = 'theory';
-                let label = 'Physics: Concepts';
+                let label = 'Physics: Deep Concepts';
                 let subtext = 'Morning is best for heavy concepts.';
 
                 if (hour >= 12 && hour < 18) {
                     subject = 'Maths';
                     type = 'practice';
                     label = 'Maths: Problem Solving';
-                    subtext = 'Active problem solving prevents afternoon slump.';
+                    subtext = 'Active solving prevents afternoon slump.';
                 } else if (hour >= 18) {
                     subject = 'Chemistry';
                     type = 'theory';
-                    label = 'Chemistry & Backlogs';
-                    subtext = 'NCERT Reading / Clearing Backlogs.';
+                    label = 'Chemistry: NCERT';
+                    subtext = 'Memorization works well in evenings.';
                 }
 
-                // Cap block at 2 hours (120 mins)
-                const blockLen = Math.min(duration, 120); 
+                // Override with Smart Rec if available
+                const smartTopic = getSmartTopic();
+                if (smartTopic) {
+                    label = smartTopic;
+                    subtext = 'Prioritized based on your progress history.';
+                }
+
                 slots.push({ 
                     time: fromMins(now), 
-                    endTime: fromMins(now + blockLen), 
+                    endTime: fromMins(now + workLen), 
                     label: label, 
                     type: type, 
                     subject: subject,
                     subtext: subtext
                 });
-                now += blockLen;
-                
-                // Break insertion logic
-                if (now < end && blockLen >= 90) {
-                    const breakLen = Math.min(15, end - now);
-                    slots.push({ time: fromMins(now), endTime: fromMins(now + breakLen), label: 'Short Break', type: 'routine' });
+                now += workLen;
+
+                // Break 10 mins (if time remains)
+                if (end - now >= 10) {
+                    const breakLen = 10;
+                    slots.push({ time: fromMins(now), endTime: fromMins(now + breakLen), label: 'Rest / Stretch', type: 'routine' });
                     now += breakLen;
                 }
             }
@@ -302,7 +362,7 @@ const TimetableGenerator: React.FC<TimetableGeneratorProps> = ({ user, savedData
                         <Calendar className="w-6 h-6" />
                         <h2 className="text-xl font-bold">Smart Timetable Generator</h2>
                     </div>
-                    <p className="text-orange-100 text-sm opacity-90">Auto-allocates Revision, Practice, and Subjects based on your day.</p>
+                    <p className="text-orange-100 text-sm opacity-90">Auto-allocates Revision based on your progress history.</p>
                 </div>
 
                 <div className="p-6 space-y-8">
