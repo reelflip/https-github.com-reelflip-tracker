@@ -25,6 +25,7 @@ import ContactUs from './components/ContactUs';
 import Blog from './components/Blog';
 import ExamGuide from './components/ExamGuide';
 import TestRunner from './components/TestRunner';
+import RevisionManager from './components/RevisionManager'; // Restored
 import { API_BASE_URL } from './config'; 
 
 // Initial global questions combined from constants
@@ -80,7 +81,7 @@ function App() {
           : currentUser.id;
 
       try {
-          const res = await fetch(`/api/get_dashboard.php?user_id=${targetUserId}`);
+          const res = await fetch(`${API_BASE_URL}/get_dashboard.php?user_id=${targetUserId}`);
           if (!res.ok) return; // Silent fail in demo
           const data = await res.json();
           
@@ -118,7 +119,9 @@ function App() {
                       ex3Total: parseInt(p.ex3_total || 15),
                       ex4Solved: parseInt(p.ex4_solved || 0),
                       ex4Total: parseInt(p.ex4_total || 10),
-                      lastUpdated: p.last_updated // Capture timestamp for smart scheduling
+                      lastUpdated: p.last_updated, // Capture timestamp for smart scheduling
+                      revisionCount: parseInt(p.revision_count || 0),
+                      nextRevisionDate: p.next_revision_date
                   };
               });
               setProgress(progObj);
@@ -178,7 +181,7 @@ function App() {
 
   const fetchCommonData = async () => {
       try {
-          const res = await fetch(`/api/get_common.php`);
+          const res = await fetch(`${API_BASE_URL}/get_common.php`);
           if (!res.ok) return;
           const data = await res.json();
 
@@ -246,7 +249,7 @@ function App() {
 
   const fetchAdminData = async () => {
       try {
-          const res = await fetch(`/api/get_users.php`);
+          const res = await fetch(`${API_BASE_URL}/get_users.php`);
           if (!res.ok) return;
           const data = await res.json();
           if (Array.isArray(data)) {
@@ -256,7 +259,7 @@ function App() {
           console.error("Failed to fetch users", err);
       }
       try {
-          const res = await fetch(`/api/manage_contact.php`);
+          const res = await fetch(`${API_BASE_URL}/manage_contact.php`);
           if (!res.ok) return;
           const data = await res.json();
           if (Array.isArray(data)) {
@@ -310,7 +313,7 @@ function App() {
                 ...current, 
                 ...updates 
             };
-            await fetch('/api/sync_progress.php', {
+            await fetch(`${API_BASE_URL}/sync_progress.php`, {
                 method: 'POST',
                 body: JSON.stringify(payload)
             });
@@ -346,7 +349,7 @@ function App() {
         // Sync mistakes to DB
         if(currentUser) {
             newMistakes.forEach(m => {
-                fetch('/api/manage_mistakes.php', {
+                fetch(`${API_BASE_URL}/manage_mistakes.php`, {
                     method: 'POST',
                     body: JSON.stringify({ ...m, user_id: currentUser.id })
                 });
@@ -355,7 +358,7 @@ function App() {
         
         // Save full attempt history
         if(currentUser) {
-            fetch('/api/save_attempt.php', {
+            fetch(`${API_BASE_URL}/save_attempt.php`, {
                 method: 'POST',
                 body: JSON.stringify({ ...attempt, user_id: currentUser.id })
             });
@@ -374,7 +377,7 @@ function App() {
   const handleAddQuestion = async (q: Question) => {
       setQuestions([...questions, q]);
       try {
-          await fetch('/api/manage_tests.php', {
+          await fetch(`${API_BASE_URL}/manage_tests.php`, {
               method: 'POST',
               body: JSON.stringify({ action: 'add_question', ...q })
           });
@@ -384,7 +387,7 @@ function App() {
   const handleCreateTest = async (t: Test) => {
       setTests([...tests, t]);
       try {
-          await fetch('/api/manage_tests.php', {
+          await fetch(`${API_BASE_URL}/manage_tests.php`, {
               method: 'POST',
               body: JSON.stringify({ action: 'create_test', ...t })
           });
@@ -394,7 +397,7 @@ function App() {
   const handleSendNotification = async (n: Notification) => {
       setNotifications([n, ...notifications]);
       try {
-          await fetch('/api/manage_broadcasts.php', {
+          await fetch(`${API_BASE_URL}/manage_broadcasts.php`, {
               method: 'POST',
               body: JSON.stringify({ action: 'send_notification', ...n })
           });
@@ -406,7 +409,7 @@ function App() {
       setQuotes([...quotes, newQ]);
       setAdminQuote(newQ);
       try {
-          await fetch('/api/manage_broadcasts.php', {
+          await fetch(`${API_BASE_URL}/manage_broadcasts.php`, {
               method: 'POST',
               body: JSON.stringify({ action: 'add_quote', ...newQ })
           });
@@ -416,13 +419,13 @@ function App() {
   const handleDeleteQuote = async (id: string) => {
       setQuotes(quotes.filter(q => q.id !== id));
       try {
-          await fetch(`/api/manage_broadcasts.php?action=delete_quote&id=${id}`, { method: 'GET' }); // Or POST/DELETE
+          await fetch(`${API_BASE_URL}/manage_broadcasts.php?action=delete_quote&id=${id}`, { method: 'GET' }); // Or POST/DELETE
       } catch (e) { console.error(e); }
   };
 
   const handleAdminUpdateUser = async (user: Partial<User>) => {
       try {
-          await fetch('/api/manage_users.php', {
+          await fetch(`${API_BASE_URL}/manage_users.php`, {
               method: 'PUT',
               body: JSON.stringify(user)
           });
@@ -435,7 +438,7 @@ function App() {
 
   const handleAdminDeleteUser = async (id: string) => {
       try {
-          await fetch(`/api/manage_users.php?id=${id}`, {
+          await fetch(`${API_BASE_URL}/manage_users.php?id=${id}`, {
               method: 'DELETE'
           });
           // Refresh list
@@ -447,7 +450,7 @@ function App() {
 
   const handleDeleteContact = async (id: number) => {
       try {
-          await fetch(`/api/manage_contact.php?id=${id}`, {
+          await fetch(`${API_BASE_URL}/manage_contact.php?id=${id}`, {
               method: 'DELETE'
           });
           fetchAdminData();
@@ -457,7 +460,7 @@ function App() {
   const handleAddBlogPost = async (post: BlogPost) => {
       setBlogPosts([post, ...blogPosts]);
       try {
-          await fetch('/api/manage_blog.php', {
+          await fetch(`${API_BASE_URL}/manage_blog.php`, {
               method: 'POST',
               body: JSON.stringify(post)
           });
@@ -467,7 +470,7 @@ function App() {
   const handleDeleteBlogPost = async (id: string) => {
       setBlogPosts(blogPosts.filter(b => b.id !== id));
       try {
-          await fetch(`/api/manage_blog.php?id=${id}`, {
+          await fetch(`${API_BASE_URL}/manage_blog.php?id=${id}`, {
               method: 'DELETE'
           });
       } catch (e) { console.error("Failed to delete blog post", e); }
@@ -477,33 +480,33 @@ function App() {
   const handleToggleGoal = (id: string) => {
       setGoals(goals.map(g => g.id === id ? { ...g, completed: !g.completed } : g));
       if(currentUser) {
-          fetch('/api/manage_goals.php', { method: 'PUT', body: JSON.stringify({ id }) });
+          fetch(`${API_BASE_URL}/manage_goals.php`, { method: 'PUT', body: JSON.stringify({ id }) });
       }
   };
   const handleAddGoal = (text: string) => {
       const newGoal = { id: `g_${Date.now()}`, text, completed: false };
       setGoals([...goals, newGoal]);
       if(currentUser) {
-          fetch('/api/manage_goals.php', { method: 'POST', body: JSON.stringify({ ...newGoal, user_id: currentUser.id }) });
+          fetch(`${API_BASE_URL}/manage_goals.php`, { method: 'POST', body: JSON.stringify({ ...newGoal, user_id: currentUser.id }) });
       }
   };
 
   const handleAddBacklog = (item: BacklogItem) => {
       setBacklogs([...backlogs, item]);
       if(currentUser) {
-          fetch('/api/manage_backlogs.php', { method: 'POST', body: JSON.stringify({ ...item, user_id: currentUser.id }) });
+          fetch(`${API_BASE_URL}/manage_backlogs.php`, { method: 'POST', body: JSON.stringify({ ...item, user_id: currentUser.id }) });
       }
   };
   const handleToggleBacklog = (id: string) => {
       setBacklogs(backlogs.map(b => b.id === id ? { ...b, status: b.status === 'PENDING' ? 'CLEARED' : 'PENDING' } : b));
       if(currentUser) {
-          fetch('/api/manage_backlogs.php', { method: 'PUT', body: JSON.stringify({ id }) });
+          fetch(`${API_BASE_URL}/manage_backlogs.php`, { method: 'PUT', body: JSON.stringify({ id }) });
       }
   };
   const handleDeleteBacklog = (id: string) => {
       setBacklogs(backlogs.filter(b => b.id !== id));
       if(currentUser) {
-          fetch(`/api/manage_backlogs.php?id=${id}`, { method: 'DELETE' });
+          fetch(`${API_BASE_URL}/manage_backlogs.php?id=${id}`, { method: 'DELETE' });
       }
   };
 
@@ -513,7 +516,7 @@ function App() {
       if(currentUser) {
           const mistake = mistakes.find(m => m.id === id);
           if(mistake) {
-             fetch('/api/manage_mistakes.php', { 
+             fetch(`${API_BASE_URL}/manage_mistakes.php`, { 
                  method: 'PUT', 
                  body: JSON.stringify({ id, ...mistake, ...updates }) 
              });
@@ -523,7 +526,7 @@ function App() {
   const handleMistakeDelete = (id: string) => {
       setMistakes(mistakes.filter(m => m.id !== id));
       if(currentUser) {
-          fetch(`/api/manage_mistakes.php?id=${id}`, { method: 'DELETE' });
+          fetch(`${API_BASE_URL}/manage_mistakes.php?id=${id}`, { method: 'DELETE' });
       }
   };
 
@@ -531,7 +534,7 @@ function App() {
   const handleSendConnectionRequest = (studentIdentifier: string) => {
       // 2. Call API (for production)
       if (currentUser) {
-          fetch('/api/send_request.php', {
+          fetch(`${API_BASE_URL}/send_request.php`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -564,7 +567,7 @@ function App() {
           setCurrentUser(updatedStudent);
 
           // 2. Call API (for production)
-          fetch('/api/respond_request.php', {
+          fetch(`${API_BASE_URL}/respond_request.php`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -640,6 +643,8 @@ function App() {
         return <Analytics attempts={attempts} tests={tests} syllabus={JEE_SYLLABUS} />;
       case 'timetable':
         return <TimetableGenerator user={currentUser} savedData={timetableData} onUpdate={handleTimetableUpdate} progress={progress} />;
+      case 'revision': // New
+        return <RevisionManager subjects={JEE_SYLLABUS} progress={progress} onUpdateProgress={handleUpdateProgress} />;
       case 'users':
         return (
             <AdminPanel 

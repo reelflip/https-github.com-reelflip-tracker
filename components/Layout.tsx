@@ -26,7 +26,8 @@ import {
   Users as UsersIcon,
   PenTool,
   Radio,
-  Terminal
+  Terminal,
+  RotateCw
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -54,6 +55,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
         { id: 'syllabus', label: 'Syllabus', icon: BookOpen },
         { id: 'tests', label: 'Tests', icon: Target },
         { id: 'analytics', label: 'Analytics', icon: BarChart2 },
+        { id: 'revision', label: 'Smart Revision', icon: RotateCw }, // Restored
         { id: 'backlogs', label: 'Backlogs', icon: ListTodo },
         { id: 'mistakes', label: 'Mistakes', icon: BookX },
         { id: 'flashcards', label: 'Flashcards', icon: Layers },
@@ -112,6 +114,10 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
               return isActive
                   ? "bg-gradient-to-br from-rose-500 to-rose-600 text-white border-rose-600 shadow-rose-200"
                   : "bg-white text-rose-600 border-rose-100 hover:border-rose-300";
+          case 'revision':
+              return isActive
+                  ? "bg-gradient-to-br from-emerald-600 to-teal-600 text-white border-emerald-600 shadow-emerald-200"
+                  : "bg-white text-emerald-700 border-emerald-100 hover:border-emerald-300";
           case 'focus':
               return isActive
                   ? "bg-gradient-to-br from-emerald-500 to-emerald-600 text-white border-emerald-600 shadow-emerald-200"
@@ -163,7 +169,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
           <h1 className="text-2xl font-bold tracking-tight text-blue-400">IITGEEPrep</h1>
           <p className="text-xs text-slate-400 mt-1">
             {currentUser.role}
-            {currentUser.role === 'ADMIN' && <span className="ml-1 opacity-75">• v2.5</span>}
+            {currentUser.role === 'ADMIN' && <span className="ml-1 opacity-75">• v3.3</span>}
           </p>
         </div>
         
@@ -240,7 +246,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
             <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center text-xs text-slate-500">
                 <div className="mb-4 md:mb-0">
                     &copy; 2025 IITGEEPrep. All rights reserved. 
-                    {currentUser.role === 'ADMIN' && <span className="ml-2 px-1.5 py-0.5 bg-slate-100 rounded text-slate-400">v2.5</span>}
+                    {currentUser.role === 'ADMIN' && <span className="ml-2 px-1.5 py-0.5 bg-slate-100 rounded text-slate-400">v3.3</span>}
                 </div>
                 <div className="flex space-x-6 flex-wrap justify-center gap-y-2">
                     <button onClick={() => onTabChange('about')} className="hover:text-blue-600 transition-colors flex items-center">
@@ -375,7 +381,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                         <span>Sign Out</span>
                     </button>
                     {currentUser.role === 'ADMIN' && (
-                        <p className="text-center text-[10px] text-slate-300 mt-4">App Version v2.5</p>
+                        <p className="text-center text-[10px] text-slate-300 mt-4">App Version v3.3</p>
                     )}
                 </div>
              </div>

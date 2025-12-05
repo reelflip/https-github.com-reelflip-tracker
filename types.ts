@@ -42,6 +42,8 @@ export interface TopicProgress {
   ex4Solved: number;
   ex4Total: number;
   lastUpdated?: string; // ISO Date string for smart scheduling
+  revisionCount?: number; // Spaced Repetition level (0, 1, 2, 3)
+  nextRevisionDate?: string; // YYYY-MM-DD
 }
 
 export interface Topic {
