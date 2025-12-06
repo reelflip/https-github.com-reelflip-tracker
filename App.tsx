@@ -1,9 +1,4 @@
 
-
-
-
-
-// ... existing imports ...
 import React, { useState, useEffect } from 'react';
 import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem, TopicStatus, Role, MemoryHack, ContactMessage, BlogPost, VideoLesson } from './types';
 import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS, BLOG_POSTS, TOPIC_VIDEO_MAP } from './constants';
@@ -32,7 +27,6 @@ import ExamGuide from './components/ExamGuide';
 import TestRunner from './components/TestRunner';
 import RevisionManager from './components/RevisionManager'; 
 import SiteAnalytics from './components/SiteAnalytics';
-import AITutor from './components/AITutor'; // New Import
 import { API_BASE_URL } from './config'; 
 
 // Initial global questions combined from constants
@@ -538,7 +532,6 @@ function App() {
       case 'flashcards': return <FlashcardDeck cards={flashcards} />;
       case 'backlogs': return <BacklogManager backlogs={backlogs} onAddBacklog={handleAddBacklog} onToggleStatus={handleToggleBacklog} onDeleteBacklog={handleDeleteBacklog} />;
       case 'hacks': return <MemoryHacks hacks={hacks} />;
-      case 'ai_tutor': return <AITutor />;
       case 'about': return <AboutUs />;
       case 'privacy': return <PrivacyPolicy />;
       case 'contact': return <ContactUs />;

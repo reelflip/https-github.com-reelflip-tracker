@@ -1,5 +1,7 @@
 
 
+
+
 export type Role = 'STUDENT' | 'ADMIN' | 'PARENT';
 
 export interface User {
@@ -216,13 +218,6 @@ export interface AdminStats {
     userGrowth: { date: string; users: number }[];
 }
 
-export interface ChatMessage {
-    id: string;
-    role: 'USER' | 'AI';
-    text: string;
-    timestamp: Date;
-}
-
 export interface MockDataState {
   users: User[];
   syllabus: Subject[];
@@ -230,6 +225,13 @@ export interface MockDataState {
   tests: Test[];
   attempts: TestAttempt[];
   sessions: FocusSession[];
+}
+
+export interface ChatMessage {
+  id: string;
+  role: 'AI' | 'USER';
+  text: string;
+  timestamp: Date;
 }
 
 declare global {
