@@ -91,7 +91,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
             <h1 className="text-2xl font-bold tracking-tight text-blue-400">IITGEEPrep</h1>
             <p className="text-xs text-slate-400 mt-1 flex items-center">
                 {currentUser?.role}
-                {currentUser?.role === 'ADMIN' && <span className="ml-1 opacity-75">• v4.6</span>}
+                {currentUser?.role === 'ADMIN' && <span className="ml-1 opacity-75">• v4.7</span>}
             </p>
           </div>
         </div>
@@ -207,7 +207,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                     ))}
                     
                     <div className="col-span-2 text-center text-slate-500 text-xs mt-4 opacity-50">
-                        v4.6 (Mobile)
+                        v4.7 (Mobile)
                     </div>
                 </div>
             </div>

@@ -1,5 +1,6 @@
 
 
+
 import React, { useState } from 'react';
 import { User, Role } from '../types';
 import { COACHING_INSTITUTES, TARGET_YEARS, TARGET_EXAMS } from '../constants';
@@ -549,7 +550,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                 <button onClick={() => onNavigate('contact')} className="hover:text-blue-600 transition-colors">Contact</button>
             </div>
             <div className="text-center text-[10px] text-slate-300 mt-4">
-                v3.9.1
+                v4.7
             </div>
         </div>
       </div>
