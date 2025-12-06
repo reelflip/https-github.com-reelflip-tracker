@@ -123,6 +123,18 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
             
             const rawUser = data.user;
 
+            // Generate Gender-Aware Avatar URL
+            let avatarUrl = rawUser.avatarUrl;
+            if (!avatarUrl) {
+                const seed = rawUser.email;
+                avatarUrl = `https://api.dicebear.com/7.x/avataaars/svg?seed=${seed}`;
+                if (rawUser.gender === 'MALE') {
+                    avatarUrl += '&top[]=shortHair&top[]=shortHairTheCaesar&top[]=shortHairShortFlat&top[]=shortHairFrizzle&facialHairProbability=20';
+                } else if (rawUser.gender === 'FEMALE') {
+                    avatarUrl += '&top[]=longHair&top[]=longHairBob&top[]=longHairCurly&top[]=longHairStraight&facialHairProbability=0';
+                }
+            }
+
             // The backend now returns normalized camelCase data (name, studentId, etc.)
             // But we keep the fallbacks just in case an old PHP file is used.
             const normalizedUser: User = {
@@ -141,7 +153,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                 gender: rawUser.gender,
                 studentId: rawUser.studentId || rawUser.student_id,
                 parentId: rawUser.parentId || rawUser.parent_id,
-                avatarUrl: rawUser.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${rawUser.email}`
+                avatarUrl: avatarUrl
             };
             
             onLogin(normalizedUser);
@@ -534,6 +546,9 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
                 <button onClick={() => onNavigate('privacy')} className="hover:text-blue-600 transition-colors">Privacy Policy</button>
                 <span>•</span>
                 <button onClick={() => onNavigate('contact')} className="hover:text-blue-600 transition-colors">Contact</button>
+            </div>
+            <div className="text-center text-[10px] text-slate-300 mt-4">
+                v3.9.1
             </div>
         </div>
       </div>

@@ -4,7 +4,7 @@ import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_M
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.9 Final Production)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.9.1 Final Production)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
 
@@ -188,6 +188,19 @@ export const generateFrontendGuide = () => {
    - Email: \`admin\`
    - Password: \`Ishika@123\`
 4. Go to **Admin > System Tests** and run the scan.
+
+## Phase 6: System Diagnostics
+Once deployed, you can verify everything is working using the built-in Test Runner.
+
+1. Log in as Admin.
+2. Navigate to **System Tests**.
+3. Click **Start Scan**.
+
+### Test Suite Reference
+- **[System] Core Health**: Checks if \`api/index.php\` and \`api/test_db.php\` are reachable.
+- **[Student] Workflows**: Verifies registration, login, and profile updates.
+- **[Parent] Monitoring**: Checks if parents can search for and link to students.
+- **[Admin] Capabilities**: Tests content management (Blogs, Tests) and user controls.
 
 ## Troubleshooting
 - **404 on API**: Ensure \`api\` folder exists in \`public_html\` and contains \`index.php\`.

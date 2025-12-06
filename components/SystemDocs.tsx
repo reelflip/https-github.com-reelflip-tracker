@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { generateSQLSchema, getBackendFiles, generateFrontendGuide, generateHtaccess, getDeploymentPhases } from '../services/generatorService';
-import { Download, Database, Code, Terminal, FileCode, BookOpen, CheckCircle, Activity, Play, AlertCircle, Server, Folder, File, Settings, Key, User as UserIcon, Package, Search } from 'lucide-react';
+import { Download, Database, Code, Terminal, FileCode, BookOpen, CheckCircle, Activity, Play, AlertCircle, Server, Folder, File, Settings, Key, User as UserIcon, Package, Search, ShieldCheck } from 'lucide-react';
 import JSZip from 'jszip';
 
 const SystemDocs: React.FC = () => {
@@ -113,7 +113,7 @@ const SystemDocs: React.FC = () => {
                         <div className="flex items-center gap-3 mb-2">
                             <h2 className="text-3xl font-bold">System Documentation</h2>
                             <span className="px-2 py-1 rounded-md bg-slate-700 border border-slate-600 text-xs font-mono text-cyan-400 shadow-sm">
-                                v3.6 (Stable)
+                                v3.9.1 (Stable)
                             </span>
                         </div>
                         <p className="text-slate-400 text-lg max-w-xl">Deployment tools for Hostinger Shared Hosting.</p>
@@ -275,6 +275,42 @@ const SystemDocs: React.FC = () => {
                                 </button>
                             </div>
                         ))}
+                    </div>
+                </div>
+
+                {/* 6. AUTOMATED TESTING GUIDE */}
+                <div className="md:col-span-1 bg-white p-6 rounded-2xl border border-slate-200 shadow-sm h-full">
+                    <h3 className="text-sm font-bold text-slate-800 flex items-center mb-4">
+                        <ShieldCheck className="mr-2 w-5 h-5 text-indigo-500"/> 6. Automated Testing Guide
+                    </h3>
+                    <div className="space-y-4 text-sm text-slate-600">
+                        <p>The <strong>System Tests</strong> tab (Admin only) allows you to verify the health of your deployed application directly from the browser.</p>
+                        
+                        <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
+                            <h4 className="font-bold text-indigo-800 mb-2">Key Test Suites:</h4>
+                            <ul className="space-y-2 text-xs">
+                                <li className="flex items-start">
+                                    <CheckCircle className="w-3 h-3 mr-2 mt-0.5 text-indigo-600 shrink-0"/>
+                                    <span><strong>Core Health:</strong> Checks API connectivity and Database Read/Write permissions.</span>
+                                </li>
+                                <li className="flex items-start">
+                                    <CheckCircle className="w-3 h-3 mr-2 mt-0.5 text-indigo-600 shrink-0"/>
+                                    <span><strong>Auth & Connections:</strong> Simulates a full registration flow and Parent-Student linking process.</span>
+                                </li>
+                                <li className="flex items-start">
+                                    <CheckCircle className="w-3 h-3 mr-2 mt-0.5 text-indigo-600 shrink-0"/>
+                                    <span><strong>Analytics Engine:</strong> Simulates taking an exam and verifies score calculation and data storage.</span>
+                                </li>
+                                <li className="flex items-start">
+                                    <CheckCircle className="w-3 h-3 mr-2 mt-0.5 text-indigo-600 shrink-0"/>
+                                    <span><strong>Admin Ops:</strong> Verifies Content Creation (Blogs, Tests) and User Management (Block/Delete).</span>
+                                </li>
+                            </ul>
+                        </div>
+
+                        <div className="text-xs text-slate-500 italic">
+                            <strong>How to Run:</strong> Go to 'System Tests' in the Admin sidebar and click 'Start Full Scan'.
+                        </div>
                     </div>
                 </div>
 

@@ -139,7 +139,10 @@ const FlashcardDeck: React.FC<FlashcardDeckProps> = ({ cards }) => {
                 >
                     
                     {/* Front Face */}
-                    <div className="absolute inset-0 bg-white rounded-3xl shadow-xl border border-slate-200 flex flex-col items-center justify-center p-8 backface-hidden z-20">
+                    <div 
+                        className="absolute inset-0 bg-white rounded-3xl shadow-xl border border-slate-200 flex flex-col items-center justify-center p-8 backface-hidden z-20"
+                        style={{ backfaceVisibility: 'hidden' }}
+                    >
                         {/* Corner Badges */}
                         <span className={`absolute top-6 left-6 text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider ${
                             currentCard.subjectId === 'phys' ? 'bg-purple-100 text-purple-700' :
