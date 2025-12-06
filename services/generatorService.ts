@@ -1,15 +1,10 @@
 
-
-
-
-
-
 // ... existing imports ...
 import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS, BLOG_POSTS, TOPIC_VIDEO_MAP } from '../constants';
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v4.10 Content Update)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v5.0 Final Production Release)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
 
@@ -270,7 +265,7 @@ try {
     exit();
 }`
         },
-        { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v4.10"]);` },
+        { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v5.0"]);` },
         { 
             name: "test_db.php", 
             folder: "api", 
@@ -337,7 +332,7 @@ try {
         { name: "get_users.php", folder: "api", desc: "Admin Get Users", content: `<?php require 'config.php'; header('Content-Type: application/json'); echo json_encode($conn->query("SELECT id, full_name as name, email, role, is_verified as isVerified, target_exam as targetExam, institute FROM users")->fetchAll(PDO::FETCH_ASSOC));` },
         { name: "manage_users.php", folder: "api", desc: "Admin Manage User", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='PUT'){ $iv=$d->isVerified?1:0; $conn->prepare("UPDATE users SET full_name=?, target_exam=?, institute=?, is_verified=$iv WHERE id=?")->execute([$d->name, $d->targetExam, $d->institute, $d->id]); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM users WHERE id=$id"); } echo json_encode(["message"=>"OK"]);` },
         { name: "manage_broadcasts.php", folder: "api", desc: "Admin Broadcasts", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); if($d->action=='send_notification'){ $conn->prepare("INSERT INTO notifications (id,title,message,type) VALUES (?,?,?,?)")->execute([$d->id, $d->title, $d->message, $d->type]); } if($d->action=='add_quote'){ $conn->prepare("INSERT INTO quotes (id,text,author) VALUES (?,?,?)")->execute([$d->id, $d->text, $d->author]); } if($_GET['action']=='delete_quote'){ $id=$_GET['id']; $conn->query("DELETE FROM quotes WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
-        { name: "manage_tests.php", folder: "api", desc: "Admin Tests", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); if($d->action=='add_question'){ $opts=json_encode($d->options); $conn->prepare("INSERT INTO questions (id,subject_id,topic_id,question_text,options_json,correct_option_index) VALUES (?,?,?,?,?,?)")->execute([$d->id, $d->subjectId, $d->topicId, $d->text, $opts, $d->correctOptionIndex]); } if($d->action=='create_test'){ $conn->prepare("INSERT INTO tests (id,title,duration_minutes,category,difficulty,exam_type) VALUES (?,?,?,?,?,?)")->execute([$d->id, $d->title, $d->durationMinutes, 'ADMIN', $d->difficulty, $d->examType]); $i=0; foreach($d->questions as $q){ $conn->prepare("INSERT INTO test_questions (test_id,question_id,question_order) VALUES (?,?,?)")->execute([$d->id, $q->id, $i++]); } } echo json_encode(["message"=>"OK"]);` },
+        { name: "manage_tests.php", folder: "api", desc: "Admin Tests", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); if($d->action=='add_question'){ $opts=json_encode($d->options); $conn->prepare("INSERT INTO questions (id,subject_id,topic_id,question_text,options_json,correct_option_index) VALUES (?,?,?,?,?,?)")->execute([$d->id, $d->subjectId, $d->topicId, $d->text, $opts, $d->correctOptionIndex]); } if($d->action=='create_test'){ $conn->prepare("INSERT INTO tests (id,title,duration_minutes,category,difficulty,exam_type) VALUES (?,?,?,?,?,?)")->execute([$d->id, $d->title, $d->durationMinutes, 'ADMIN', $d->difficulty, $d->examType]); $i=0; foreach($d->questions as $q){ $conn->prepare("INSERT INTO test_questions (test_id,question_id,question_order) VALUES (?,?,?)")->execute([$d->id, $q.id, $i++]); } } echo json_encode(["message"=>"OK"]);` },
         { name: "manage_blog.php", folder: "api", desc: "Admin Blog", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; if($m=='POST'){ $d=json_decode(file_get_contents("php://input")); $conn->prepare("INSERT INTO blog_posts (id,title,excerpt,content,author,category,image_url,created_at) VALUES (?,?,?,?,?,?,?,?)")->execute([$d->id, $d->title, $d->excerpt, $d->content, $d->author, $d->category, $d->imageUrl, $d->date]); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM blog_posts WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
         { name: "manage_contact.php", folder: "api", desc: "Admin Contact", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; if($m=='GET'){ echo json_encode($conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC)); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM contact_messages WHERE id=$id"); echo json_encode(["message"=>"Deleted"]); }` },
         { name: "manage_videos.php", folder: "api", desc: "Admin Videos", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); $conn->query("INSERT INTO topic_videos (topic_id, video_url, description) VALUES ('{$d->topicId}', '{$d->url}', '{$d->desc}') ON DUPLICATE KEY UPDATE video_url='{$d->url}', description='{$d->desc}'"); echo json_encode(["message"=>"Saved"]);` },

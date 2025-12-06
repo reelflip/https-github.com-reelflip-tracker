@@ -113,7 +113,7 @@ const SystemDocs: React.FC = () => {
                         <div className="flex items-center gap-3 mb-2">
                             <h2 className="text-3xl font-bold">System Documentation</h2>
                             <span className="px-2 py-1 rounded-md bg-slate-700 border border-slate-600 text-xs font-mono text-cyan-400 shadow-sm">
-                                v4.7 (Stable)
+                                v5.0 (Stable)
                             </span>
                         </div>
                         <p className="text-slate-400 text-lg max-w-xl">Deployment tools for Hostinger Shared Hosting.</p>
@@ -284,7 +284,7 @@ const SystemDocs: React.FC = () => {
                         <ShieldCheck className="mr-2 w-5 h-5 text-indigo-500"/> 6. Automated Testing Guide
                     </h3>
                     <div className="space-y-4 text-sm text-slate-600">
-                        <p>The <strong>System Tests</strong> tab (Admin only) allows you to verify the health of your deployed application directly from the browser.</p>
+                        <p>The <strong>Diagnostics</strong> tab (Admin only) allows you to verify the health of your deployed application directly from the browser.</p>
                         
                         <div className="bg-indigo-50 p-4 rounded-xl border border-indigo-100">
                             <h4 className="font-bold text-indigo-800 mb-2">Key Test Suites:</h4>
@@ -309,7 +309,7 @@ const SystemDocs: React.FC = () => {
                         </div>
 
                         <div className="text-xs text-slate-500 italic">
-                            <strong>How to Run:</strong> Go to 'System Tests' in the Admin sidebar and click 'Start Full Scan'.
+                            <strong>How to Run:</strong> Go to 'Diagnostics' in the Admin sidebar and click 'Start Full Scan'.
                         </div>
                     </div>
                 </div>
@@ -334,6 +334,9 @@ const SystemDocs: React.FC = () => {
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> config.php</div>
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> login.php</div>
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> register.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> track_visit.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> manage_videos.php</div>
+                                <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> get_admin_stats.php</div>
                                 {/* ... other files ... */}
                                 <div className="flex items-center"><FileCode className="w-3 h-3 mr-2 text-purple-400" /> index.php</div>
                             </div>
