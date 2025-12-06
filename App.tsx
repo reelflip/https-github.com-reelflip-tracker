@@ -1,7 +1,10 @@
 
+
+
+// ... existing imports ...
 import React, { useState, useEffect } from 'react';
-import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem, TopicStatus, Role, MemoryHack, ContactMessage, BlogPost } from './types';
-import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS, BLOG_POSTS } from './constants';
+import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem, TopicStatus, Role, MemoryHack, ContactMessage, BlogPost, VideoLesson } from './types';
+import { MOCK_USERS, JEE_SYLLABUS, MOCK_TESTS, DEFAULT_QUOTES, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS, BLOG_POSTS, TOPIC_VIDEO_MAP } from './constants';
 import Layout from './components/Layout';
 import PublicLayout from './components/PublicLayout';
 import Dashboard from './components/Dashboard';
@@ -61,6 +64,8 @@ function App() {
   const [timetableData, setTimetableData] = useState<{config: any, slots: any[]} | null>(null);
   const [contactMessages, setContactMessages] = useState<ContactMessage[]>([]);
   const [blogPosts, setBlogPosts] = useState<BlogPost[]>(BLOG_POSTS);
+  const [videoMap, setVideoMap] = useState<Record<string, string>>(TOPIC_VIDEO_MAP);
+  const [videoLibrary, setVideoLibrary] = useState<VideoLesson[]>([]);
 
   // --- API: Fetch Data on Login ---
   useEffect(() => {
@@ -83,16 +88,17 @@ function App() {
               user_role: currentUser?.role || 'GUEST'
           });
       }
+  }, [activeTab, currentUser]);
 
-      // 2. Internal Traffic Counter (Once per session/refresh)
-      // We call this on mount to track every visitor, even if not logged in
+  // 2. Internal Traffic Counter (Once per session/refresh)
+  useEffect(() => {
       const hasTracked = sessionStorage.getItem('visit_tracked');
       if (!hasTracked) {
           fetch(`${API_BASE_URL}/track_visit.php`)
             .then(() => sessionStorage.setItem('visit_tracked', 'true'))
-            .catch(() => {});
+            .catch(err => console.error("Tracking failed", err));
       }
-  }, [activeTab, currentUser]);
+  }, []);
 
   // ... existing fetch functions ...
   const fetchDashboardData = async () => {
@@ -257,6 +263,19 @@ function App() {
                   })) : []
               }));
               setTests(dbTests);
+          }
+
+          // Fetch Videos
+          if (data.videoMap && Object.keys(data.videoMap).length > 0) {
+              setVideoMap(prev => ({ ...prev, ...data.videoMap }));
+          }
+          // Fetch Video Library (Detailed)
+          if (data.videoLibrary && Array.isArray(data.videoLibrary)) {
+              setVideoLibrary(data.videoLibrary.map((v: any) => ({
+                  topic_id: v.topic_id,
+                  video_url: v.video_url,
+                  description: v.description
+              })));
           }
       } catch (err) {
           console.error("Failed to fetch common data", err);
@@ -497,7 +516,7 @@ function App() {
             contactMessages={contactMessages}
           />
         );
-      case 'syllabus': return <SyllabusTracker user={currentUser} subjects={JEE_SYLLABUS} progress={progress} onUpdateProgress={handleUpdateProgress} readOnly={currentUser.role === 'PARENT'} />;
+      case 'syllabus': return <SyllabusTracker user={currentUser} subjects={JEE_SYLLABUS} progress={progress} onUpdateProgress={handleUpdateProgress} readOnly={currentUser.role === 'PARENT'} videoMap={videoMap} />;
       case 'tests': return <TestCenter availableTests={tests} attempts={attempts} onCompleteTest={handleCompleteTest} user={currentUser} />;
       case 'focus': return <FocusZone />;
       case 'analytics': return <Analytics attempts={attempts} tests={tests} syllabus={JEE_SYLLABUS} />;
@@ -506,7 +525,8 @@ function App() {
       case 'users': return <AdminPanel section="users" users={allUsers.length > 0 ? allUsers : MOCK_USERS} questionBank={questions} quotes={quotes} activeTab={activeTab} onTabChange={setActiveTab} onAddQuestion={handleAddQuestion} onCreateTest={handleCreateTest} onSendNotification={handleSendNotification} onAddQuote={handleAddQuote} onDeleteQuote={handleDeleteQuote} onUpdateUser={handleAdminUpdateUser} onDeleteUser={handleAdminDeleteUser} contactMessages={contactMessages} onDeleteContact={handleDeleteContact} blogPosts={blogPosts} onAddBlogPost={handleAddBlogPost} onDeleteBlogPost={handleDeleteBlogPost} />;
       case 'tests_admin': return <AdminPanel section="tests" users={allUsers.length > 0 ? allUsers : MOCK_USERS} questionBank={questions} quotes={quotes} activeTab={activeTab} onTabChange={setActiveTab} onAddQuestion={handleAddQuestion} onCreateTest={handleCreateTest} onSendNotification={handleSendNotification} onAddQuote={handleAddQuote} onDeleteQuote={handleDeleteQuote} onUpdateUser={handleAdminUpdateUser} onDeleteUser={handleAdminDeleteUser} contactMessages={contactMessages} onDeleteContact={handleDeleteContact} blogPosts={blogPosts} onAddBlogPost={handleAddBlogPost} onDeleteBlogPost={handleDeleteBlogPost} />;
       case 'content_admin': return <AdminPanel section="content" users={allUsers.length > 0 ? allUsers : MOCK_USERS} questionBank={questions} quotes={quotes} activeTab={activeTab} onTabChange={setActiveTab} onAddQuestion={handleAddQuestion} onCreateTest={handleCreateTest} onSendNotification={handleSendNotification} onAddQuote={handleAddQuote} onDeleteQuote={handleDeleteQuote} onUpdateUser={handleAdminUpdateUser} onDeleteUser={handleAdminDeleteUser} contactMessages={contactMessages} onDeleteContact={handleDeleteContact} blogPosts={blogPosts} onAddBlogPost={handleAddBlogPost} onDeleteBlogPost={handleDeleteBlogPost} />;
-      case 'admin_analytics': return <SiteAnalytics />; // Render new component
+      case 'video_admin': return <AdminPanel section="videos" videoLibrary={videoLibrary} users={allUsers.length > 0 ? allUsers : MOCK_USERS} questionBank={questions} quotes={quotes} activeTab={activeTab} onTabChange={setActiveTab} onAddQuestion={handleAddQuestion} onCreateTest={handleCreateTest} onSendNotification={handleSendNotification} onAddQuote={handleAddQuote} onDeleteQuote={handleDeleteQuote} onUpdateUser={handleAdminUpdateUser} onDeleteUser={handleAdminDeleteUser} contactMessages={contactMessages} onDeleteContact={handleDeleteContact} blogPosts={blogPosts} onAddBlogPost={handleAddBlogPost} onDeleteBlogPost={handleDeleteBlogPost} />;
+      case 'admin_analytics': return <SiteAnalytics />;
       case 'test_runner': return <TestRunner />;
       case 'system': return <SystemDocs />;
       case 'profile': return <ProfileSettings user={currentUser} onUpdateUser={handleUpdateUser} onSendRequest={handleSendConnectionRequest} onRespondRequest={handleRespondConnectionRequest} />;

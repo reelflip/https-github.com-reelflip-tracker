@@ -1,4 +1,5 @@
 
+// ... existing imports ...
 import React, { useState, useMemo } from 'react';
 import { Subject, TopicProgress, TopicStatus, Topic, User } from '../types';
 import { 
@@ -13,8 +14,12 @@ import {
   BookOpen,
   Save,
   Loader2,
-  Target
+  Target,
+  PlayCircle,
+  X,
+  Youtube
 } from 'lucide-react';
+// TOPIC_VIDEO_MAP import removed as it comes from props now
 
 interface SyllabusTrackerProps {
   user: User;
@@ -22,6 +27,7 @@ interface SyllabusTrackerProps {
   progress: Record<string, TopicProgress>;
   onUpdateProgress: (topicId: string, updates: Partial<TopicProgress>) => void;
   readOnly?: boolean;
+  videoMap?: Record<string, string>; // New Prop
 }
 
 const statusColors: Record<TopicStatus, string> = {
@@ -38,12 +44,13 @@ const statusLabels: Record<TopicStatus, string> = {
   'REVISE': 'Revise',
 };
 
-const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progress, onUpdateProgress, readOnly = false }) => {
+const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progress, onUpdateProgress, readOnly = false, videoMap = {} }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeSubjectFilter, setActiveSubjectFilter] = useState<string>('ALL');
   const [expandedTopicId, setExpandedTopicId] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [showSaveToast, setShowSaveToast] = useState(false);
+  const [activeVideo, setActiveVideo] = useState<{url: string, title: string} | null>(null);
 
   const handleSave = () => {
       if (readOnly) return;
@@ -234,6 +241,7 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
                       const solvedQuestions = topicData.ex1Solved + topicData.ex2Solved + topicData.ex3Solved + topicData.ex4Solved;
                       const qPercent = totalQuestions > 0 ? Math.round((solvedQuestions / totalQuestions) * 100) : 0;
                       const isExpanded = expandedTopicId === topic.id;
+                      const videoUrl = videoMap[topic.id];
 
                       return (
                         <div key={topic.id} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -249,7 +257,22 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
                                     </span>
                                     <span className="text-[10px] text-slate-400">Est. 8 Hours</span>
                                  </div>
-                                 <h3 className="text-base font-bold text-slate-800">{topic.name}</h3>
+                                 <div className="flex items-center gap-3">
+                                     <h3 className="text-base font-bold text-slate-800">{topic.name}</h3>
+                                     {videoUrl && (
+                                         <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setActiveVideo({ url: videoUrl, title: topic.name });
+                                            }}
+                                            className="flex items-center space-x-1.5 px-2 py-1 bg-red-50 text-red-600 rounded-full hover:bg-red-100 transition-colors border border-red-100 group"
+                                            title="Watch Video Lesson"
+                                         >
+                                             <PlayCircle className="w-3.5 h-3.5 fill-red-100 group-hover:fill-red-200" />
+                                             <span className="text-[10px] font-bold uppercase tracking-wide">Watch</span>
+                                         </button>
+                                     )}
+                                 </div>
                                  
                                  <div className="mt-3 flex items-center space-x-3 w-full md:w-64">
                                     <div className="flex-1 h-1.5 bg-slate-100 rounded-full overflow-hidden">
@@ -376,6 +399,40 @@ const SyllabusTracker: React.FC<SyllabusTrackerProps> = ({ user, subjects, progr
             >
                 {isSaving ? <Loader2 className="w-6 h-6 animate-spin" /> : <Save className="w-6 h-6" />}
             </button>
+          </div>
+      )}
+
+      {/* Video Modal */}
+      {activeVideo && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/90 backdrop-blur-sm animate-in fade-in duration-300">
+              <div className="w-full max-w-5xl bg-black rounded-2xl overflow-hidden shadow-2xl relative border border-slate-800">
+                  <div className="flex justify-between items-center p-4 bg-slate-900 text-white border-b border-slate-800">
+                      <div className="flex items-center space-x-3">
+                          <Youtube className="w-6 h-6 text-red-600" />
+                          <h3 className="font-bold text-lg">{activeVideo.title}</h3>
+                      </div>
+                      <button 
+                        onClick={() => setActiveVideo(null)}
+                        className="text-slate-400 hover:text-white transition-colors bg-white/10 p-2 rounded-full hover:bg-white/20"
+                      >
+                          <X className="w-5 h-5" />
+                      </button>
+                  </div>
+                  <div className="relative pt-[56.25%] bg-black">
+                      <iframe 
+                        className="absolute inset-0 w-full h-full"
+                        src={activeVideo.url} 
+                        title={activeVideo.title}
+                        frameBorder="0" 
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
+                        allowFullScreen
+                      ></iframe>
+                  </div>
+                  {/* Video Details */}
+                  <div className="p-4 bg-slate-900 text-slate-300 text-xs border-t border-slate-800">
+                      <p>Source: YouTube (Educational Content) • Concept Explanation for <strong>{activeVideo.title}</strong>.</p>
+                  </div>
+              </div>
           </div>
       )}
     </div>

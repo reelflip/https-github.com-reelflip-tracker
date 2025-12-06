@@ -181,6 +181,12 @@ export interface BlogPost {
     imageUrl?: string;
 }
 
+export interface VideoLesson {
+    topic_id: string;
+    video_url: string;
+    description: string;
+}
+
 export interface ExamComparisonItem {
     name: string;
     difficulty: number; // 1-5
@@ -201,6 +207,13 @@ export interface ContactMessage {
     subject: string;
     message: string;
     created_at?: string;
+}
+
+export interface AdminStats {
+    totalVisits: number;
+    totalUsers: number;
+    dailyTraffic: { date: string; visits: number }[];
+    userGrowth: { date: string; users: number }[];
 }
 
 export interface MockDataState {

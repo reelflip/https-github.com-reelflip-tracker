@@ -1,4 +1,5 @@
 
+
 import React, { useState, useEffect } from 'react';
 import { Flashcard } from '../types';
 import { Layers, RotateCw, Check, X, Filter, Trophy, Star } from 'lucide-react';
@@ -130,7 +131,7 @@ const FlashcardDeck: React.FC<FlashcardDeckProps> = ({ cards }) => {
 
             {/* Card Area */}
             <div 
-                className="perspective-1000 h-96 cursor-pointer group relative" 
+                className="perspective-1000 h-80 md:h-96 cursor-pointer group relative" 
                 onClick={() => { setIsFlipped(!isFlipped); playFlipSound(); }}
             >
                 <div 
@@ -158,7 +159,7 @@ const FlashcardDeck: React.FC<FlashcardDeckProps> = ({ cards }) => {
                         )}
 
                         <div className="flex-1 flex items-center justify-center w-full">
-                            <h3 className="text-3xl md:text-4xl font-black text-slate-800 text-center leading-tight">
+                            <h3 className="text-2xl md:text-4xl font-black text-slate-800 text-center leading-tight">
                                 {currentCard.front}
                             </h3>
                         </div>
@@ -174,7 +175,7 @@ const FlashcardDeck: React.FC<FlashcardDeckProps> = ({ cards }) => {
                         style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}
                     >
                          <div className="flex-1 flex items-center justify-center w-full">
-                            <h3 className="text-2xl md:text-3xl font-mono font-bold text-green-400 text-center leading-relaxed">
+                            <h3 className="text-xl md:text-3xl font-mono font-bold text-green-400 text-center leading-relaxed">
                                 {currentCard.back}
                             </h3>
                          </div>

@@ -411,6 +411,19 @@ export const MOCK_TESTS: Test[] = [
     ]
   },
   {
+    id: 'test_jee_main_2024_s2',
+    title: 'JEE Mains 2024 (April 6 Shift 2)',
+    durationMinutes: 180,
+    category: 'PAST_PAPER',
+    difficulty: 'MAINS',
+    examType: 'JEE',
+    questions: [
+        ...PHYSICS_QUESTIONS.slice(15, 25),
+        ...CHEMISTRY_QUESTIONS.slice(15, 25),
+        ...MATHS_QUESTIONS.slice(15, 25)
+    ]
+  },
+  {
     id: 'test_jee_main_2023',
     title: 'JEE Mains 2023 (Jan 24 Shift 2)',
     durationMinutes: 180,
@@ -434,6 +447,19 @@ export const MOCK_TESTS: Test[] = [
         ...PHYSICS_QUESTIONS.slice(20, 28),
         ...CHEMISTRY_QUESTIONS.slice(20, 28),
         ...MATHS_QUESTIONS.slice(20, 28)
+    ]
+  },
+  {
+    id: 'test_jee_adv_2022',
+    title: 'JEE Advanced 2022 (Paper 2)',
+    durationMinutes: 180,
+    category: 'PAST_PAPER',
+    difficulty: 'ADVANCED',
+    examType: 'JEE',
+    questions: [
+        ...PHYSICS_QUESTIONS.slice(5, 13),
+        ...CHEMISTRY_QUESTIONS.slice(5, 13),
+        ...MATHS_QUESTIONS.slice(5, 13)
     ]
   },
   {
@@ -503,6 +529,33 @@ export const JEE_SYLLABUS: Subject[] = [
                     { id: 'm_cpx_2', name: 'Argand Diagram & Algebra' },
                     { id: 'm_quad_1', name: 'Quadratic Equations & Roots' }
                 ]
+            },
+            {
+                id: 'm_mat_det',
+                name: 'MATRICES AND DETERMINANTS',
+                topics: [
+                    { id: 'm_mat_1', name: 'Matrices: Types and Operations' },
+                    { id: 'm_det_1', name: 'Determinants: Properties and Area' },
+                    { id: 'm_mat_2', name: 'Adjoint and Inverse of Matrix' }
+                ]
+            },
+            {
+                id: 'm_calc',
+                name: 'CALCULUS (LIMITS & CONTINUITY)',
+                topics: [
+                    { id: 'm_lim_1', name: 'Limits and Continuity' },
+                    { id: 'm_diff_1', name: 'Differentiation Methods' },
+                    { id: 'm_app_diff', name: 'Applications of Derivatives (AOD)' }
+                ]
+            },
+            {
+                id: 'm_int',
+                name: 'INTEGRAL CALCULUS',
+                topics: [
+                    { id: 'm_int_1', name: 'Indefinite Integration' },
+                    { id: 'm_int_2', name: 'Definite Integration & Properties' },
+                    { id: 'm_area', name: 'Area Under Curves' }
+                ]
             }
         ]
     },
@@ -526,6 +579,32 @@ export const JEE_SYLLABUS: Subject[] = [
                     { id: 'p_kin_2', name: 'Projectile Motion' },
                     { id: 'p_kin_3', name: 'Relative Velocity' }
                 ]
+            },
+            {
+                id: 'p_laws',
+                name: 'UNIT 3: Laws of Motion',
+                topics: [
+                    { id: 'p_nlm_1', name: 'Newton\'s Laws & Impulse' },
+                    { id: 'p_fric', name: 'Friction and Dynamics' },
+                    { id: 'p_circ', name: 'Uniform Circular Motion' }
+                ]
+            },
+            {
+                id: 'p_wep',
+                name: 'UNIT 4: Work, Energy and Power',
+                topics: [
+                    { id: 'p_wep_1', name: 'Work Energy Theorem' },
+                    { id: 'p_coll', name: 'Collisions (Elastic/Inelastic)' }
+                ]
+            },
+            {
+                id: 'p_rot',
+                name: 'UNIT 5: Rotational Motion',
+                topics: [
+                    { id: 'p_com', name: 'Centre of Mass' },
+                    { id: 'p_moi', name: 'Moment of Inertia' },
+                    { id: 'p_torque', name: 'Torque and Angular Momentum' }
+                ]
             }
         ]
     },
@@ -548,10 +627,85 @@ export const JEE_SYLLABUS: Subject[] = [
                     { id: 'c_at_1', name: 'Bohr Model & Spectrum' },
                     { id: 'c_at_2', name: 'Quantum Numbers & Orbitals' }
                 ]
+            },
+            {
+                id: 'c_bond',
+                name: 'UNIT 3: CHEMICAL BONDING',
+                topics: [
+                    { id: 'c_bond_1', name: 'Ionic & Covalent Bonding' },
+                    { id: 'c_vsepr', name: 'VSEPR Theory & Shapes' },
+                    { id: 'c_mot', name: 'Molecular Orbital Theory (MOT)' }
+                ]
+            },
+            {
+                id: 'c_thermo',
+                name: 'UNIT 4: THERMODYNAMICS',
+                topics: [
+                    { id: 'c_th_1', name: 'First Law of Thermodynamics' },
+                    { id: 'c_th_2', name: 'Entropy & Gibbs Free Energy' }
+                ]
             }
         ]
     }
 ];
+
+// --- VIDEO MAPPING (Concept Cinema) ---
+// Massively Expanded Video Library for JEE Topics
+export const TOPIC_VIDEO_MAP: Record<string, string> = {
+    // PHYSICS - Units
+    'p_unit_1': 'https://www.youtube.com/embed/hmJD8753wXY', 
+    'p_unit_2': 'https://www.youtube.com/embed/hQ1eBqZt9YQ',
+    // PHYSICS - Kinematics
+    'p_kin_1': 'https://www.youtube.com/embed/ZM8ECpBuQYE', 
+    'p_kin_2': 'https://www.youtube.com/embed/M8xh1396x70',
+    'p_kin_3': 'https://www.youtube.com/embed/PyT0Z3XgqE0',
+    // PHYSICS - NLM
+    'p_nlm_1': 'https://www.youtube.com/embed/kKKM8Y-u7ds', // NLM Basics
+    'p_fric': 'https://www.youtube.com/embed/fo_pmp5rtzo', // Friction
+    'p_circ': 'https://www.youtube.com/embed/bpFK2VCRHUs', // Circular
+    // PHYSICS - WEP
+    'p_wep_1': 'https://www.youtube.com/embed/2WS1sG9fhOk', // Work Energy
+    'p_coll': 'https://www.youtube.com/embed/Y-iM8tEa1k4', // Collisions
+    // PHYSICS - Rotation
+    'p_com': 'https://www.youtube.com/embed/XFpMJD883_g', // CoM
+    'p_moi': 'https://www.youtube.com/embed/l8F6rX8Qx_k', // MoI
+    'p_torque': 'https://www.youtube.com/embed/X6yX9q6i8jA', // Torque
+
+    // CHEMISTRY - Basics
+    'c_bas_1': 'https://www.youtube.com/embed/wI5S7J5sXTo', 
+    'c_bas_2': 'https://www.youtube.com/embed/7Cqy544jqnM',
+    // CHEMISTRY - Atom
+    'c_at_1': 'https://www.youtube.com/embed/GhAn8xZQ-d8',
+    'c_at_2': 'https://www.youtube.com/embed/Aoi4j8es4gQ',
+    // CHEMISTRY - Bonding
+    'c_bond_1': 'https://www.youtube.com/embed/QXT4OVM4vXI', // Bonding Types
+    'c_vsepr': 'https://www.youtube.com/embed/keHS-CASZfc', // VSEPR
+    'c_mot': 'https://www.youtube.com/embed/6T5iJ4a7xAA', // MOT
+    // CHEMISTRY - Thermo
+    'c_th_1': 'https://www.youtube.com/embed/JuWTx-q1WYA', // 1st Law
+    'c_th_2': 'https://www.youtube.com/embed/8N1BxHgsoOw', // Gibbs
+
+    // MATHS - Sets
+    'm_set_1': 'https://www.youtube.com/embed/tyDKR4FG3Yw', 
+    'm_set_2': 'https://www.youtube.com/embed/5hV5bJ6s-6s', // Operations
+    'm_rel_1': 'https://www.youtube.com/embed/5C9p1U8c5_I', // Relations
+    'm_fun_1': 'https://www.youtube.com/embed/2J5f2a1J4iE', // Functions
+    // MATHS - Complex
+    'm_cpx_1': 'https://www.youtube.com/embed/SP-YJe7Vldo',
+    'm_cpx_2': 'https://www.youtube.com/embed/hX0z3q9f3_M', // Argand
+    'm_quad_1': 'https://www.youtube.com/embed/m94DzL3kYV4',
+    // MATHS - Matrices
+    'm_mat_1': 'https://www.youtube.com/embed/u9R2f0E5yyg', // Matrix Types
+    'm_det_1': 'https://www.youtube.com/embed/Ip3X9LOh2dk', // Determinants
+    'm_mat_2': 'https://www.youtube.com/embed/5hP5b5_5-5s', // Inverse
+    // MATHS - Calculus
+    'm_lim_1': 'https://www.youtube.com/embed/riXcZT2ICjA', // Limits
+    'm_diff_1': 'https://www.youtube.com/embed/rAof9Ld5sOg', // Derivatives
+    'm_app_diff': 'https://www.youtube.com/embed/OCw5r2r5s_M', // AOD
+    'm_int_1': 'https://www.youtube.com/embed/yiy7y5t7_lM', // Integration
+    'm_int_2': 'https://www.youtube.com/embed/3j3_25-25_s', // Definite
+    'm_area': 'https://www.youtube.com/embed/exampleArea', // Area
+};
 
 export const INITIAL_FLASHCARDS: Flashcard[] = [
     // PHYSICS

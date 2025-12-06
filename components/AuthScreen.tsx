@@ -1,4 +1,5 @@
 
+
 import React, { useState } from 'react';
 import { User, Role } from '../types';
 import { COACHING_INSTITUTES, TARGET_YEARS, TARGET_EXAMS } from '../constants';
@@ -188,7 +189,7 @@ const AuthScreen: React.FC<AuthScreenProps> = ({ onLogin, onNavigate }) => {
         {/* Header Section (Logo) */}
         <div className="pt-10 pb-4 text-center">
             <h1 className="flex flex-col items-center" aria-label="IIT GEE PREP">
-                <span className="text-4xl font-sans font-bold tracking-tight mb-4 block">
+                <span className="text-3xl md:text-4xl font-sans font-bold tracking-tight mb-4 block">
                     <span className="text-slate-900">IIT</span> <span className="text-orange-500">GEE</span>
                 </span>
                 

@@ -1,11 +1,14 @@
 
+
+// ... existing imports ...
 import React, { useState, useEffect } from 'react';
-import { Database, Users, Radio, FileText, Plus, Check, Shield, Trash2, X, AlertOctagon, Save, Inbox, CheckCircle2, PenTool } from 'lucide-react';
-import { User, Question, Test, Notification, Quote, ContactMessage, BlogPost } from '../types';
-import { JEE_SYLLABUS } from '../constants';
+import { Database, Users, Radio, FileText, Plus, Check, Shield, Trash2, X, AlertOctagon, Save, Inbox, CheckCircle2, PenTool, Video, ExternalLink } from 'lucide-react';
+import { User, Question, Test, Notification, Quote, ContactMessage, BlogPost, VideoLesson } from '../types';
+import { JEE_SYLLABUS, TOPIC_VIDEO_MAP } from '../constants';
+import { API_BASE_URL } from '../config';
 
 interface AdminPanelProps {
-    section: 'users' | 'content' | 'tests';
+    section: 'users' | 'content' | 'tests' | 'videos';
     users: User[];
     questionBank: Question[];
     quotes: Quote[];
@@ -23,9 +26,10 @@ interface AdminPanelProps {
     blogPosts?: BlogPost[];
     onAddBlogPost?: (post: BlogPost) => void;
     onDeleteBlogPost?: (id: string) => void;
+    videoLibrary?: VideoLesson[]; // New prop
 }
 
-type TabView = 'BROADCAST' | 'QUESTION_BANK' | 'TEST_BUILDER' | 'USERS' | 'INBOX' | 'BLOG_EDITOR';
+type TabView = 'BROADCAST' | 'QUESTION_BANK' | 'TEST_BUILDER' | 'USERS' | 'INBOX' | 'BLOG_EDITOR' | 'VIDEO_MANAGER';
 
 const AdminPanel: React.FC<AdminPanelProps> = ({ 
     section,
@@ -45,7 +49,8 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     onDeleteContact,
     blogPosts = [],
     onAddBlogPost,
-    onDeleteBlogPost
+    onDeleteBlogPost,
+    videoLibrary = []
 }) => {
     const [view, setView] = useState<TabView>('BROADCAST');
     
@@ -54,6 +59,7 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         if (section === 'users') setView('USERS');
         if (section === 'content') setView('BROADCAST');
         if (section === 'tests') setView('QUESTION_BANK');
+        if (section === 'videos') setView('VIDEO_MANAGER');
     }, [section]);
 
     // User Management State
@@ -88,6 +94,47 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
     const [blogAuthor, setBlogAuthor] = useState('');
     const [blogCategory, setBlogCategory] = useState<'Strategy' | 'Motivation' | 'Subject-wise' | 'Updates'>('Strategy');
     const [blogImage, setBlogImage] = useState('');
+
+    // Video Manager State
+    const [videoSubject, setVideoSubject] = useState('phys');
+    const [videoTopic, setVideoTopic] = useState('');
+    const [videoUrl, setVideoUrl] = useState('');
+    const [videoDesc, setVideoDesc] = useState('');
+    const [currentVideoDisplay, setCurrentVideoDisplay] = useState<{url: string, desc: string, source: 'DB' | 'STATIC'} | null>(null);
+
+    // Effect to check existing video when topic is selected
+    useEffect(() => {
+        if (!videoTopic) {
+            setCurrentVideoDisplay(null);
+            setVideoUrl('');
+            setVideoDesc('');
+            return;
+        }
+
+        // 1. Check Database (Dynamic)
+        const dbVideo = videoLibrary.find(v => v.topic_id === videoTopic);
+        if (dbVideo) {
+            setCurrentVideoDisplay({ url: dbVideo.video_url, desc: dbVideo.description || "No description", source: 'DB' });
+            setVideoUrl(dbVideo.video_url);
+            setVideoDesc(dbVideo.description || '');
+            return;
+        }
+
+        // 2. Check Static Map (Constants)
+        const staticUrl = TOPIC_VIDEO_MAP[videoTopic];
+        if (staticUrl) {
+            setCurrentVideoDisplay({ url: staticUrl, desc: "Default System Video", source: 'STATIC' });
+            setVideoUrl(staticUrl); // Pre-fill for easy editing
+            setVideoDesc(''); // Static doesn't have desc
+            return;
+        }
+
+        // 3. No Video
+        setCurrentVideoDisplay(null);
+        setVideoUrl('');
+        setVideoDesc('');
+
+    }, [videoTopic, videoLibrary]);
 
     // --- Actions ---
 
@@ -189,6 +236,36 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         alert("Blog Post Published Successfully!");
     };
 
+    const submitVideo = async () => {
+        if(!videoTopic || !videoUrl) return;
+        
+        // Convert YouTube Watch URL to Embed URL if needed
+        let finalUrl = videoUrl;
+        if (finalUrl.includes('watch?v=')) {
+            finalUrl = finalUrl.replace('watch?v=', 'embed/');
+        } else if (finalUrl.includes('youtu.be/')) {
+            finalUrl = finalUrl.replace('youtu.be/', 'www.youtube.com/embed/');
+        }
+
+        try {
+            const res = await fetch(`${API_BASE_URL}/manage_videos.php`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({
+                    topicId: videoTopic,
+                    url: finalUrl,
+                    desc: videoDesc
+                })
+            });
+            if(res.ok) {
+                alert("Video Link Updated!");
+                // Optimistic UI Update isn't easy here without refreshing common data, 
+                // but we can update the display card manually for UX
+                setCurrentVideoDisplay({ url: finalUrl, desc: videoDesc, source: 'DB' });
+            }
+        } catch(e) { console.error(e); }
+    };
+
     const handleOptionChange = (idx: number, val: string) => {
         const newOpts = [...qOptions];
         newOpts[idx] = val;
@@ -238,7 +315,10 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
         }
     };
 
-    const availableTopics = JEE_SYLLABUS.find(s => s.id === qSubject)?.chapters.flatMap(c => c.topics) || [];
+    // Helper for dropdowns
+    const getTopicsForSubject = (sid: string) => JEE_SYLLABUS.find(s => s.id === sid)?.chapters.flatMap(c => c.topics) || [];
+    const availableTopics = getTopicsForSubject(qSubject);
+    const videoTopics = getTopicsForSubject(videoSubject);
 
     // --- Tab Definitions ---
     const contentTabs = [
@@ -267,10 +347,17 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                 icon: <FileText className="w-10 h-10 text-white" />,
                 gradient: 'from-violet-700 to-purple-800'
             };
+        } else if (section === 'videos') {
+            return {
+                title: 'Video Lesson Manager',
+                desc: 'Assign YouTube educational content to syllabus topics.',
+                icon: <Video className="w-10 h-10 text-white" />,
+                gradient: 'from-red-700 to-rose-800'
+            };
         } else {
             return {
                 title: 'Content & Broadcasts',
-                desc: 'Manage announcements, motivational quotes, and blog posts.',
+                desc: 'Manage announcements, blog posts, and inbox.',
                 icon: <Radio className="w-10 h-10 text-white" />,
                 gradient: 'from-fuchsia-700 to-pink-800'
             };
@@ -746,9 +833,109 @@ const AdminPanel: React.FC<AdminPanelProps> = ({
                     </div>
                 )}
 
+                {/* 6. VIDEO MANAGER */}
+                {view === 'VIDEO_MANAGER' && section === 'videos' && (
+                    <div className="space-y-6 animate-in fade-in">
+                        <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
+                            <h3 className="font-bold text-slate-800 mb-4 flex items-center">
+                                <Video className="w-4 h-4 mr-2" /> Manage Syllabus Videos
+                            </h3>
+                            <p className="text-xs text-slate-500 mb-4">
+                                Select a topic to view or update its video lesson. Changes reflect immediately for all students.
+                            </p>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Subject</label>
+                                    <select 
+                                        className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white"
+                                        value={videoSubject}
+                                        onChange={e => { setVideoSubject(e.target.value); setVideoTopic(''); }}
+                                    >
+                                        <option value="phys">Physics</option>
+                                        <option value="chem">Chemistry</option>
+                                        <option value="math">Mathematics</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Topic</label>
+                                    <select 
+                                        className="w-full p-2.5 border border-slate-200 rounded-lg text-sm bg-white"
+                                        value={videoTopic}
+                                        onChange={e => setVideoTopic(e.target.value)}
+                                    >
+                                        <option value="">Select Topic</option>
+                                        {videoTopics.map(t => (
+                                            <option key={t.id} value={t.id}>{t.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+
+                            {/* Current Video Display */}
+                            {currentVideoDisplay && (
+                                <div className="mb-6 bg-white p-4 rounded-lg border border-slate-200 flex flex-col md:flex-row gap-4 items-start animate-in fade-in">
+                                    <div className="relative w-40 aspect-video bg-black rounded overflow-hidden shrink-0">
+                                        <iframe 
+                                            src={currentVideoDisplay.url} 
+                                            className="w-full h-full" 
+                                            title="Preview" 
+                                            frameBorder="0"
+                                        ></iframe>
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center gap-2 mb-1">
+                                            <span className={`text-[10px] font-bold px-2 py-0.5 rounded text-white ${currentVideoDisplay.source === 'DB' ? 'bg-green-500' : 'bg-slate-500'}`}>
+                                                {currentVideoDisplay.source === 'DB' ? 'CUSTOM OVERRIDE' : 'SYSTEM DEFAULT'}
+                                            </span>
+                                            <a href={currentVideoDisplay.url} target="_blank" rel="noreferrer" className="text-blue-600 hover:underline text-xs flex items-center">
+                                                Open <ExternalLink className="w-3 h-3 ml-1" />
+                                            </a>
+                                        </div>
+                                        <p className="text-xs text-slate-500 font-mono break-all">{currentVideoDisplay.url}</p>
+                                        {currentVideoDisplay.desc && <p className="text-xs text-slate-600 mt-2 italic">{currentVideoDisplay.desc}</p>}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">New YouTube URL</label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none"
+                                        placeholder="https://www.youtube.com/watch?v=..."
+                                        value={videoUrl}
+                                        onChange={e => setVideoUrl(e.target.value)}
+                                    />
+                                    <p className="text-[10px] text-slate-400 mt-1">Paste any YouTube link. We'll auto-convert it.</p>
+                                </div>
+                                <div>
+                                    <label className="block text-xs font-bold text-slate-500 uppercase mb-1">Short Description</label>
+                                    <input 
+                                        type="text" 
+                                        className="w-full p-2.5 border border-slate-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-100 outline-none"
+                                        placeholder="e.g. Khan Academy - 10 mins"
+                                        value={videoDesc}
+                                        onChange={e => setVideoDesc(e.target.value)}
+                                    />
+                                </div>
+                            </div>
+
+                            <button 
+                                onClick={submitVideo} 
+                                disabled={!videoTopic || !videoUrl}
+                                className="bg-slate-900 text-white px-6 py-2.5 rounded-lg font-bold hover:bg-slate-800 flex items-center shadow-lg transition-transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                <Save className="w-4 h-4 mr-2" /> Save Video Link
+                            </button>
+                        </div>
+                    </div>
+                )}
+
                 {/* 7. USER MANAGEMENT (Only in Users Section) */}
                 {view === 'USERS' && section === 'users' && (
-                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden animate-in fade-in">
+                    <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-x-auto animate-in fade-in">
                         <table className="min-w-full divide-y divide-slate-200">
                             <thead className="bg-slate-50">
                                 <tr>
