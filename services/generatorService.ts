@@ -2,12 +2,14 @@
 
 
 
+
+
 // ... existing imports ...
 import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_MEMORY_HACKS, BLOG_POSTS, TOPIC_VIDEO_MAP } from '../constants';
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v4.8 Content Update)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v4.10 Content Update)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
 
@@ -268,7 +270,7 @@ try {
     exit();
 }`
         },
-        { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v4.8"]);` },
+        { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v4.10"]);` },
         { 
             name: "test_db.php", 
             folder: "api", 

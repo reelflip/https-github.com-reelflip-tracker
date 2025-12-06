@@ -103,76 +103,105 @@ export const DEFAULT_QUOTES: Quote[] = [
 export const BLOG_POSTS: BlogPost[] = [
     {
         id: 'blog_1',
-        title: 'The 1-7-30 Revision Strategy: Beating the Forgetting Curve',
-        excerpt: 'Why do you forget formulas 2 days after studying? Learn the scientifically proven method to retain 90% of what you learn.',
+        title: 'The 1-7-30 Revision Strategy: Beating the Forgetting Curve for JEE',
+        excerpt: 'Why do you forget formulas 2 days after studying? Learn the scientifically proven Spaced Repetition method to retain 90% of your Physics and Chemistry syllabus.',
         author: 'Rahul Sharma (IIT Bombay)',
-        date: 'Oct 15, 2024',
+        date: '2024-10-15',
         category: 'Strategy',
         imageUrl: 'https://images.unsplash.com/photo-1434030216411-0b793f4b4173?auto=format&fit=crop&q=80&w=1000',
         content: `
-            <p>We've all been there. You spend 4 hours mastering Rotational Motion, solving every problem in the book. Two weeks later, you open a mock test, and your mind goes blank. You remember studying it, but the formula for Moment of Inertia of a solid cone just won't come to you.</p>
+            <p>We've all been there. You spend 4 intense hours mastering <strong>Rotational Motion</strong>, solving every problem in HC Verma. Two weeks later, you open a mock test, and your mind goes blank. You remember studying it, but the formula for the <em>Moment of Inertia of a solid cone</em> just won't come to you.</p>
             <br/>
-            <h3 class="text-xl font-bold text-slate-800">The Problem: Ebbinghaus Forgetting Curve</h3>
-            <p>The human brain is wired to forget. Research shows that within 24 hours of learning something new, we forget about 50-80% of it unless we review it. By day 30, we retain less than 5%.</p>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">The Problem: Ebbinghaus Forgetting Curve</h2>
+            <p>The human brain is wired to forget. Hermann Ebbinghaus, a German psychologist, discovered that within <strong>24 hours</strong> of learning something new, we forget about <strong>50-80%</strong> of it unless we review it. By day 30, retention drops to less than 5%.</p>
+            <p>For an <strong>IIT JEE aspirant</strong> covering 90+ chapters across Physics, Chemistry, and Maths, this is a disaster. You cannot afford to relearn chapters from scratch every month.</p>
             <br/>
-            <h3 class="text-xl font-bold text-slate-800">The Solution: Spaced Repetition (1-7-30)</h3>
-            <p>To hack your brain's retention, you need to interrupt the forgetting curve at specific intervals:</p>
-            <ul class="list-disc pl-5 space-y-2 mt-2">
-                <li><strong>The 1st Review (24 Hours):</strong> Revise the topic the very next day. This signals to your brain that this information is important. It takes only 10-15 minutes but restores retention to 100%.</li>
-                <li><strong>The 2nd Review (7 Days):</strong> Revise it again a week later. This pushes the memory from short-term to medium-term storage.</li>
-                <li><strong>The 3rd Review (30 Days):</strong> The final seal. Reviewing it after a month cements it into long-term memory.</li>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">The Solution: Spaced Repetition (1-7-30)</h2>
+            <p>To hack your brain's retention, you need to interrupt the forgetting curve at specific intervals. This signals to your hippocampus that this information is vital.</p>
+            
+            <h3 class="text-xl font-bold text-blue-600 mt-4 mb-2">1. The 1st Review (24 Hours)</h3>
+            <p>Revise the topic the very next day. Do not solve new problems; just review your short notes and key formulas. This takes only 10-15 minutes but restores retention to 100%.</p>
+            
+            <h3 class="text-xl font-bold text-blue-600 mt-4 mb-2">2. The 2nd Review (7 Days)</h3>
+            <p>Revise it again exactly a week later. Solve 5-10 mixed questions. This pushes the memory from short-term to medium-term storage.</p>
+            
+            <h3 class="text-xl font-bold text-blue-600 mt-4 mb-2">3. The 3rd Review (30 Days)</h3>
+            <p>The final seal. Reviewing it after a month cements it into long-term memory. At this stage, the concept becomes intuitive.</p>
+            <br/>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">How to Track This?</h2>
+            <p>Manually tracking dates for 90 chapters is impossible. That's why we built the <strong>IITGEEPrep Revision Manager</strong>. It automatically calculates these dates for you:</p>
+            <ul class="list-disc pl-5 space-y-2 mt-2 bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <li>Mark a topic as <strong>"Completed"</strong> in the Syllabus Tracker.</li>
+                <li>Go to the <strong>Revision Tab</strong>.</li>
+                <li>The system will automatically alert you when a topic is "Overdue" based on the 1-7-30 rule.</li>
             </ul>
             <br/>
-            <p>Using the <strong>IIT JEE Prep Syllabus Tracker</strong>, you can easily mark topics for revision. Don't just study hard; study smart.</p>
+            <p>Don't just study hard; study smart. Use data to beat the curve.</p>
         `
     },
     {
         id: 'blog_2',
-        title: 'Physics: Why "Deriving" is Better Than "Memorizing"',
-        excerpt: 'Stop mugging up formulas. Understanding the derivation is the key to solving Advanced level problems.',
+        title: 'Physics for JEE Advanced: Why "Deriving" beats "Memorizing"',
+        excerpt: 'Stop mugging up formulas. In JEE Advanced, understanding the derivation and assumptions is the key to solving complex, multi-concept problems.',
         author: 'A. Verma (Physics Faculty)',
-        date: 'Oct 10, 2024',
+        date: '2024-10-10',
         category: 'Subject-wise',
         imageUrl: 'https://images.unsplash.com/photo-1635070041078-e363dbe005cb?auto=format&fit=crop&q=80&w=1000',
         content: `
-            <p>In JEE Mains, you might get away with direct formula application. But JEE Advanced is a different beast. It tests your understanding of the <em>assumptions</em> behind the formulas.</p>
+            <p>In <strong>JEE Mains</strong>, you might get away with direct formula application. The questions are often single-step: <em>"Here is u, here is a, find s."</em></p>
+            <p>But <strong>JEE Advanced</strong> is a different beast. It tests your understanding of the <em>assumptions</em> behind the formulas. If you only memorize the end result, you will get trapped.</p>
             <br/>
-            <h3 class="text-xl font-bold text-slate-800">Case Study: Projectile Motion</h3>
-            <p>Everyone knows <em>R = u²sin(2θ)/g</em>. But this formula assumes:</p>
-            <ol class="list-decimal pl-5 space-y-2 mt-2">
-                <li>The landing point is at the same height as the launch point.</li>
-                <li>There is no air resistance.</li>
-                <li>The ground is flat (not an inclined plane).</li>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">Case Study: Projectile Motion</h2>
+            <p>Everyone knows the range formula: <strong>R = u²sin(2θ)/g</strong>. But do you know the constraints?</p>
+            <ol class="list-decimal pl-5 space-y-2 mt-2 bg-orange-50 p-4 rounded-lg border border-orange-100">
+                <li>The landing point must be at the <strong>same vertical height</strong> as the launch point.</li>
+                <li>There must be <strong>no air resistance</strong>.</li>
+                <li>The ground must be <strong>flat</strong> (not an inclined plane).</li>
+                <li>Gravity <strong>g</strong> is assumed constant (valid for short ranges, invalid for ICBMs).</li>
             </ol>
             <br/>
-            <p>If a question asks for the range on an inclined plane, or if there's a wind force, the standard formula fails. If you know how to derive the equation of trajectory using <em>x = ut</em> and <em>y = ut - 1/2gt²</em>, you can solve ANY variation of the problem.</p>
+            <p>If a JEE Advanced question asks for the range on an <em>inclined plane</em>, or introduces a <em>horizontal wind force</em> (acceleration in x-axis), the standard formula fails instantly.</p>
+            <p>However, if you know how to derive the equation of trajectory using fundamental kinematics (<em>x = ut</em> and <em>y = ut - 1/2gt²</em>), you can solve <strong>ANY</strong> variation of the problem. You can simply add the wind acceleration term to the x-equation.</p>
             <br/>
-            <p><strong>Actionable Tip:</strong> For every chapter in Physics, maintain a "Derivation Notebook". Before memorizing the final result, write down the starting conditions and the steps to get there.</p>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">The "First Principles" Strategy</h2>
+            <p>For every chapter in Physics, maintain a separate <strong>"Derivation Notebook"</strong>. Before memorizing the final result:</p>
+            <ul class="list-disc pl-5 space-y-2 mt-2">
+                <li>Write down the <strong>starting conditions</strong>.</li>
+                <li>Write down the <strong>assumptions</strong> (e.g., "Charge is uniformly distributed").</li>
+                <li>Perform the integration or calculus steps yourself.</li>
+            </ul>
+            <br/>
+            <p>This builds "Physics Intuition". When you see a new, scary problem in the exam, you won't panic searching for a formula. You will simply build the solution from the ground up.</p>
         `
     },
     {
         id: 'blog_3',
-        title: 'Managing Stress: The 4-7-8 Breathing Technique',
-        excerpt: 'Exam anxiety is real. Here is a simple tool you can use right inside the exam hall to calm your nerves.',
+        title: 'Exam Anxiety: The 4-7-8 Breathing Technique for Students',
+        excerpt: 'Exam stress can lower your IQ by 15 points in the exam hall. Here is a physiological hack to calm your nerves instantly during JEE or BITSAT.',
         author: 'Dr. S. Gupta (Psychologist)',
-        date: 'Oct 05, 2024',
+        date: '2024-10-05',
         category: 'Motivation',
         imageUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773?auto=format&fit=crop&q=80&w=1000',
         content: `
-            <p>Your heart is racing. Your palms are sweaty. You read the first question of the paper, and your mind goes blank. This is the "Fight or Flight" response, and it shuts down the logical part of your brain (prefrontal cortex).</p>
+            <p>Your heart is racing. Your palms are sweaty. You read the first question of the paper, and your mind goes blank. This is the <strong>"Fight or Flight"</strong> response.</p>
+            <p>Biologically, your body thinks you are facing a tiger. It pumps adrenaline and cortisol, which diverts blood <em>away</em> from your prefrontal cortex (the logic center) to your muscles. This literally makes you "dumber" right when you need to be smart.</p>
             <br/>
-            <h3 class="text-xl font-bold text-slate-800">The Reset Button</h3>
-            <p>You can hack your nervous system using the <strong>4-7-8 Breathing Technique</strong>. You can do this invisibly in the exam hall:</p>
+            <h2 class="text-2xl font-bold text-slate-800 mb-2">The Biological Reset Button</h2>
+            <p>You cannot "think" your way out of anxiety. You must "breathe" your way out. You can hack your nervous system using the <strong>4-7-8 Breathing Technique</strong>. You can do this invisibly in the exam hall:</p>
             <br/>
-            <ul class="list-disc pl-5 space-y-2">
-                <li><strong>Inhale</strong> quietly through the nose for <strong>4 seconds</strong>.</li>
-                <li><strong>Hold</strong> the breath for <strong>7 seconds</strong>.</li>
-                <li><strong>Exhale</strong> completely through the mouth for <strong>8 seconds</strong>.</li>
-            </ul>
+            <div class="bg-blue-50 p-6 rounded-xl border border-blue-200 my-4">
+                <ul class="list-none space-y-4">
+                    <li class="flex items-center"><span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4">1</span> <strong>Inhale</strong> quietly through the nose for <strong>4 seconds</strong>.</li>
+                    <li class="flex items-center"><span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4">2</span> <strong>Hold</strong> the breath for <strong>7 seconds</strong>.</li>
+                    <li class="flex items-center"><span class="bg-blue-600 text-white w-8 h-8 rounded-full flex items-center justify-center font-bold mr-4">3</span> <strong>Exhale</strong> completely through the mouth for <strong>8 seconds</strong> (making a whoosh sound).</li>
+                </ul>
+            </div>
             <br/>
-            <p>Repeat this cycle 4 times. This forces your body to switch from "Sympathetic" (Panic) to "Parasympathetic" (Calm) mode. Your heart rate will drop, and your logical brain will come back online.</p>
+            <p>Repeat this cycle <strong>4 times</strong>. No more.</p>
+            <h3 class="text-xl font-bold text-slate-800 mt-4 mb-2">Why It Works</h3>
+            <p>The long exhale forces your body to switch from the Sympathetic Nervous System (Panic) to the <strong>Parasympathetic Nervous System</strong> (Rest & Digest). Your heart rate will drop, your hands will dry, and your logical brain will come back online.</p>
             <br/>
-            <p>Check out the <strong>Wellness Corner</strong> in the app for a guided visual aid of this technique.</p>
+            <p><strong>Pro Tip:</strong> Practice this every night before sleep using the <strong>Wellness Corner</strong> in the IITGEEPrep app. Familiarity makes it more effective during the actual exam.</p>
         `
     }
 ];
