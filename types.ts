@@ -216,6 +216,13 @@ export interface AdminStats {
     userGrowth: { date: string; users: number }[];
 }
 
+export interface ChatMessage {
+    id: string;
+    role: 'USER' | 'AI';
+    text: string;
+    timestamp: Date;
+}
+
 export interface MockDataState {
   users: User[];
   syllabus: Subject[];

@@ -1,6 +1,8 @@
 
 
 
+
+
 // ... existing imports ...
 import React, { useState, useEffect } from 'react';
 import { User, TopicProgress, TestAttempt, Test, Question, Notification, MistakeRecord, DailyGoal, Quote, Flashcard, BacklogItem, TopicStatus, Role, MemoryHack, ContactMessage, BlogPost, VideoLesson } from './types';
@@ -30,6 +32,7 @@ import ExamGuide from './components/ExamGuide';
 import TestRunner from './components/TestRunner';
 import RevisionManager from './components/RevisionManager'; 
 import SiteAnalytics from './components/SiteAnalytics';
+import AITutor from './components/AITutor'; // New Import
 import { API_BASE_URL } from './config'; 
 
 // Initial global questions combined from constants
@@ -527,7 +530,7 @@ function App() {
       case 'content_admin': return <AdminPanel section="content" users={allUsers.length > 0 ? allUsers : MOCK_USERS} questionBank={questions} quotes={quotes} activeTab={activeTab} onTabChange={setActiveTab} onAddQuestion={handleAddQuestion} onCreateTest={handleCreateTest} onSendNotification={handleSendNotification} onAddQuote={handleAddQuote} onDeleteQuote={handleDeleteQuote} onUpdateUser={handleAdminUpdateUser} onDeleteUser={handleAdminDeleteUser} contactMessages={contactMessages} onDeleteContact={handleDeleteContact} blogPosts={blogPosts} onAddBlogPost={handleAddBlogPost} onDeleteBlogPost={handleDeleteBlogPost} />;
       case 'video_admin': return <AdminPanel section="videos" videoLibrary={videoLibrary} users={allUsers.length > 0 ? allUsers : MOCK_USERS} questionBank={questions} quotes={quotes} activeTab={activeTab} onTabChange={setActiveTab} onAddQuestion={handleAddQuestion} onCreateTest={handleCreateTest} onSendNotification={handleSendNotification} onAddQuote={handleAddQuote} onDeleteQuote={handleDeleteQuote} onUpdateUser={handleAdminUpdateUser} onDeleteUser={handleAdminDeleteUser} contactMessages={contactMessages} onDeleteContact={handleDeleteContact} blogPosts={blogPosts} onAddBlogPost={handleAddBlogPost} onDeleteBlogPost={handleDeleteBlogPost} />;
       case 'admin_analytics': return <SiteAnalytics />;
-      case 'test_runner': return <TestRunner />;
+      case 'diagnostics': return <TestRunner />;
       case 'system': return <SystemDocs />;
       case 'profile': return <ProfileSettings user={currentUser} onUpdateUser={handleUpdateUser} onSendRequest={handleSendConnectionRequest} onRespondRequest={handleRespondConnectionRequest} />;
       case 'mistakes': return <MistakeNotebook mistakes={mistakes} onUpdateMistake={handleMistakeUpdate} onDeleteMistake={handleMistakeDelete} />;
@@ -535,6 +538,7 @@ function App() {
       case 'flashcards': return <FlashcardDeck cards={flashcards} />;
       case 'backlogs': return <BacklogManager backlogs={backlogs} onAddBacklog={handleAddBacklog} onToggleStatus={handleToggleBacklog} onDeleteBacklog={handleDeleteBacklog} />;
       case 'hacks': return <MemoryHacks hacks={hacks} />;
+      case 'ai_tutor': return <AITutor />;
       case 'about': return <AboutUs />;
       case 'privacy': return <PrivacyPolicy />;
       case 'contact': return <ContactUs />;
