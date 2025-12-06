@@ -611,6 +611,7 @@ function App() {
             subjects={JEE_SYLLABUS} 
             progress={progress} 
             onUpdateProgress={handleUpdateProgress} 
+            readOnly={currentUser.role === 'PARENT'}
           />
         );
       case 'tests':

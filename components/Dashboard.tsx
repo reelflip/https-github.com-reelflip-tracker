@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { User, TopicProgress, Notification, DailyGoal, Quote, ContactMessage, TestAttempt, Test } from '../types';
 import { Calendar, CheckCircle2, Trophy, ArrowRight, Bell, Flame, Plus, Square, CheckSquare, Target, UserPlus, Link as LinkIcon, Users, Inbox, Database, PenTool, Activity, RotateCw } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
+import { JEE_SYLLABUS } from '../constants';
 
 interface DashboardProps {
   user: User;
@@ -53,7 +54,8 @@ const Dashboard: React.FC<DashboardProps> = ({
 
   const currentQuote = quotes.length > 0 ? quotes[currentQuoteIndex] : { text: "Loading motivation...", author: "" };
 
-  const totalTopics = Object.keys(progress).length || 1; 
+  // FIX: Calculate total topics from the full static syllabus, not just what's in the progress object
+  const totalTopics = JEE_SYLLABUS.flatMap(s => s.chapters.flatMap(c => c.topics)).length || 1;
   const completedTopics = Object.values(progress).filter((p: TopicProgress) => p.status === 'COMPLETED').length;
   const completionRate = Math.round((completedTopics / totalTopics) * 100);
 
