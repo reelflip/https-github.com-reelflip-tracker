@@ -41,8 +41,8 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
   const studentNav = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'syllabus', label: 'Syllabus', icon: BookOpen },
-    { id: 'tests', label: 'Test Center', icon: PenTool },
-    { id: 'focus', label: 'Focus Zone', icon: Timer },
+    { id: 'tests', label: 'Tests', icon: PenTool },
+    { id: 'focus', label: 'Focus', icon: Timer },
     { id: 'analytics', label: 'Analytics', icon: BarChart2 },
     { id: 'timetable', label: 'Timetable', icon: Calendar },
     { id: 'revision', label: 'Revision', icon: RotateCw },
@@ -61,7 +61,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
     { id: 'video_admin', label: 'Videos', icon: Layers }, 
     { id: 'content_admin', label: 'Content', icon: Radio },
     { id: 'admin_analytics', label: 'Analytics', icon: BarChart2 },
-    { id: 'test_runner', label: 'Diagnostics', icon: Terminal },
+    { id: 'test_runner', label: 'Tests', icon: Terminal },
     { id: 'system', label: 'System', icon: Database },
   ];
 
@@ -74,11 +74,12 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
   // Helper for mobile menu styling
   const getMobileMenuStyles = (id: string) => {
       switch(id) {
-          case 'focus': return 'bg-indigo-50 text-indigo-600 border-indigo-200';
-          case 'analytics': return 'bg-blue-50 text-blue-600 border-blue-200';
-          case 'wellness': return 'bg-teal-50 text-teal-600 border-teal-200';
-          case 'mistakes': return 'bg-red-50 text-red-600 border-red-200';
-          default: return 'bg-slate-50 text-slate-600 border-slate-200';
+          case 'focus': return 'bg-indigo-50 text-indigo-600 border-indigo-100';
+          case 'analytics': return 'bg-blue-50 text-blue-600 border-blue-100';
+          case 'wellness': return 'bg-teal-50 text-teal-600 border-teal-100';
+          case 'mistakes': return 'bg-red-50 text-red-600 border-red-100';
+          case 'test_runner': return 'bg-lime-50 text-lime-600 border-lime-100';
+          default: return 'bg-slate-50 text-slate-600 border-slate-100';
       }
   };
 
@@ -91,7 +92,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
             <h1 className="text-2xl font-bold tracking-tight text-blue-400">IITGEEPrep</h1>
             <p className="text-xs text-slate-400 mt-1 flex items-center">
                 {currentUser?.role}
-                {currentUser?.role === 'ADMIN' && <span className="ml-1 opacity-75">• v4.7</span>}
+                {currentUser?.role === 'ADMIN' && <span className="ml-1 opacity-75">• v4.8</span>}
             </p>
           </div>
         </div>
@@ -135,6 +136,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
         <header className="md:hidden bg-slate-900 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-30 shadow-md">
              <div className="font-bold text-lg text-blue-400 tracking-tight">IITGEEPrep</div>
              <div className="flex items-center space-x-3">
+                 {currentUser?.role === 'ADMIN' && <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">v4.8</span>}
                  {/* User Avatar Tiny */}
                  {currentUser?.avatarUrl && (
                      <img src={currentUser.avatarUrl} alt="Profile" className="w-8 h-8 rounded-full border border-slate-700 bg-slate-800" />
@@ -150,7 +152,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
         </div>
 
         {/* Mobile Bottom Navigation Bar (Fixed) */}
-        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-2 z-40 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] safe-area-bottom">
+        <div className="md:hidden fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 px-2 py-2 z-50 flex justify-between items-center shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.05)] safe-area-bottom">
             {bottomNavItems.map((item) => (
                 <button
                     key={item.id}
@@ -161,7 +163,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                         : 'text-slate-400 hover:text-slate-600'
                     }`}
                 >
-                    <item.icon className={`w-6 h-6 mb-1 ${activeTab === item.id ? 'fill-blue-100' : ''}`} strokeWidth={activeTab === item.id ? 2.5 : 2} />
+                    <item.icon className={`w-6 h-6 mb-1 ${activeTab === item.id ? 'fill-blue-50' : ''}`} strokeWidth={activeTab === item.id ? 2.5 : 2} />
                     <span className="text-[10px] font-bold truncate w-full text-center">{item.label}</span>
                 </button>
             ))}
@@ -174,7 +176,9 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                     : 'text-slate-400 hover:text-slate-600'
                 }`}
             >
-                {mobileMenuOpen ? <X className="w-6 h-6 mb-1" /> : <Menu className="w-6 h-6 mb-1" />}
+                <div className={`transition-transform duration-300 ${mobileMenuOpen ? 'rotate-90' : 'rotate-0'}`}>
+                    {mobileMenuOpen ? <X className="w-6 h-6 mb-1" /> : <Menu className="w-6 h-6 mb-1" />}
+                </div>
                 <span className="text-[10px] font-bold">More</span>
             </button>
 
@@ -189,26 +193,27 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
 
         {/* Mobile "More" Menu Overlay (Full Screen / Drawer) */}
         {mobileMenuOpen && (
-            <div className="md:hidden fixed inset-0 z-30 bg-slate-900/95 backdrop-blur-md pt-20 px-6 pb-24 overflow-y-auto animate-in fade-in slide-in-from-bottom-10 duration-200">
-                <div className="grid grid-cols-2 gap-4">
+            <div className="md:hidden fixed inset-0 z-40 bg-slate-900/95 backdrop-blur-md pt-20 px-4 pb-28 overflow-y-auto animate-in fade-in slide-in-from-bottom-10 duration-200">
+                <h3 className="text-white/50 text-xs font-bold uppercase tracking-widest mb-6 text-center">All Apps</h3>
+                <div className="grid grid-cols-3 gap-3">
                     {moreNavItems.map((item, idx) => (
                         <button
                             key={item.id}
                             onClick={() => { onTabChange(item.id); setMobileMenuOpen(false); }}
-                            className={`flex flex-col items-center justify-center p-4 rounded-2xl border shadow-sm active:scale-95 transition-all ${getMobileMenuStyles(item.id)}`}
-                            style={{ animationDelay: `${idx * 50}ms` }}
+                            className={`flex flex-col items-center justify-center p-3 rounded-2xl border shadow-sm active:scale-95 transition-all aspect-square ${getMobileMenuStyles(item.id)}`}
+                            style={{ animationDelay: `${idx * 30}ms` }}
                         >
-                            <item.icon className="w-8 h-8 mb-3" strokeWidth={1.5} />
-                            <span className="font-bold text-xs uppercase tracking-wide">{item.label}</span>
+                            <item.icon className="w-7 h-7 mb-2 opacity-90" strokeWidth={1.5} />
+                            <span className="font-bold text-[10px] uppercase tracking-wide text-center leading-tight">{item.label}</span>
                             {item.id === 'profile' && currentUser?.pendingRequest && (
-                                <span className="mt-2 bg-red-500 text-white text-[9px] px-2 py-0.5 rounded-full animate-pulse">Request</span>
+                                <span className="absolute top-2 right-2 w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>
                             )}
                         </button>
                     ))}
-                    
-                    <div className="col-span-2 text-center text-slate-500 text-xs mt-4 opacity-50">
-                        v4.7 (Mobile)
-                    </div>
+                </div>
+                
+                <div className="mt-8 text-center">
+                    <p className="text-white/20 text-[10px]">IITGEEPrep Mobile v4.8</p>
                 </div>
             </div>
         )}
