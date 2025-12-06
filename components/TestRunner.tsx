@@ -389,6 +389,20 @@ const TestRunner: React.FC = () => {
             });
         });
 
+        // --- NEW SUITE 17 ---
+        engine.describe("17. [System] Analytics Engine", (it) => {
+            it("should increment visitor count", async () => {
+                // Call tracker
+                await fetchApi('/api/track_visit.php');
+                // Check stats
+                const stats = await fetchApi('/api/get_admin_stats.php');
+                expect(stats.totalVisits).toBeGreaterThan(0);
+                // Check if today is logged
+                const today = new Date().toLocaleDateString('en-US', {weekday: 'short'}); // Mon, Tue
+                expect(stats.dailyTraffic.length).toBeGreaterThan(0);
+            });
+        });
+
         const finalResults = await engine.runAll();
         setResults(finalResults);
         setIsRunning(false);
@@ -398,7 +412,7 @@ const TestRunner: React.FC = () => {
     const generateReport = () => {
         if (!results) return;
         const report = {
-            metadata: { timestamp: new Date().toISOString(), url: window.location.href, appVersion: 'v3.9' },
+            metadata: { timestamp: new Date().toISOString(), url: window.location.href, appVersion: 'v4.3' },
             results
         };
         const blob = new Blob([JSON.stringify(report, null, 2)], { type: 'application/json' });
@@ -413,7 +427,7 @@ const TestRunner: React.FC = () => {
 
     const renderPendingList = () => (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 opacity-60">
-            {Array.from({length: 16}, (_, i) => `Suite ${i+1}`).map(s => (
+            {Array.from({length: 17}, (_, i) => `Suite ${i+1}`).map(s => (
                 <div key={s} className="bg-white p-3 rounded border border-slate-200 text-xs font-bold text-slate-400">
                     {s}: Pending...
                 </div>
@@ -429,7 +443,7 @@ const TestRunner: React.FC = () => {
                         <Terminal className="w-8 h-8 mr-3 text-green-400" />
                         System Diagnostics
                     </h1>
-                    <p className="text-slate-400">Full 16-Suite Validation for Production (v3.9).</p>
+                    <p className="text-slate-400">Full 17-Suite Validation for Production (v4.3).</p>
                 </div>
                 <div className="flex gap-3">
                     {results && (

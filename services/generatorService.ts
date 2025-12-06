@@ -4,7 +4,7 @@ import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_M
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v3.9.1 Final Production)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v4.3 Analytics & Final Production)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
 
@@ -35,6 +35,7 @@ DROP TABLE IF EXISTS flashcards;
 DROP TABLE IF EXISTS memory_hacks;
 DROP TABLE IF EXISTS contact_messages;
 DROP TABLE IF EXISTS blog_posts;
+DROP TABLE IF EXISTS site_traffic;
 SET FOREIGN_KEY_CHECKS = 1;
 
 -- 1. USERS TABLE
@@ -103,6 +104,7 @@ CREATE TABLE flashcards ( id VARCHAR(50) PRIMARY KEY, subject_id ENUM('phys', 'c
 CREATE TABLE memory_hacks ( id VARCHAR(50) PRIMARY KEY, subject_id ENUM('phys', 'chem', 'math') NOT NULL, category VARCHAR(100) DEFAULT 'General', title VARCHAR(255) NOT NULL, description TEXT, trick TEXT NOT NULL, tags_json JSON, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
 CREATE TABLE contact_messages ( id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(100), email VARCHAR(100), subject VARCHAR(255), message TEXT, created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP );
 CREATE TABLE blog_posts ( id VARCHAR(50) PRIMARY KEY, title VARCHAR(255) NOT NULL, excerpt TEXT, content TEXT, author VARCHAR(100), category VARCHAR(50), image_url VARCHAR(255), created_at DATE DEFAULT (CURRENT_DATE) );
+CREATE TABLE site_traffic ( visit_date DATE PRIMARY KEY, visit_count INT DEFAULT 0 );
 
 -- SEED DATA
 INSERT IGNORE INTO subjects (id, name) VALUES ('phys', 'Physics'),('chem', 'Chemistry'),('math', 'Mathematics');
@@ -195,12 +197,6 @@ Once deployed, you can verify everything is working using the built-in Test Runn
 1. Log in as Admin.
 2. Navigate to **System Tests**.
 3. Click **Start Scan**.
-
-### Test Suite Reference
-- **[System] Core Health**: Checks if \`api/index.php\` and \`api/test_db.php\` are reachable.
-- **[Student] Workflows**: Verifies registration, login, and profile updates.
-- **[Parent] Monitoring**: Checks if parents can search for and link to students.
-- **[Admin] Capabilities**: Tests content management (Blogs, Tests) and user controls.
 
 ## Troubleshooting
 - **404 on API**: Ensure \`api\` folder exists in \`public_html\` and contains \`index.php\`.
@@ -313,7 +309,18 @@ try {
         { name: "manage_blog.php", folder: "api", desc: "Admin Blog", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; if($m=='POST'){ $d=json_decode(file_get_contents("php://input")); $conn->prepare("INSERT INTO blog_posts (id,title,excerpt,content,author,category,image_url,created_at) VALUES (?,?,?,?,?,?,?,?)")->execute([$d->id, $d->title, $d->excerpt, $d->content, $d->author, $d->category, $d->imageUrl, $d->date]); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM blog_posts WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
         { name: "manage_contact.php", folder: "api", desc: "Admin Contact", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; if($m=='GET'){ echo json_encode($conn->query("SELECT * FROM contact_messages ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC)); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM contact_messages WHERE id=$id"); echo json_encode(["message"=>"Deleted"]); }` },
 
-        // --- 7. SEO & MISC (Root Folder) ---
+        // --- 7. ANALYTICS (Lightweight) ---
+        { name: "track_visit.php", folder: "api", desc: "Track Visit", content: `<?php require 'config.php'; $d=date('Y-m-d'); $conn->query("INSERT INTO site_traffic (visit_date, visit_count) VALUES ('$d', 1) ON DUPLICATE KEY UPDATE visit_count=visit_count+1");` },
+        { name: "get_admin_stats.php", folder: "api", desc: "Get Admin Stats", content: `<?php require 'config.php'; header('Content-Type: application/json'); 
+        $tf=$conn->query("SELECT * FROM site_traffic ORDER BY visit_date DESC LIMIT 7")->fetchAll(PDO::FETCH_ASSOC);
+        $total=$conn->query("SELECT COUNT(*) FROM users")->fetchColumn();
+        $visits=array_sum(array_column($tf,'visit_count'));
+        $daily=array_reverse(array_map(function($r){ return ['date'=>date('D',strtotime($r['visit_date'])), 'visits'=>(int)$r['visit_count']]; }, $tf));
+        $growth=$conn->query("SELECT DATE(created_at) as d, COUNT(*) as c FROM users GROUP BY DATE(created_at) ORDER BY d DESC LIMIT 7")->fetchAll(PDO::FETCH_ASSOC);
+        $growthData=array_reverse(array_map(function($r){ return ['date'=>date('M d',strtotime($r['d'])), 'users'=>(int)$r['c']]; }, $growth));
+        echo json_encode(['totalVisits'=>$visits,'totalUsers'=>$total,'dailyTraffic'=>$daily,'userGrowth'=>$growthData]);` },
+
+        // --- 8. SEO & MISC (Root Folder) ---
         { name: "sitemap.xml", folder: "root", desc: "SEO Sitemap", content: `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url><loc>https://iitgeeprep.com/</loc><priority>1.0</priority></url>

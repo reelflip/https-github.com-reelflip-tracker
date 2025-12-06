@@ -26,6 +26,7 @@ import Blog from './components/Blog';
 import ExamGuide from './components/ExamGuide';
 import TestRunner from './components/TestRunner';
 import RevisionManager from './components/RevisionManager'; 
+import SiteAnalytics from './components/SiteAnalytics';
 import { API_BASE_URL } from './config'; 
 
 // Initial global questions combined from constants
@@ -70,26 +71,44 @@ function App() {
             fetchAdminData();
         }
     }
-  }, [currentUser?.id, currentUser?.role, currentUser?.studentId]); // Added studentId dependency to refresh when parent connects
+  }, [currentUser?.id, currentUser?.role, currentUser?.studentId]); 
 
+  // --- Analytics & Tracking ---
+  useEffect(() => {
+      // 1. Google Analytics Page View
+      if (window.gtag) {
+          window.gtag('event', 'page_view', {
+              page_title: activeTab,
+              page_location: window.location.href + '#' + activeTab,
+              user_role: currentUser?.role || 'GUEST'
+          });
+      }
+
+      // 2. Internal Traffic Counter (Once per session/refresh)
+      // We call this on mount to track every visitor, even if not logged in
+      const hasTracked = sessionStorage.getItem('visit_tracked');
+      if (!hasTracked) {
+          fetch(`${API_BASE_URL}/track_visit.php`)
+            .then(() => sessionStorage.setItem('visit_tracked', 'true'))
+            .catch(() => {});
+      }
+  }, [activeTab, currentUser]);
+
+  // ... existing fetch functions ...
   const fetchDashboardData = async () => {
       if (!currentUser) return;
       
-      // If Parent, fetch Student's data instead
       const targetUserId = currentUser.role === 'PARENT' && currentUser.studentId 
           ? currentUser.studentId 
           : currentUser.id;
 
       try {
           const res = await fetch(`${API_BASE_URL}/get_dashboard.php?user_id=${targetUserId}`);
-          if (!res.ok) return; // Silent fail in demo
+          if (!res.ok) return;
           const data = await res.json();
           
-          // --- PROFILE SYNC (Critical for Connection Requests) ---
-          // We check the CURRENT user's profile to see if requests/links have changed
           if (data.userProfileSync && currentUser.id === targetUserId) {
               const synced = data.userProfileSync;
-              // Check if any connection data changed
               if (
                   JSON.stringify(synced.pendingRequest) !== JSON.stringify(currentUser.pendingRequest) ||
                   synced.parentId !== currentUser.parentId ||
@@ -106,7 +125,6 @@ function App() {
           }
 
           if (data.progress) {
-              // Convert array to record object
               const progObj: Record<string, TopicProgress> = {};
               data.progress.forEach((p: any) => {
                   progObj[p.topic_id] = {
@@ -120,7 +138,7 @@ function App() {
                       ex3Total: parseInt(p.ex3_total || 15),
                       ex4Solved: parseInt(p.ex4_solved || 0),
                       ex4Total: parseInt(p.ex4_total || 10),
-                      lastUpdated: p.last_updated, // Capture timestamp for smart scheduling
+                      lastUpdated: p.last_updated, 
                       revisionCount: parseInt(p.revision_count || 0),
                       nextRevisionDate: p.next_revision_date
                   };
@@ -160,7 +178,6 @@ function App() {
               setTimetableData(data.timetable);
           }
           if (data.attempts) {
-              // Map DB attempts to Frontend structure
               setAttempts(data.attempts.map((a: any) => ({
                   id: a.id,
                   testId: a.test_id,
@@ -222,7 +239,6 @@ function App() {
               })));
           }
 
-          // Load tests from DB (combining with mock if needed, but DB priority)
           if (data.tests && data.tests.length > 0) {
               const dbTests: Test[] = data.tests.map((t: any) => ({
                   id: t.id,
@@ -240,7 +256,6 @@ function App() {
                       correctOptionIndex: parseInt(q.correct_option_index)
                   })) : []
               }));
-              // Use DB tests as source of truth (includes seeded mock + new admin tests)
               setTests(dbTests);
           }
       } catch (err) {
@@ -269,11 +284,9 @@ function App() {
       } catch (err) { console.error("Failed to fetch contacts", err); }
   }
 
-  // --- Handlers ---
-
+  // ... existing handlers (handleLogin, handleUpdateProgress, etc.) ...
   const handleLogin = (user: User) => {
       const existingUser = allUsers.find(u => u.id === user.id);
-      
       if (existingUser && window.IITJEE_CONFIG?.enableDevTools) {
           setCurrentUser({ ...existingUser, ...user });
       } else {
@@ -286,7 +299,6 @@ function App() {
   };
 
   const handleUpdateProgress = async (topicId: string, updates: Partial<TopicProgress>) => {
-    // 1. Optimistic Update
     setProgress(prev => {
       const current = prev[topicId] || {
         topicId, status: 'NOT_STARTED',
@@ -296,7 +308,6 @@ function App() {
       return { ...prev, [topicId]: { ...current, ...updates } };
     });
 
-    // 2. API Sync
     if (currentUser) {
         try {
             const current = progress[topicId] || {
@@ -320,13 +331,10 @@ function App() {
 
   const handleCompleteTest = (attempt: TestAttempt) => {
     setAttempts([attempt, ...attempts]);
-    
-    // Auto-capture mistakes
     if (attempt.detailedResults) {
         const newMistakes: MistakeRecord[] = attempt.detailedResults
             .filter(r => r.status === 'INCORRECT')
             .map(r => {
-                // Find Question Text
                 const q = questions.find(q => q.id === r.questionId);
                 const t = tests.find(t => t.id === attempt.testId);
                 return {
@@ -336,14 +344,10 @@ function App() {
                     topicId: r.topicId,
                     testName: t?.title || "Unknown Test",
                     date: new Date().toISOString(),
-                    tags: ['Conceptual Error'] // Default tag
+                    tags: ['Conceptual Error']
                 };
             });
-        
-        // Optimistic update
         setMistakes(prev => [...newMistakes, ...prev]);
-
-        // Sync mistakes to DB
         if(currentUser) {
             newMistakes.forEach(m => {
                 fetch(`${API_BASE_URL}/manage_mistakes.php`, {
@@ -351,10 +355,6 @@ function App() {
                     body: JSON.stringify({ ...m, user_id: currentUser.id })
                 });
             });
-        }
-        
-        // Save full attempt history
-        if(currentUser) {
             fetch(`${API_BASE_URL}/save_attempt.php`, {
                 method: 'POST',
                 body: JSON.stringify({ ...attempt, user_id: currentUser.id })
@@ -366,209 +366,102 @@ function App() {
   const handleUpdateUser = (updates: Partial<User>) => {
       if (currentUser) {
           setCurrentUser({ ...currentUser, ...updates });
-          // In a real app, send to update_profile.php
       }
   };
 
-  // --- Admin Handlers ---
+  // ... existing Admin Handlers ...
   const handleAddQuestion = async (q: Question) => {
       setQuestions([...questions, q]);
-      try {
-          await fetch(`${API_BASE_URL}/manage_tests.php`, {
-              method: 'POST',
-              body: JSON.stringify({ action: 'add_question', ...q })
-          });
-      } catch (e) { console.error(e); }
+      try { await fetch(`${API_BASE_URL}/manage_tests.php`, { method: 'POST', body: JSON.stringify({ action: 'add_question', ...q }) }); } catch (e) { console.error(e); }
   };
-
   const handleCreateTest = async (t: Test) => {
       setTests([...tests, t]);
-      try {
-          await fetch(`${API_BASE_URL}/manage_tests.php`, {
-              method: 'POST',
-              body: JSON.stringify({ action: 'create_test', ...t })
-          });
-      } catch (e) { console.error(e); }
+      try { await fetch(`${API_BASE_URL}/manage_tests.php`, { method: 'POST', body: JSON.stringify({ action: 'create_test', ...t }) }); } catch (e) { console.error(e); }
   };
-
   const handleSendNotification = async (n: Notification) => {
       setNotifications([n, ...notifications]);
-      try {
-          await fetch(`${API_BASE_URL}/manage_broadcasts.php`, {
-              method: 'POST',
-              body: JSON.stringify({ action: 'send_notification', ...n })
-          });
-      } catch (e) { console.error(e); }
+      try { await fetch(`${API_BASE_URL}/manage_broadcasts.php`, { method: 'POST', body: JSON.stringify({ action: 'send_notification', ...n }) }); } catch (e) { console.error(e); }
   };
-
   const handleAddQuote = async (text: string, author: string) => {
       const newQ = { id: `q_${Date.now()}`, text, author };
       setQuotes([...quotes, newQ]);
       setAdminQuote(newQ);
-      try {
-          await fetch(`${API_BASE_URL}/manage_broadcasts.php`, {
-              method: 'POST',
-              body: JSON.stringify({ action: 'add_quote', ...newQ })
-          });
-      } catch (e) { console.error(e); }
+      try { await fetch(`${API_BASE_URL}/manage_broadcasts.php`, { method: 'POST', body: JSON.stringify({ action: 'add_quote', ...newQ }) }); } catch (e) { console.error(e); }
   };
-
   const handleDeleteQuote = async (id: string) => {
       setQuotes(quotes.filter(q => q.id !== id));
-      try {
-          await fetch(`${API_BASE_URL}/manage_broadcasts.php?action=delete_quote&id=${id}`, { method: 'GET' });
-      } catch (e) { console.error(e); }
+      try { await fetch(`${API_BASE_URL}/manage_broadcasts.php?action=delete_quote&id=${id}`, { method: 'GET' }); } catch (e) { console.error(e); }
   };
-
   const handleAdminUpdateUser = async (user: Partial<User>) => {
-      try {
-          await fetch(`${API_BASE_URL}/manage_users.php`, {
-              method: 'PUT',
-              body: JSON.stringify(user)
-          });
-          fetchAdminData();
-      } catch (err) {
-          console.error("Failed to update user", err);
-      }
+      try { await fetch(`${API_BASE_URL}/manage_users.php`, { method: 'PUT', body: JSON.stringify(user) }); fetchAdminData(); } catch (err) { console.error("Failed to update user", err); }
   };
-
   const handleAdminDeleteUser = async (id: string) => {
-      try {
-          await fetch(`${API_BASE_URL}/manage_users.php?id=${id}`, {
-              method: 'DELETE'
-          });
-          fetchAdminData();
-      } catch (err) {
-          console.error("Failed to delete user", err);
-      }
+      try { await fetch(`${API_BASE_URL}/manage_users.php?id=${id}`, { method: 'DELETE' }); fetchAdminData(); } catch (err) { console.error("Failed to delete user", err); }
   };
-
   const handleDeleteContact = async (id: number) => {
-      try {
-          await fetch(`${API_BASE_URL}/manage_contact.php?id=${id}`, {
-              method: 'DELETE'
-          });
-          fetchAdminData();
-      } catch (err) { console.error("Failed to delete message", err); }
+      try { await fetch(`${API_BASE_URL}/manage_contact.php?id=${id}`, { method: 'DELETE' }); fetchAdminData(); } catch (err) { console.error("Failed to delete message", err); }
   };
-
   const handleAddBlogPost = async (post: BlogPost) => {
       setBlogPosts([post, ...blogPosts]);
-      try {
-          await fetch(`${API_BASE_URL}/manage_blog.php`, {
-              method: 'POST',
-              body: JSON.stringify(post)
-          });
-      } catch (e) { console.error("Failed to add blog post", e); }
+      try { await fetch(`${API_BASE_URL}/manage_blog.php`, { method: 'POST', body: JSON.stringify(post) }); } catch (e) { console.error("Failed to add blog post", e); }
   };
-
   const handleDeleteBlogPost = async (id: string) => {
       setBlogPosts(blogPosts.filter(b => b.id !== id));
-      try {
-          await fetch(`${API_BASE_URL}/manage_blog.php?id=${id}`, {
-              method: 'DELETE'
-          });
-      } catch (e) { console.error("Failed to delete blog post", e); }
+      try { await fetch(`${API_BASE_URL}/manage_blog.php?id=${id}`, { method: 'DELETE' }); } catch (e) { console.error("Failed to delete blog post", e); }
   };
 
-  // --- Goals & Backlogs ---
+  // ... existing Task Handlers ...
   const handleToggleGoal = (id: string) => {
       setGoals(goals.map(g => g.id === id ? { ...g, completed: !g.completed } : g));
-      if(currentUser) {
-          fetch(`${API_BASE_URL}/manage_goals.php`, { method: 'PUT', body: JSON.stringify({ id }) });
-      }
+      if(currentUser) { fetch(`${API_BASE_URL}/manage_goals.php`, { method: 'PUT', body: JSON.stringify({ id }) }); }
   };
   const handleAddGoal = (text: string) => {
       const newGoal = { id: `g_${Date.now()}`, text, completed: false };
       setGoals([...goals, newGoal]);
-      if(currentUser) {
-          fetch(`${API_BASE_URL}/manage_goals.php`, { method: 'POST', body: JSON.stringify({ ...newGoal, user_id: currentUser.id }) });
-      }
+      if(currentUser) { fetch(`${API_BASE_URL}/manage_goals.php`, { method: 'POST', body: JSON.stringify({ ...newGoal, user_id: currentUser.id }) }); }
   };
-
   const handleAddBacklog = (item: BacklogItem) => {
       setBacklogs([...backlogs, item]);
-      if(currentUser) {
-          fetch(`${API_BASE_URL}/manage_backlogs.php`, { method: 'POST', body: JSON.stringify({ ...item, user_id: currentUser.id }) });
-      }
+      if(currentUser) { fetch(`${API_BASE_URL}/manage_backlogs.php`, { method: 'POST', body: JSON.stringify({ ...item, user_id: currentUser.id }) }); }
   };
   const handleToggleBacklog = (id: string) => {
       setBacklogs(backlogs.map(b => b.id === id ? { ...b, status: b.status === 'PENDING' ? 'CLEARED' : 'PENDING' } : b));
-      if(currentUser) {
-          fetch(`${API_BASE_URL}/manage_backlogs.php`, { method: 'PUT', body: JSON.stringify({ id }) });
-      }
+      if(currentUser) { fetch(`${API_BASE_URL}/manage_backlogs.php`, { method: 'PUT', body: JSON.stringify({ id }) }); }
   };
   const handleDeleteBacklog = (id: string) => {
       setBacklogs(backlogs.filter(b => b.id !== id));
-      if(currentUser) {
-          fetch(`${API_BASE_URL}/manage_backlogs.php?id=${id}`, { method: 'DELETE' });
-      }
+      if(currentUser) { fetch(`${API_BASE_URL}/manage_backlogs.php?id=${id}`, { method: 'DELETE' }); }
   };
-
   const handleMistakeUpdate = (id: string, updates: Partial<MistakeRecord>) => {
       setMistakes(mistakes.map(m => m.id === id ? { ...m, ...updates } : m));
-      if(currentUser) {
-          const mistake = mistakes.find(m => m.id === id);
-          if(mistake) {
-             fetch(`${API_BASE_URL}/manage_mistakes.php`, { 
-                 method: 'PUT', 
-                 body: JSON.stringify({ id, ...mistake, ...updates }) 
-             });
-          }
-      }
+      if(currentUser) { const mistake = mistakes.find(m => m.id === id); if(mistake) { fetch(`${API_BASE_URL}/manage_mistakes.php`, { method: 'PUT', body: JSON.stringify({ id, ...mistake, ...updates }) }); } }
   };
   const handleMistakeDelete = (id: string) => {
       setMistakes(mistakes.filter(m => m.id !== id));
-      if(currentUser) {
-          fetch(`${API_BASE_URL}/manage_mistakes.php?id=${id}`, { method: 'DELETE' });
-      }
+      if(currentUser) { fetch(`${API_BASE_URL}/manage_mistakes.php?id=${id}`, { method: 'DELETE' }); }
   };
 
-  // --- Connection Handlers ---
+  // ... existing Connection Handlers ...
   const handleSendConnectionRequest = (studentIdentifier: string) => {
       if (currentUser) {
           fetch(`${API_BASE_URL}/send_request.php`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  student_identifier: studentIdentifier,
-                  parent_id: currentUser.id,
-                  parent_name: currentUser.name
-              })
-          })
-          .then(res => res.json())
-          .then(data => {
-              if (data.message === "Request Sent Successfully") {
-                  // Success UI handled by component state
-              } else {
-                  console.error(data.message);
-              }
-          })
-          .catch(err => console.error("Failed to send request", err));
+              body: JSON.stringify({ student_identifier: studentIdentifier, parent_id: currentUser.id, parent_name: currentUser.name })
+          }).then(res => res.json()).catch(err => console.error(err));
       }
   };
-
   const handleRespondConnectionRequest = (accept: boolean) => {
       if (currentUser && currentUser.pendingRequest) {
           const parentId = currentUser.pendingRequest.fromId;
-          
-          // 1. Optimistic Update
           const updatedStudent = { ...currentUser, pendingRequest: undefined };
-          if (accept) {
-              updatedStudent.parentId = parentId;
-          }
+          if (accept) updatedStudent.parentId = parentId;
           setCurrentUser(updatedStudent);
-
-          // 2. Call API
           fetch(`${API_BASE_URL}/respond_request.php`, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                  student_id: currentUser.id,
-                  parent_id: parentId,
-                  accept: accept
-              })
-          }).catch(err => console.error("Failed to respond to request", err));
+              body: JSON.stringify({ student_id: currentUser.id, parent_id: parentId, accept: accept })
+          }).catch(err => console.error(err));
       }
   };
 
@@ -604,109 +497,19 @@ function App() {
             contactMessages={contactMessages}
           />
         );
-      case 'syllabus':
-        return (
-          <SyllabusTracker 
-            user={currentUser}
-            subjects={JEE_SYLLABUS} 
-            progress={progress} 
-            onUpdateProgress={handleUpdateProgress} 
-            readOnly={currentUser.role === 'PARENT'}
-          />
-        );
-      case 'tests':
-        return (
-          <TestCenter 
-            availableTests={tests} 
-            attempts={attempts} 
-            onCompleteTest={handleCompleteTest} 
-            user={currentUser}
-          />
-        );
+      case 'syllabus': return <SyllabusTracker user={currentUser} subjects={JEE_SYLLABUS} progress={progress} onUpdateProgress={handleUpdateProgress} readOnly={currentUser.role === 'PARENT'} />;
+      case 'tests': return <TestCenter availableTests={tests} attempts={attempts} onCompleteTest={handleCompleteTest} user={currentUser} />;
       case 'focus': return <FocusZone />;
       case 'analytics': return <Analytics attempts={attempts} tests={tests} syllabus={JEE_SYLLABUS} />;
       case 'timetable': return <TimetableGenerator user={currentUser} savedData={timetableData} onUpdate={handleTimetableUpdate} progress={progress} />;
       case 'revision': return <RevisionManager subjects={JEE_SYLLABUS} progress={progress} onUpdateProgress={handleUpdateProgress} />;
-      case 'users':
-        return (
-            <AdminPanel 
-                section="users"
-                users={allUsers.length > 0 ? allUsers : MOCK_USERS} 
-                questionBank={questions} 
-                quotes={quotes}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                onAddQuestion={handleAddQuestion}
-                onCreateTest={handleCreateTest}
-                onSendNotification={handleSendNotification}
-                onAddQuote={handleAddQuote}
-                onDeleteQuote={handleDeleteQuote}
-                onUpdateUser={handleAdminUpdateUser}
-                onDeleteUser={handleAdminDeleteUser}
-                contactMessages={contactMessages}
-                onDeleteContact={handleDeleteContact}
-                blogPosts={blogPosts}
-                onAddBlogPost={handleAddBlogPost}
-                onDeleteBlogPost={handleDeleteBlogPost}
-            />
-        );
-      case 'tests_admin':
-        return (
-            <AdminPanel 
-                section="tests"
-                users={allUsers.length > 0 ? allUsers : MOCK_USERS} 
-                questionBank={questions} 
-                quotes={quotes}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                onAddQuestion={handleAddQuestion}
-                onCreateTest={handleCreateTest}
-                onSendNotification={handleSendNotification}
-                onAddQuote={handleAddQuote}
-                onDeleteQuote={handleDeleteQuote}
-                onUpdateUser={handleAdminUpdateUser}
-                onDeleteUser={handleAdminDeleteUser}
-                contactMessages={contactMessages}
-                onDeleteContact={handleDeleteContact}
-                blogPosts={blogPosts}
-                onAddBlogPost={handleAddBlogPost}
-                onDeleteBlogPost={handleDeleteBlogPost}
-            />
-        );
-      case 'content_admin':
-        return (
-            <AdminPanel 
-                section="content"
-                users={allUsers.length > 0 ? allUsers : MOCK_USERS} 
-                questionBank={questions} 
-                quotes={quotes}
-                activeTab={activeTab}
-                onTabChange={setActiveTab}
-                onAddQuestion={handleAddQuestion}
-                onCreateTest={handleCreateTest}
-                onSendNotification={handleSendNotification}
-                onAddQuote={handleAddQuote}
-                onDeleteQuote={handleDeleteQuote}
-                onUpdateUser={handleAdminUpdateUser}
-                onDeleteUser={handleAdminDeleteUser}
-                contactMessages={contactMessages}
-                onDeleteContact={handleDeleteContact}
-                blogPosts={blogPosts}
-                onAddBlogPost={handleAddBlogPost}
-                onDeleteBlogPost={handleDeleteBlogPost}
-            />
-        );
+      case 'users': return <AdminPanel section="users" users={allUsers.length > 0 ? allUsers : MOCK_USERS} questionBank={questions} quotes={quotes} activeTab={activeTab} onTabChange={setActiveTab} onAddQuestion={handleAddQuestion} onCreateTest={handleCreateTest} onSendNotification={handleSendNotification} onAddQuote={handleAddQuote} onDeleteQuote={handleDeleteQuote} onUpdateUser={handleAdminUpdateUser} onDeleteUser={handleAdminDeleteUser} contactMessages={contactMessages} onDeleteContact={handleDeleteContact} blogPosts={blogPosts} onAddBlogPost={handleAddBlogPost} onDeleteBlogPost={handleDeleteBlogPost} />;
+      case 'tests_admin': return <AdminPanel section="tests" users={allUsers.length > 0 ? allUsers : MOCK_USERS} questionBank={questions} quotes={quotes} activeTab={activeTab} onTabChange={setActiveTab} onAddQuestion={handleAddQuestion} onCreateTest={handleCreateTest} onSendNotification={handleSendNotification} onAddQuote={handleAddQuote} onDeleteQuote={handleDeleteQuote} onUpdateUser={handleAdminUpdateUser} onDeleteUser={handleAdminDeleteUser} contactMessages={contactMessages} onDeleteContact={handleDeleteContact} blogPosts={blogPosts} onAddBlogPost={handleAddBlogPost} onDeleteBlogPost={handleDeleteBlogPost} />;
+      case 'content_admin': return <AdminPanel section="content" users={allUsers.length > 0 ? allUsers : MOCK_USERS} questionBank={questions} quotes={quotes} activeTab={activeTab} onTabChange={setActiveTab} onAddQuestion={handleAddQuestion} onCreateTest={handleCreateTest} onSendNotification={handleSendNotification} onAddQuote={handleAddQuote} onDeleteQuote={handleDeleteQuote} onUpdateUser={handleAdminUpdateUser} onDeleteUser={handleAdminDeleteUser} contactMessages={contactMessages} onDeleteContact={handleDeleteContact} blogPosts={blogPosts} onAddBlogPost={handleAddBlogPost} onDeleteBlogPost={handleDeleteBlogPost} />;
+      case 'admin_analytics': return <SiteAnalytics />; // Render new component
       case 'test_runner': return <TestRunner />;
       case 'system': return <SystemDocs />;
-      case 'profile':
-        return (
-            <ProfileSettings 
-                user={currentUser} 
-                onUpdateUser={handleUpdateUser} 
-                onSendRequest={handleSendConnectionRequest}
-                onRespondRequest={handleRespondConnectionRequest}
-            />
-        );
+      case 'profile': return <ProfileSettings user={currentUser} onUpdateUser={handleUpdateUser} onSendRequest={handleSendConnectionRequest} onRespondRequest={handleRespondConnectionRequest} />;
       case 'mistakes': return <MistakeNotebook mistakes={mistakes} onUpdateMistake={handleMistakeUpdate} onDeleteMistake={handleMistakeDelete} />;
       case 'wellness': return <WellnessCorner />;
       case 'flashcards': return <FlashcardDeck cards={flashcards} />;
@@ -717,46 +520,13 @@ function App() {
       case 'contact': return <ContactUs />;
       case 'blog': return <Blog posts={blogPosts} />;
       case 'exams': return <ExamGuide />;
-      case 'parent_view':
-        return (
-            <Dashboard 
-                user={currentUser} 
-                progress={progress} 
-                onChangeTab={() => {}} 
-                notifications={notifications}
-                quotes={quotes}
-                goals={goals} 
-                onToggleGoal={() => {}} 
-                onAddGoal={() => {}}
-                attempts={attempts}
-                tests={tests}
-            />
-        );
-      default:
-        return (
-            <div className="flex flex-col items-center justify-center h-full text-slate-400 p-10 text-center">
-                <p className="text-lg font-bold mb-2">Page Not Found</p>
-                <p className="text-sm">The requested tab "{activeTab}" does not exist.</p>
-                <button onClick={() => setActiveTab('dashboard')} className="mt-4 text-blue-600 hover:underline">Return to Dashboard</button>
-            </div>
-        );
+      case 'parent_view': return <Dashboard user={currentUser} progress={progress} onChangeTab={() => {}} notifications={notifications} quotes={quotes} goals={goals} onToggleGoal={() => {}} onAddGoal={() => {}} attempts={attempts} tests={tests} />;
+      default: return <div className="flex flex-col items-center justify-center h-full text-slate-400 p-10 text-center"><p className="text-lg font-bold mb-2">Page Not Found</p><p className="text-sm">The requested tab "{activeTab}" does not exist.</p><button onClick={() => setActiveTab('dashboard')} className="mt-4 text-blue-600 hover:underline">Return to Dashboard</button></div>;
     }
   };
 
   return (
-    <Layout 
-      currentUser={currentUser} 
-      activeTab={activeTab} 
-      onTabChange={setActiveTab}
-      onLogout={() => {
-          setCurrentUser(null);
-          setActiveTab('dashboard'); 
-          setProgress({});
-          setGoals([]);
-          setMistakes([]);
-          setTimetableData(null);
-      }}
-    >
+    <Layout currentUser={currentUser} activeTab={activeTab} onTabChange={setActiveTab} onLogout={() => { setCurrentUser(null); setActiveTab('dashboard'); setProgress({}); setGoals([]); setMistakes([]); setTimetableData(null); }}>
       {renderContent()}
     </Layout>
   );

@@ -217,6 +217,7 @@ declare global {
     IITJEE_CONFIG?: {
       enableDevTools: boolean;
       gaMeasurementId: string;
-    }
+    };
+    gtag?: (...args: any[]) => void;
   }
 }
