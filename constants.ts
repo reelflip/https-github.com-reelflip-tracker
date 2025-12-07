@@ -1,7 +1,4 @@
 
-
-
-
 import { Subject, User, Test, Question, Quote, Flashcard, MemoryHack, BlogPost, ExamComparisonItem } from './types';
 
 export const COACHING_INSTITUTES = [
@@ -619,17 +616,25 @@ export const JEE_SYLLABUS: Subject[] = [
 ];
 
 export const AI_KNOWLEDGE_BASE: Record<string, string> = {
-    "torque": "Torque is the rotational equivalent of force. Formula: τ = r x F = rFsinθ. It causes angular acceleration.",
-    "entropy": "Entropy is a measure of the disorder or randomness in a system. Second law of thermodynamics states that entropy of the universe always increases.",
-    "integration": "Integration is the process of finding the area under a curve. It is the reverse process of differentiation.",
-    "ohm's law": "Ohm's Law states that V = IR, where V is voltage, I is current, and R is resistance. It applies to ohmic conductors.",
-    "projectile motion": "Motion of an object thrown into the air, subject only to gravity. Path is a parabola. Key formulas: H = u²sin²θ/2g, R = u²sin2θ/g.",
-    "vsepr": "Valence Shell Electron Pair Repulsion theory predicts molecular geometry based on minimizing repulsion between electron pairs around a central atom.",
-    "cannizzaro reaction": "A redox reaction of aldehydes without alpha-hydrogen in presence of conc. base (NaOH), giving an alcohol and a carboxylic acid salt.",
-    "newton's laws": "1. Inertia. 2. F=ma. 3. Action-Reaction. They govern classical mechanics.",
-    "mole concept": "One mole contains 6.022 x 10²³ particles (Avogadro's number). Molar mass is mass of 1 mole of substance.",
-    "hybridization": "Mixing of atomic orbitals to form new hybrid orbitals suitable for bonding. e.g., sp3 (tetrahedral), sp2 (trigonal planar).",
-    "photoelectric effect": "Emission of electrons when electromagnetic radiation hits a material. Evidence for particle nature of light. KE = hν - Φ.",
-    "bernopulli": "Bernoulli's principle states that an increase in the speed of a fluid occurs simultaneously with a decrease in static pressure or potential energy.",
-    "doppler effect": "Change in frequency of a wave in relation to an observer who is moving relative to the wave source."
+    "torque": "Torque is the rotational equivalent of linear force. It is calculated as τ = r × F, where r is the distance from the pivot point and F is the force applied.",
+    "entropy": "Entropy is a measure of the disorder or randomness in a system. The Second Law of Thermodynamics states that the total entropy of an isolated system can never decrease over time.",
+    "newton's second law": "Newton's Second Law states that force equals mass times acceleration (F = ma).",
+    "ohm's law": "Ohm's Law states that the current through a conductor between two points is directly proportional to the voltage across the two points (V = IR).",
+    "photoelectric effect": "The photoelectric effect is the emission of electrons when electromagnetic radiation, such as light, hits a material.",
+    "integration": "Integration is a fundamental concept in calculus, often used to find areas, volumes, central points, and many useful things. It is the reverse process of differentiation.",
+    "differentiation": "Differentiation is the action of computing a derivative. The derivative of a function of a real variable measures the sensitivity to change of the function value (output value) with respect to a change in its argument (input value).",
+    "cannizzaro reaction": "The Cannizzaro reaction is a chemical reaction that involves the base-induced disproportionation of an aldehyde lacking a hydrogen atom in the alpha position.",
+    "aldol condensation": "Aldol condensation is a condensation reaction in organic chemistry in which an enol or an enolate ion reacts with a carbonyl compound to form a β-hydroxyaldehyde or β-hydroxyketone, followed by dehydration to give a conjugated enone.",
+    "vsepr": "Valence shell electron pair repulsion (VSEPR) theory is a model used in chemistry to predict the geometry of individual molecules from the number of electron pairs surrounding their central atoms.",
+    "mole concept": "A mole is the amount of substance that contains as many elementary entities (e.g., atoms, molecules) as there are atoms in 12 grams of pure carbon-12. This number is Avogadro's constant, approximately 6.022×10²³.",
+    "projectile motion": "Projectile motion is a form of motion experienced by an object or particle that is thrown near the Earth's surface and moves along a curved path under the action of gravity only.",
+    "bernoulli's principle": "Bernoulli's principle states that an increase in the speed of a fluid occurs simultaneously with a decrease in static pressure or a decrease in the fluid's potential energy.",
+    "doppler effect": "The Doppler effect is the change in frequency or wavelength of a wave in relation to an observer who is moving relative to the wave source.",
+    "hybridization": "Hybridization is the concept of mixing atomic orbitals into new hybrid orbitals suitable for the pairing of electrons to form chemical bonds in valence bond theory.",
+    "resonance": "Resonance describes the delocalization of electrons within molecules. It involves constructing multiple Lewis structures that, when combined, represent the full electronic structure of the molecule.",
+    "complex numbers": "A complex number is a number that can be expressed in the form a + bi, where a and b are real numbers, and i is a solution of the equation x² = −1.",
+    "quadratic equation": "A quadratic equation is a polynomial equation of degree 2, generally in the form ax² + bx + c = 0.",
+    "matrix": "A matrix is a rectangular array or table of numbers, symbols, or expressions, arranged in rows and columns.",
+    "probability": "Probability is the branch of mathematics concerning numerical descriptions of how likely an event is to occur.",
+    "thermodynamics": "Thermodynamics is a branch of physics that deals with heat, work, and temperature, and their relation to energy, entropy, and the physical properties of matter and radiation."
 };
