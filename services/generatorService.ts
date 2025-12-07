@@ -4,7 +4,7 @@ import { JEE_SYLLABUS, DEFAULT_QUOTES, MOCK_TESTS, INITIAL_FLASHCARDS, INITIAL_M
 import { Question } from '../types';
 
 export const generateSQLSchema = (): string => {
-  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v5.8 GitHub Sync)
+  let sql = `-- DATABASE SCHEMA FOR IITGEEPrep (v6.0 Final Production)
 -- Generated for Hostinger / Shared Hosting (MySQL)
 -- Official Website: iitgeeprep.com
 
