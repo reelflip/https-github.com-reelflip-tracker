@@ -23,7 +23,7 @@ import {
   BookX,
   Menu,
   X,
-  Home
+  Bot
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -41,6 +41,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'syllabus', label: 'Syllabus', icon: BookOpen },
     { id: 'tests', label: 'Tests', icon: PenTool },
+    { id: 'ai_tutor', label: 'AI Tutor', icon: Bot },
     { id: 'focus', label: 'Focus', icon: Timer },
     { id: 'analytics', label: 'Analytics', icon: BarChart2 },
     { id: 'timetable', label: 'Timetable', icon: Calendar },
@@ -51,6 +52,13 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
     { id: 'hacks', label: 'Hacks', icon: Lightbulb },
     { id: 'wellness', label: 'Wellness', icon: Heart },
     { id: 'profile', label: 'Profile', icon: Settings },
+  ];
+
+  const parentNav = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'syllabus', label: 'Syllabus', icon: BookOpen },
+    { id: 'analytics', label: 'Analytics', icon: BarChart2 },
+    { id: 'profile', label: 'Settings', icon: Settings },
   ];
 
   const adminNav = [
@@ -64,7 +72,9 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
     { id: 'system', label: 'System', icon: Database },
   ];
 
-  const navItems = currentUser?.role === 'ADMIN' ? adminNav : studentNav;
+  let navItems = studentNav;
+  if (currentUser?.role === 'ADMIN') navItems = adminNav;
+  if (currentUser?.role === 'PARENT') navItems = parentNav;
 
   // Bottom Nav Items (Core)
   const bottomNavItems = navItems.slice(0, 3); // First 3 items
@@ -78,6 +88,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
           case 'wellness': return 'bg-teal-50 text-teal-600 border-teal-100';
           case 'mistakes': return 'bg-red-50 text-red-600 border-red-100';
           case 'diagnostics': return 'bg-lime-50 text-lime-600 border-lime-100';
+          case 'ai_tutor': return 'bg-violet-50 text-violet-600 border-violet-100';
           default: return 'bg-slate-50 text-slate-600 border-slate-100';
       }
   };
@@ -91,7 +102,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
             <h1 className="text-2xl font-bold tracking-tight text-blue-400">IITGEEPrep</h1>
             <p className="text-xs text-slate-400 mt-1 flex items-center">
                 {currentUser?.role}
-                {currentUser?.role === 'ADMIN' && <span className="ml-1 opacity-75">• v5.2</span>}
+                {currentUser?.role === 'ADMIN' && <span className="ml-1 opacity-75">• v5.3</span>}
             </p>
           </div>
         </div>
@@ -135,7 +146,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
         <header className="md:hidden bg-slate-900 text-white px-4 py-3 flex justify-between items-center sticky top-0 z-30 shadow-md">
              <div className="font-bold text-lg text-blue-400 tracking-tight">IITGEEPrep</div>
              <div className="flex items-center space-x-3">
-                 {currentUser?.role === 'ADMIN' && <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">v5.2</span>}
+                 {currentUser?.role === 'ADMIN' && <span className="text-[10px] bg-slate-800 px-2 py-1 rounded text-slate-400">v5.3</span>}
                  {/* User Avatar Tiny */}
                  {currentUser?.avatarUrl && (
                      <img src={currentUser.avatarUrl} alt="Profile" className="w-8 h-8 rounded-full border border-slate-700 bg-slate-800" />
@@ -167,19 +178,21 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                 </button>
             ))}
             
-            <button
-                onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 w-16 ${
-                    mobileMenuOpen 
-                    ? 'text-blue-600' 
-                    : 'text-slate-400 hover:text-slate-600'
-                }`}
-            >
-                <div className={`transition-transform duration-300 ${mobileMenuOpen ? 'rotate-90' : 'rotate-0'}`}>
-                    {mobileMenuOpen ? <X className="w-6 h-6 mb-1" /> : <Menu className="w-6 h-6 mb-1" />}
-                </div>
-                <span className="text-[10px] font-bold">More</span>
-            </button>
+            {moreNavItems.length > 0 && (
+                <button
+                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                    className={`flex flex-col items-center justify-center p-2 rounded-xl transition-all duration-300 w-16 ${
+                        mobileMenuOpen 
+                        ? 'text-blue-600' 
+                        : 'text-slate-400 hover:text-slate-600'
+                    }`}
+                >
+                    <div className={`transition-transform duration-300 ${mobileMenuOpen ? 'rotate-90' : 'rotate-0'}`}>
+                        {mobileMenuOpen ? <X className="w-6 h-6 mb-1" /> : <Menu className="w-6 h-6 mb-1" />}
+                    </div>
+                    <span className="text-[10px] font-bold">More</span>
+                </button>
+            )}
 
             <button
                 onClick={onLogout}
@@ -191,7 +204,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
         </div>
 
         {/* Mobile "More" Menu Overlay (Full Screen / Drawer) */}
-        {mobileMenuOpen && (
+        {mobileMenuOpen && moreNavItems.length > 0 && (
             <div className="md:hidden fixed inset-0 z-40 bg-slate-900/95 backdrop-blur-md pt-20 px-4 pb-28 overflow-y-auto animate-in fade-in slide-in-from-bottom-10 duration-200">
                 <h3 className="text-white/50 text-xs font-bold uppercase tracking-widest mb-6 text-center">All Apps</h3>
                 <div className="grid grid-cols-3 gap-3">
@@ -212,7 +225,7 @@ const Layout: React.FC<LayoutProps> = ({ currentUser, activeTab, onTabChange, on
                 </div>
                 
                 <div className="mt-8 text-center">
-                    <p className="text-white/20 text-[10px]">IITGEEPrep Mobile v5.2</p>
+                    <p className="text-white/20 text-[10px]">IITGEEPrep Mobile v5.3</p>
                 </div>
             </div>
         )}
