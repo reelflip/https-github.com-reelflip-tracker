@@ -182,9 +182,9 @@ export const generateFrontendGuide = () => {
 1. Log in to Hostinger hPanel.
 2. Go to **Databases > Management**.
 3. Create a New Database:
-   - Name: \`u123_iitjee_tracker\` (Example)
-   - User: \`u123_iitjee_user\`
-   - Password: (Strong Password)
+   - Name: \`u131922718_iitjee_tracker\`
+   - User: \`u131922718_iitjee_user\`
+   - Password: (Your Password: IITjeeprep@12345)
 4. Click **Enter phpMyAdmin**.
 5. Select your database on the left.
 6. Click **Import** tab.
@@ -199,7 +199,7 @@ export const generateFrontendGuide = () => {
 5. **Upload Backend**: Open \`api/\` folder. Upload \`hostinger_backend_bundle.zip\` and extract it.
 6. **Configure Database**:
    - Open \`api/config.php\`.
-   - Update \`$host\`, \`$db_name\`, \`$username\`, \`$password\` with the values from Phase 2.
+   - Update \`$host\`, \`$db_name\`, \`$username\`, \`$password\` with the values if they are different from default.
    - Save & Close.
 
 ## Phase 4: Permissions Fix (Critical)
@@ -230,9 +230,10 @@ Once deployed, you can verify everything is working using the built-in Test Runn
 };
 
 export const getBackendFiles = (dbConfig?: { host: string, user: string, pass: string, name: string }) => {
+    // PRE-FILLED CREDENTIALS FROM USER
     const dbHost = dbConfig?.host || "82.25.121.80";
     const dbUser = dbConfig?.user || "u131922718_iitjee_user";
-    const dbPass = dbConfig?.pass || "";
+    const dbPass = dbConfig?.pass || "IITjeeprep@12345";
     const dbName = dbConfig?.name || "u131922718_iitjee_tracker";
 
     return [
@@ -265,7 +266,7 @@ try {
     exit();
 }`
         },
-        { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v5.8"]);` },
+        { name: "index.php", folder: "api", desc: "API Root", content: `<?php header("Content-Type: application/json"); echo json_encode(["status" => "active", "message" => "IITGEEPrep API v6.0"]);` },
         { 
             name: "test_db.php", 
             folder: "api", 
@@ -309,6 +310,7 @@ try {
         { name: "manage_goals.php", folder: "api", desc: "Manage Goals", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST'){ $conn->prepare("INSERT INTO daily_goals (id,user_id,goal_text) VALUES (?,?,?)")->execute([$d->id, $d->user_id, $d->text]); } if($m=='PUT'){ $conn->query("UPDATE daily_goals SET is_completed = NOT is_completed WHERE id='{$d->id}'"); } echo json_encode(["message"=>"OK"]);` },
         { name: "manage_backlogs.php", folder: "api", desc: "Manage Backlogs", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST'){ $conn->prepare("INSERT INTO backlogs (id,user_id,title,subject_id,priority,deadline,status) VALUES (?,?,?,?,?,?,?)")->execute([$d->id, $d->user_id, $d->title, $d->subjectId, $d->priority, $d->deadline, $d->status]); } if($m=='PUT'){ $conn->query("UPDATE backlogs SET status = IF(status='PENDING','CLEARED','PENDING') WHERE id='{$d->id}'"); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM backlogs WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
         { name: "manage_mistakes.php", folder: "api", desc: "Manage Mistakes", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST'){ $tags=json_encode($d->tags); $conn->prepare("INSERT INTO mistake_notebook (id,user_id,question_text,subject_id,topic_id,test_name,tags_json) VALUES (?,?,?,?,?,?,?)")->execute([$d->id, $d->user_id, $d->questionText, $d->subjectId, $d->topicId, $d->testName, $tags]); } if($m=='PUT'){ $tags=json_encode($d->tags); $conn->prepare("UPDATE mistake_notebook SET user_notes=?, tags_json=? WHERE id=?")->execute([$d->userNotes, $tags, $d->id]); } if($m=='DELETE'){ $id=$_GET['id']; $conn->query("DELETE FROM mistake_notebook WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
+        { name: "manage_study_tools.php", folder: "api", desc: "Manage Study Tools", content: `<?php require 'config.php'; header('Content-Type: application/json'); $m=$_SERVER['REQUEST_METHOD']; $d=json_decode(file_get_contents("php://input")); if($m=='POST' && $d->type == 'FLASHCARD'){ $conn->prepare("INSERT INTO flashcards (id,subject_id,front,back,difficulty) VALUES (?,?,?,?,?)")->execute([$d->id, $d->subjectId, $d->front, $d->back, $d->difficulty]); } if($m=='POST' && $d->type == 'HACK'){ $tags=json_encode($d->tags); $conn->prepare("INSERT INTO memory_hacks (id,subject_id,category,title,description,trick,tags_json) VALUES (?,?,?,?,?,?,?)")->execute([$d->id, $d->subjectId, $d->category, $d->title, $d->description, $d->trick, $tags]); } if($m=='DELETE'){ $table = $d->type == 'FLASHCARD' ? 'flashcards' : 'memory_hacks'; $id=$d->id; $conn->query("DELETE FROM $table WHERE id='$id'"); } echo json_encode(["message"=>"OK"]);` },
         
         // --- 6. CONNECTIONS ---
         { name: "send_request.php", folder: "api", desc: "Send Request", content: `<?php require 'config.php'; header('Content-Type: application/json'); $d=json_decode(file_get_contents("php://input")); 
